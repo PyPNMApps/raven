@@ -59,6 +59,15 @@ method name or bare inherited-doc reference is not a complete banner.
 Keep banners consistent with actual signatures and behavior. In particular,
 missing samples are not zeros and file-format versions are not DOCSIS versions.
 
+## Explanatory comment spacing
+
+Leave one blank line before a standalone explanatory comment or comment block
+to separate it from preceding code. Apply this to new and modified code and
+documentation examples. Keep consecutive lines of the same comment together;
+do not split copyright banners or documentation comments. Inline end-of-line
+comments are unchanged. If the formatter removes the separation, move the
+comment above the containing statement rather than disabling formatting.
+
 ## Regular-expression documentation
 
 When adding/changing a regex, comment directly above its declaration or inline
