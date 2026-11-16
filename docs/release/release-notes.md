@@ -1,4 +1,4 @@
-# PNM Viewer Toolkit {{TAG}}
+# RAVEN {{TAG}}
 
 **Under development.** Download the package for your system under **Assets**.
 The native Qt viewer includes the same-version `pnm-decode` CLI and manual;
@@ -22,10 +22,10 @@ Download both same-version DEBs and `SHA256SUMS` from this release. In the downl
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS &&
-sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
 ```
 
-Launch **PNM Viewer Toolkit** from the application menu, or run `pnm-viewer`
+Launch **RAVEN** from the application menu, or run `raven`
 inside your graphical desktop session. The CLI is available as `pnm-decode`;
 read its manual with `man pnm-decode`.
 
@@ -36,7 +36,7 @@ read its manual with `man pnm-decode`.
 **Uninstall the viewer:**
 
 ```bash
-sudo apt remove pnm-viewer-toolkit
+sudo apt remove raven
 ```
 
 This leaves the separately owned CLI installed. To remove it too, run
@@ -47,14 +47,14 @@ This leaves the separately owned CLI installed. To remove it too, run
 ## Windows — x64
 
 1. Download and run the **Windows x64 MSI installer** from the table.
-2. Select an installation folder and launch **PNM Viewer Toolkit** from Start.
+2. Select an installation folder and launch **RAVEN** from Start.
 
-The default per-machine location is `%ProgramFiles%\PNM Viewer Toolkit`.
+The default per-machine location is `%ProgramFiles%\RAVEN`.
 Qt and Microsoft runtime DLLs are app-local. The bundled CLI is in that folder;
 the installer does not add it to PATH. From PowerShell at the default location:
 
 ```powershell
-& "$env:ProgramFiles\PNM Viewer Toolkit\pnm-decode.exe" --help
+& "$env:ProgramFiles\RAVEN\pnm-decode.exe" --help
 ```
 
 For a standalone CLI without the viewer, use the Windows CLI ZIP from the
@@ -67,7 +67,7 @@ These steps do not disable SmartScreen, Defender, or company policy.
 
 **Update:** quit the viewer and install the new MSI (older MSIs upgrade; downgrades are refused).
 
-**Uninstall:** Settings → Apps → Installed apps → PNM Viewer Toolkit → Uninstall,
+**Uninstall:** Settings → Apps → Installed apps → RAVEN → Uninstall,
 managed by Windows Installer. A separately extracted CLI
 is independent of the desktop installation.
 
@@ -76,7 +76,7 @@ is independent of the desktop installation.
 ## macOS — Apple Silicon or Intel
 
 1. Choose **arm64** for an Apple M-series Mac or **x64** for an Intel Mac.
-2. Open the matching DMG and drag **PNM Viewer Toolkit** onto **Applications**.
+2. Open the matching DMG and drag **RAVEN** onto **Applications**.
 3. Eject the disk image and open the app from Applications.
 
 The deployment target is macOS 13 or newer; native CI uses macOS 15 runners.
@@ -87,7 +87,7 @@ source and checksum, then use the operating system's application-approval contro
 The bundled CLI can be run from a terminal:
 
 ```bash
-"/Applications/PNM Viewer Toolkit.app/Contents/MacOS/pnm-decode" --help
+"/Applications/RAVEN.app/Contents/MacOS/pnm-decode" --help
 ```
 
 For a standalone CLI without the viewer, use the matching Darwin CLI archive from
@@ -122,13 +122,13 @@ against your local SHA-256 result. Examples from the download directory:
 
 ```bash
 # Ubuntu
-sha256sum pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+sha256sum raven_{{VERSION}}_amd64.deb
 # macOS Apple Silicon; substitute macos-x64 for an Intel package
-shasum -a 256 PNM-Viewer-Toolkit-{{VERSION}}-macos-arm64.dmg
+shasum -a 256 RAVEN-{{VERSION}}-macos-arm64.dmg
 ```
 
 ```powershell
-Get-FileHash .\PNM-Viewer-Toolkit-{{VERSION}}-windows-x64.msi -Algorithm SHA256
+Get-FileHash .\RAVEN-{{VERSION}}-windows-x64.msi -Algorithm SHA256
 ```
 
 These packages are assembled only after CodeQL, code checks, the complete native

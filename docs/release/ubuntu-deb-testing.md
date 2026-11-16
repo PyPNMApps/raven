@@ -18,7 +18,7 @@ For an explicitly requested troubleshooting run, open **Actions → Ubuntu 22.04
 Extract it into a fresh directory, keeping one version per directory. It includes:
 
 - `pnm-decode_VERSION_amd64.deb` — CLI/manual.
-- `pnm-viewer-toolkit_VERSION_amd64.deb` — viewer, with a matching CLI dependency.
+- `raven_VERSION_amd64.deb` — viewer, with a matching CLI dependency.
 - Existing CLI archive, SHA256SUMS, SBOM and build/dependency metadata.
 
 The job enforces version/master ancestry, CodeQL/static checks, Rust and Qt/QML
@@ -35,9 +35,9 @@ artifact directory. Verify its bytes, then install both packages together:
 
 ```bash
 sha256sum --check SHA256SUMS
-sudo apt install ./pnm-decode_*_amd64.deb ./pnm-viewer-toolkit_*_amd64.deb
+sudo apt install ./pnm-decode_*_amd64.deb ./raven_*_amd64.deb
 pnm-decode --version
-pnm-viewer
+raven
 ```
 
 For upgrade testing, first install an older successful artifact, then repeat

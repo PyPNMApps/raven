@@ -6,9 +6,8 @@
 use serde::Deserialize;
 use std::{io::Read, time::Duration};
 
-pub const RELEASES_URL: &str = "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases";
-const RELEASE_API_URL: &str =
-    "https://api.github.com/repos/PyPNMApps/PNM-Viewer-Toolkit/releases/latest";
+pub use crate::identity::RELEASES_URL;
+use crate::identity::{DISPLAY_NAME, RELEASE_API_URL};
 const MAX_RESPONSE_BYTES: usize = 1024 * 1024;
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(10);
 const MAX_VERSION_BYTES: usize = 64;
@@ -95,7 +94,7 @@ fn fetch_release(
     let response = match agent
         .get(address)
         .set("Accept", "application/vnd.github+json")
-        .set("User-Agent", "PNM-Viewer-Toolkit")
+        .set("User-Agent", DISPLAY_NAME)
         .call()
     {
         Ok(response) if response.status() == 200 => response,

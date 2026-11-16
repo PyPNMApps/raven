@@ -27,13 +27,13 @@ def manifests(version):
         Four platform manifests with deliberately synthetic download sizes.
     """
     names = {
-        ('Linux', 'x64'): [f'pnm-viewer-toolkit_{version}_amd64.deb',
+        ('Linux', 'x64'): [f'raven_{version}_amd64.deb',
                            f'pnm-decode_{version}_amd64.deb', f'pnm-decode-{version}-linux-x64.tar.gz'],
-        ('Windows', 'x64'): [f'PNM-Viewer-Toolkit-{version}-windows-x64.msi',
+        ('Windows', 'x64'): [f'RAVEN-{version}-windows-x64.msi',
                              f'pnm-decode-{version}-windows-x64.zip'],
-        ('Darwin', 'arm64'): [f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg',
+        ('Darwin', 'arm64'): [f'RAVEN-{version}-macos-arm64.dmg',
                               f'pnm-decode-{version}-darwin-arm64.tar.gz'],
-        ('Darwin', 'x64'): [f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg',
+        ('Darwin', 'x64'): [f'RAVEN-{version}-macos-x64.dmg',
                             f'pnm-decode-{version}-darwin-x64.tar.gz'],
     }
     return [{'version': version, 'system': system, 'architecture': architecture,
@@ -54,14 +54,14 @@ class ReleasePageTests(unittest.TestCase):
     def render(self, **overrides):
         """Render the actual template with isolated synthetic package metadata."""
         arguments = dict(template=self.template, manifests=self.index, version=self.version,
-                         tag=self.tag, repository='PyPNMApps/PNM-Viewer-Toolkit')
+                         tag=self.tag, repository='PyPNMApps/raven')
         arguments.update(overrides)
         return notes.render(**arguments)
 
     def test_complete_page_has_real_asset_links_and_tagged_guides(self):
         """Link every collected artifact and retain platform install/uninstall steps."""
         page = self.render()
-        base = 'https://github.com/PyPNMApps/PNM-Viewer-Toolkit'
+        base = 'https://github.com/PyPNMApps/raven'
         for manifest in self.index:
             for artifact in manifest['artifacts']:
                 link = base + '/releases/download/' + self.tag + '/' + artifact['name']
@@ -72,7 +72,7 @@ class ReleasePageTests(unittest.TestCase):
         self.assertIn('(2.20 MB)', page)
         self.assertIn(base + '/blob/' + self.tag + '/docs/ui/README.md', page)
         self.assertIn('sudo apt install ./pnm-decode_12.34.56_amd64.deb', page)
-        self.assertIn('pnm-viewer-toolkit_12.34.56_amd64.deb', page)
+        self.assertIn('raven_12.34.56_amd64.deb', page)
         self.assertIn('pnm-decode.exe', page)
         self.assertIn('Applications', page)
         self.assertIn('SHA256SUMS', page)
@@ -95,7 +95,7 @@ class ReleasePageTests(unittest.TestCase):
         """Do not publish legacy EXEs or mislabeled DMGs behind new OS instructions."""
         for index, suffix in ((1, 'windows-x64.exe'), (2, 'macos-x64.dmg')):
             changed = copy.deepcopy(self.index)
-            changed[index]['artifacts'][0]['name'] = f'PNM-Viewer-Toolkit-{self.version}-{suffix}'
+            changed[index]['artifacts'][0]['name'] = f'RAVEN-{self.version}-{suffix}'
             with self.assertRaisesRegex(ValueError, 'Target installer|duplicate'):
                 self.render(manifests=changed)
 
@@ -210,7 +210,7 @@ class ReleasePageTests(unittest.TestCase):
             result = subprocess.run(command, cwd=folder, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             before = output.read_bytes()
-            self.assertIn(('PNM Viewer Toolkit v' + version).encode(), before)
+            self.assertIn(('RAVEN v' + version).encode(), before)
             result = subprocess.run(command, cwd=folder, capture_output=True, text=True)
             self.assertNotEqual(result.returncode, 0)
             self.assertEqual(output.read_bytes(), before)

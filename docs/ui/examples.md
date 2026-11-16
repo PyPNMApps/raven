@@ -38,9 +38,9 @@ files/demo/
 
 | Platform | Installed folder |
 | --- | --- |
-| Windows | `C:\Program Files\PNM Viewer Toolkit\files\demo` |
-| macOS | `/Applications/PNM Viewer Toolkit.app/Contents/Resources/files/demo` |
-| Ubuntu | `/opt/pnm-viewer-toolkit/files/demo` |
+| Windows | `C:\Program Files\RAVEN\files\demo` |
+| macOS | `/Applications/RAVEN.app/Contents/Resources/files/demo` |
+| Ubuntu | `/opt/raven/files/demo` |
 
 Treat installed examples as read-only. Export JSON into Documents or another
 user-selected writable folder. CLI-only archives remain capture-free.

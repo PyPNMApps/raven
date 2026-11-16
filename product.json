@@ -1,0 +1,13 @@
+{
+  "display_name": "RAVEN",
+  "acronym": "RF Analysis, Visualization & Engineering Navigator",
+  "tagline": "See the signal. Reveal the impairment.",
+  "organization": "PyPNMApps",
+  "repository": "PyPNMApps/raven",
+  "target_repository": "PyPNMApps/raven",
+  "desktop_package": "raven-desktop",
+  "desktop_binary": "raven",
+  "linux_package": "raven",
+  "desktop_id": "raven",
+  "bundle_id": "org.pypnmapps.raven"
+}

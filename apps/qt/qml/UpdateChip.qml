@@ -16,7 +16,7 @@ Button {
     rightPadding: 12
     topPadding: 3
     bottomPadding: 3
-    Accessible.name: "Update PNM Viewer Toolkit"
+    Accessible.name: "Update RAVEN"
     ToolTip.visible: hovered
     ToolTip.text: "A newer release is available. View update options."
     contentItem: Text {

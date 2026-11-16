@@ -83,9 +83,9 @@ class NativeCacheTests(unittest.TestCase):
 
     def test_only_dependency_outputs_are_reused(self):
         """Do not carry workspace binaries/tests or incremental caches across tags."""
-        names = {'pnm', 'pnm-viewer-qt', 'test_rxmer'}
+        names = {'pnm', 'raven', 'test_rxmer'}
         for path in ('target/debug/deps/test_rxmer-abc', 'target/debug/deps/libpnm-abc.rlib',
-                     'apps/qt/target/debug/build/pnm-viewer-qt-abc/out/file',
+                     'apps/qt/target/debug/build/raven-abc/out/file',
                      'target/debug/incremental/session/file', 'target/debug/examples/example'):
             self.assertFalse(CACHE.reusable(path, names), path)
         for path in ('apps/qt/target/debug/deps/libcxx_qt_lib-abc.rlib',

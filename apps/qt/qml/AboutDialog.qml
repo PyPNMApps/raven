@@ -40,7 +40,7 @@ Dialog {
         }
     }
     objectName: "aboutDialog"
-    title: "About PNM Viewer Toolkit"
+    title: "About RAVEN"
 
     width: 500
     modal: true
@@ -54,14 +54,14 @@ Dialog {
             sourceSize.height: 64
             Layout.alignment: Qt.AlignHCenter
         }
-        Label { text: "PNM Viewer Toolkit"; color: dialog.theme.text; font.pixelSize: 20; font.bold: true }
+        Label { text: "RAVEN"; color: dialog.theme.text; font.pixelSize: 20; font.bold: true }
         Label { objectName: "installedVersionLabel"; text: "Version " + dialog.appVersion; color: dialog.theme.muted }
         RowLayout {
             ThemeButton {
                 theme: dialog.theme
                 objectName: "projectButton"
                 text: "GitHub project"
-                onClicked: Qt.openUrlExternally("https://github.com/PyPNMApps/PNM-Viewer-Toolkit")
+                onClicked: Qt.openUrlExternally(dialog.updates.project_url)
             }
             ThemeButton {
                 theme: dialog.theme

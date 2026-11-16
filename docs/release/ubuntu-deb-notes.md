@@ -1,4 +1,4 @@
-# PNM Viewer Toolkit {{TAG}} — Ubuntu 22.04 development build
+# RAVEN {{TAG}} — Ubuntu 22.04 development build
 
 This temporary release contains **Ubuntu 22.04 x64 packages only**. The project
 is under development. Other platforms are not validated by this workflow; their
@@ -27,31 +27,31 @@ viewer and use the APT commands below from your Downloads folder.
 (
   set -euo pipefail
   umask 022
-  download_dir="$(mktemp -d /tmp/pnm-viewer-install.XXXXXX)"
+  download_dir="$(mktemp -d /tmp/raven-install.XXXXXX)"
   chmod 755 "$download_dir"
   cd "$download_dir"
-  release_url="https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/{{TAG}}"
-  for asset in SHA256SUMS pnm-decode_{{VERSION}}_amd64.deb pnm-viewer-toolkit_{{VERSION}}_amd64.deb; do
+  release_url="https://github.com/PyPNMApps/raven/releases/download/{{TAG}}"
+  for asset in SHA256SUMS pnm-decode_{{VERSION}}_amd64.deb raven_{{VERSION}}_amd64.deb; do
     curl -fL --retry 3 "$release_url/$asset" -o "$asset"
   done
   sha256sum --ignore-missing --check SHA256SUMS
-  sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+  sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
   pnm-decode --version
 )
 ```
 
-Launch `pnm-viewer` from a graphical desktop terminal or the application menu.
+Launch `raven` from a graphical desktop terminal or the application menu.
 </details>
 
 The download command uses `curl`; downloaded packages remain under the generated
-`/tmp/pnm-viewer-install.*` directory. To install files already downloaded using
+`/tmp/raven-install.*` directory. To install files already downloaded using
 your browser, open a terminal in their directory and run:
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS &&
-sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./pnm-viewer-toolkit_{{VERSION}}_amd64.deb
+sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
 pnm-decode --version
-pnm-viewer
+raven
 ```
 
 The viewer requires the matching CLI package. `apt install` also performs a
@@ -66,10 +66,10 @@ without network access is not claimed.
 ## Uninstall
 
 ```bash
-sudo apt remove pnm-viewer-toolkit pnm-decode
+sudo apt remove raven pnm-decode
 ```
 
-Remove only `pnm-viewer-toolkit` to keep the CLI. Capture files remain intact.
+Remove only `raven` to keep the CLI. Capture files remain intact.
 
 ## Windows and macOS
 

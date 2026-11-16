@@ -1,10 +1,10 @@
-# PNM Viewer Toolkit documentation
+# RAVEN documentation
 
 The Qt viewer, CLI and Rust parsers are available from source and the project
 remains under development. Tag releases require Ubuntu 22.04/24.04/26.04,
 Windows x64 MSI and macOS Apple Silicon/Intel DMG checks before verified
 publication. Earlier releases may be Ubuntu-only. See the
-[Releases page](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases) for
+[Releases page](https://github.com/PyPNMApps/raven/releases) for
 actual published assets and [CI scope](development/ci.md) for validation status.
 
 ## Use the toolkit

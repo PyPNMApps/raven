@@ -1,6 +1,6 @@
 # Permanent project guidance
 
-Build PNM Viewer Toolkit with a Rust backend and native Qt Quick/QML desktop
+Build RAVEN with a Rust backend and native Qt Quick/QML desktop
 under apps/qt/. Qt is the sole desktop UI; do not reintroduce a web frontend.
 
 - Work only in this viewer repository. PyPNM is read-only reference material. Do not change its files, configuration, dependencies or services, or run capture/startup code.
@@ -23,7 +23,11 @@ under apps/qt/. Qt is the sole desktop UI; do not reintroduce a web frontend.
 
 ## Project naming
 
-Display name: PNM Viewer Toolkit. Repository/directory: `PNM-Viewer-Toolkit`.
+Display name: RAVEN (RF Analysis, Visualization & Engineering Navigator).
+GitHub repository: `PyPNMApps/raven`; local directory: `PNM-Viewer-Toolkit`.
+Root product.json owns the active repository identity. Keep repository links,
+updater endpoints and release tooling aligned with docs/development/rebranding.md.
+Desktop package: `raven-desktop`; executable: `raven`. Preserve the core/CLI names.
 Standalone CLI: `pnm-decode` (`pnm-decode.exe` on Windows); manual: `pnm-decode.1`.
 Existing Cargo library names and copyright notices retain their current identities.
 
@@ -78,7 +82,7 @@ for the preserved original guidance before creating new working plans.
 
 ## Versioning
 
-- Use the `pnm-viewer-release` skill for version bumps and release work.
+- Use the `raven-release` skill for version bumps and release work.
 - Keep VERSION in MAJOR.MINOR.PATCH format; use tools/bump-version.sh.
 - See docs/release/versioning.md. Version bumps do not authorize commits, tags, or pushes.
 

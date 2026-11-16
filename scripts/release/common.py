@@ -20,6 +20,9 @@ import importlib
 qt = importlib.import_module('qt-sdk')
 from versions import synchronize, validate
 
+PRODUCT = json.loads((ROOT / "product.json").read_text(encoding="utf-8"))
+PROJECT_URL = "https://github.com/" + PRODUCT["repository"]
+
 MAX_PACKAGE_BYTES = 50_000_000
 DEPENDENCY_NOTICES = None
 
@@ -54,7 +57,7 @@ def binary_path(gui=False):
                   '--manifest-path', manifest], capture_output=True, text=True)
     target = Path(json.loads(result.stdout)['target_directory'])
     suffix = '.exe' if os.name == 'nt' else ''
-    return target / 'release' / (('pnm-viewer-qt' if gui else 'pnm-decode') + suffix)
+    return target / 'release' / ((PRODUCT['desktop_binary'] if gui else 'pnm-decode') + suffix)
 
 
 def notices(destination):

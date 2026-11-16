@@ -1,9 +1,9 @@
 ---
-name: pnm-viewer-release
-description: Prepare PNM Viewer three-component version bumps and release commands. Use for this repository's major, minor, patch, tag, and release workflow; not for other repositories.
+name: raven-release
+description: Prepare RAVEN three-component version bumps and release commands. Use for this repository's major, minor, patch, tag, and release workflow; not for other repositories.
 ---
 
-# PNM Viewer release workflow
+# RAVEN release workflow
 
 Read `docs/release/versioning.md`, `VERSION`, and the repository's helpers before preparing
 commands. Resolve those paths from the repository root (two levels above this

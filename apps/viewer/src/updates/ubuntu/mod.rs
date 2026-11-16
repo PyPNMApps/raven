@@ -13,8 +13,8 @@ pub use install::{install, install_elevated, restart};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
 const MAX_PACKAGE_BYTES: u64 = 50_000_000;
-const INSTALLED_VIEWER: &str = "/opt/pnm-viewer-toolkit/pnm-viewer-qt";
-const PACKAGES: [&str; 2] = ["pnm-decode", "pnm-viewer-toolkit"];
+const INSTALLED_VIEWER: &str = "/opt/raven/raven";
+const PACKAGES: [&str; 2] = ["pnm-decode", "raven"];
 
 /// Relevant immutable fields from the GitHub release asset API.
 #[derive(Debug, Deserialize)]
@@ -94,7 +94,8 @@ impl InstallPlan {
         for (package, expected) in self.packages.iter().zip(PACKAGES) {
             let name = format!("{expected}_{}_amd64.deb", self.version);
             let url = format!(
-                "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/v{}/{name}",
+                "{}/download/v{}/{name}",
+                super::release::RELEASES_URL,
                 self.version
             );
             if package.name != name

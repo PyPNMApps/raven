@@ -15,11 +15,19 @@ use std::{
     time::{Duration, Instant},
 };
 fn plan() -> InstallPlan {
-    InstallPlan::from_assets("0.2.0", &PACKAGES.map(|package| ReleaseAsset {
-            name: format!("{package}_0.2.0_amd64.deb"), size: 3,
+    InstallPlan::from_assets(
+        "0.2.0",
+        &PACKAGES.map(|package| ReleaseAsset {
+            name: format!("{package}_0.2.0_amd64.deb"),
+            size: 3,
             digest: Some(format!("sha256:{:x}", Sha256::digest(b"abc"))),
-            browser_download_url: format!("https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/v0.2.0/{package}_0.2.0_amd64.deb"),
-        })).unwrap()
+            browser_download_url: format!(
+                "{}/download/v0.2.0/{package}_0.2.0_amd64.deb",
+                super::super::release::RELEASES_URL
+            ),
+        }),
+    )
+    .unwrap()
 }
 #[test]
 fn rejects_spoofed_missing_duplicate_or_unbounded_metadata() {
@@ -146,7 +154,7 @@ fn package_control_identity_is_checked_before_apt() {
         .status
         .success());
     validate_deb(&package, "pnm-decode", "0.2.0").unwrap();
-    assert!(validate_deb(&package, "pnm-viewer-toolkit", "0.2.0").is_err());
+    assert!(validate_deb(&package, "raven", "0.2.0").is_err());
     assert!(validate_deb(&package, "pnm-decode", "0.3.0").is_err());
     fs::write(
         stage.join("control"),

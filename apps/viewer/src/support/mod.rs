@@ -17,7 +17,7 @@ use crate::updates::release::RELEASES_URL;
 /// sections. It contains no capture data, file paths, logs or environment dump.
 pub fn issue_report_url(app_version: &str, platform: &str, architecture: &str) -> String {
     let body = format!(
-        "## Environment\n- PNM Viewer Toolkit: {app_version}\n- OS: {platform}\n\
+        "## Environment\n- RAVEN: {app_version}\n- OS: {platform}\n\
          - Architecture: {architecture}\n\n## Steps to reproduce\n\n1. \n\n\
          ## Expected behavior\n\n## Actual behavior\n\n## Screenshots (optional)\n\n\
          Please remove secrets and customer data before adding screenshots or files.\n"
@@ -40,7 +40,10 @@ mod tests {
         let parsed = url::Url::parse(&draft).unwrap();
         assert_eq!(parsed.scheme(), "https");
         assert_eq!(parsed.host_str(), Some("github.com"));
-        assert_eq!(parsed.path(), "/PyPNMApps/PNM-Viewer-Toolkit/issues/new");
+        assert_eq!(
+            parsed.path(),
+            format!("/{}/issues/new", crate::identity::REPOSITORY)
+        );
         let parameters: Vec<_> = parsed.query_pairs().collect();
         assert_eq!(parameters.len(), 2);
         assert_eq!(parameters[0].1, "[Bug] ");

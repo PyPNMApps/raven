@@ -105,7 +105,7 @@ validated existing-tag mode to push master and that tag together:
 
 ```bash
 cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
-git tag -a v0.1.0 -m "PNM Viewer Toolkit 0.1.0" &&
+git tag -a v0.1.0 -m "RAVEN 0.1.0" &&
 ./tools/git/git-push.sh --tag v0.1.0
 ```
 

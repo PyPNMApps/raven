@@ -11,7 +11,7 @@ import shutil
 import uuid
 import xml.etree.ElementTree as ET
 
-from common import ROOT, run
+from common import PRODUCT, ROOT, run
 from versions import validate
 
 NAMESPACE = 'http://schemas.microsoft.com/wix/2006/wi'
@@ -35,12 +35,12 @@ def _identifier(prefix, relative):
     return prefix + hashlib.sha256(relative.casefold().encode()).hexdigest()[:32]
 
 
-def _desktop_options(product):
+def _desktop_options(product, display_name):
     """Offer a pre-install shortcut choice without executing custom actions."""
     _element('Property', product, Id='CREATE_DESKTOP_SHORTCUT', Secure='yes')
     ui = _element('UI', product)
     dialog = _element('Dialog', ui, Id='ShortcutOptionsDlg', Width='370', Height='270',
-                      Title='PNM Viewer Toolkit Setup')
+                      Title=f'{display_name} Setup')
     _element('Control', dialog, Id='Banner', Type='Bitmap', X='0', Y='0',
              Width='370', Height='44', TabSkip='yes', Text='WixUI_Bmp_Banner')
     _element('Control', dialog, Id='Title', Type='Text', X='20', Y='15', Width='280',
@@ -70,30 +70,35 @@ def _desktop_options(product):
     backward.text = 'NOT Installed'
 
 
-def author(payload, version, destination):
+def author(payload, version, destination, legacy=False):
     """Write fresh MSI authoring with stable file components and rollback-safe upgrades.
 
     Args:
         payload: Fresh deployment tree containing the GUI, CLI and app-local DLLs.
         version: Canonical major.minor.patch within MSI's 255.255.65535 bounds.
         destination: New XML source path; existing authoring is never replaced.
+        legacy: Author the old identity only for synthetic native migration tests.
     Returns:
         The written authoring path.
     Raises:
         ValueError: Invalid version, missing entry points, links or path collisions.
         OSError: Source tree or destination I/O failure.
     """
+    display_name = "PNM Viewer Toolkit" if legacy else PRODUCT["display_name"]
+    executable = "pnm-viewer.exe" if legacy else PRODUCT["desktop_binary"] + ".exe"
+    component_prefix = "" if legacy else "raven/"
+    registry_name = "PNMViewerToolkit" if legacy else "RAVEN"
     version = validate(version)
     if any(part > limit for part, limit in zip(map(int, version.split('.')), (255, 255, 65535))):
         raise ValueError('Version exceeds Windows Installer limits')
     payload = payload.resolve()
-    if not all((payload / name).is_file() for name in ('pnm-viewer.exe', 'pnm-decode.exe')):
+    if not all((payload / name).is_file() for name in (executable, 'pnm-decode.exe')):
         raise ValueError('MSI payload requires both viewer and decoder')
     wix = _element('Wix')
-    product = _element('Product', wix, Id='*', Name='PNM Viewer Toolkit', Language='1033',
-                      Version=version, Manufacturer='PyPNMApps contributors', UpgradeCode=UPGRADE_CODE)
+    product = _element('Product', wix, Id='*', Name=display_name, Language='1033',
+                      Version=version, Manufacturer=PRODUCT['organization'], UpgradeCode=UPGRADE_CODE)
     _element('Package', product, InstallerVersion='500', Compressed='yes', InstallScope='perMachine', Platform='x64')
-    _element('MajorUpgrade', product, DowngradeErrorMessage='A newer PNM Viewer Toolkit version is already installed.',
+    _element('MajorUpgrade', product, DowngradeErrorMessage=f'A newer {display_name} version is already installed.',
             Schedule='afterInstallInitialize')
     _element('MediaTemplate', product, EmbedCab='yes', CompressionLevel='high')
     _element('Property', product, Id='INSTALLFOLDER', Secure='yes')
@@ -102,26 +107,26 @@ def author(payload, version, destination):
     _element('WixVariable', product, Id='WixUILicenseRtf', Value=str(destination.with_suffix('.rtf')))
     for identifier, filename in (('WixUIDialogBmp', 'dialog.bmp'), ('WixUIBannerBmp', 'banner.bmp')):
         _element('WixVariable', product, Id=identifier, Value=str(ROOT / 'packaging/windows' / filename))
-    _element('Icon', product, Id=APPLICATION_ICON_ID, SourceFile=str(ROOT / 'packaging/windows/pnm-viewer.ico'))
+    _element('Icon', product, Id=APPLICATION_ICON_ID, SourceFile=str(ROOT / 'packaging/windows/raven.ico'))
     _element('Property', product, Id='ARPPRODUCTICON', Value=APPLICATION_ICON_ID)
-    _desktop_options(product)
+    _desktop_options(product, display_name)
     condition = _element('Condition', product, Message='64-bit Windows is required.')
     condition.text = 'Installed OR VersionNT64'
     root = _element('Directory', product, Id='TARGETDIR', Name='SourceDir')
     programs = _element('Directory', root, Id='ProgramFiles64Folder')
-    install = _element('Directory', programs, Id='INSTALLFOLDER', Name='PNM Viewer Toolkit')
+    install = _element('Directory', programs, Id='INSTALLFOLDER', Name=display_name)
     menu = _element('Directory', root, Id='ProgramMenuFolder')
-    _element('Directory', menu, Id='ApplicationMenu', Name='PNM Viewer Toolkit')
+    _element('Directory', menu, Id='ApplicationMenu', Name=display_name)
     _element('Directory', root, Id='DesktopFolder')
-    feature = _element('Feature', product, Id='Complete', Title='PNM Viewer Toolkit', Level='1')
+    feature = _element('Feature', product, Id='Complete', Title=display_name, Level='1')
     shortcut_component = _element('Component', install, Id='DesktopShortcutComponent', Win64='yes',
-                                  Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, 'desktop-shortcut')),
+                                  Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, component_prefix + 'desktop-shortcut')),
                                   Transitive='yes')
     _element('Condition', shortcut_component).text = 'CREATE_DESKTOP_SHORTCUT = "1"'
     _element('Shortcut', shortcut_component, Id='DesktopViewer', Directory='DesktopFolder',
-             Name='PNM Viewer Toolkit', Target='[INSTALLFOLDER]pnm-viewer.exe',
+             Name=display_name, Target=f'[INSTALLFOLDER]{executable}',
              WorkingDirectory='INSTALLFOLDER', Icon=APPLICATION_ICON_ID, IconIndex='0')
-    _element('RegistryValue', shortcut_component, Root='HKCU', Key='Software\\PyPNMApps\\PNMViewerToolkit',
+    _element('RegistryValue', shortcut_component, Root='HKCU', Key=f'Software\\PyPNMApps\\{registry_name}',
              Name='DesktopShortcut', Type='integer', Value='1', KeyPath='yes')
     _element('ComponentRef', feature, Id='DesktopShortcutComponent')
     directories = {'.': install}
@@ -140,13 +145,13 @@ def author(payload, version, destination):
             raise ValueError('MSI payload contains a special file')
         component_id = _identifier('C', spelling)
         component = _element('Component', directories[relative.parent.as_posix()], Id=component_id,
-                            Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, spelling.casefold())), Win64='yes')
+                            Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, component_prefix + spelling.casefold())), Win64='yes')
         installed = _element('File', component, Id=_identifier('F', spelling), Source=str(path), KeyPath='yes')
-        if spelling == 'pnm-viewer.exe':
+        if spelling == executable:
             # Use the key executable's embedded icon. An explicit ICO override
             # on this advertised shortcut violates MSI ICE50 extension matching.
             _element('Shortcut', installed, Id='StartMenuViewer', Directory='ApplicationMenu',
-                    Name='PNM Viewer Toolkit', Advertise='yes', WorkingDirectory='INSTALLFOLDER')
+                    Name=display_name, Advertise='yes', WorkingDirectory='INSTALLFOLDER')
             _element('RemoveFolder', component, Id='RemoveApplicationMenu', Directory='ApplicationMenu', On='uninstall')
         _element('ComponentRef', feature, Id=component_id)
     legal = 'Desktop: GPL-3.0-only. Core libraries: Apache-2.0. See bundled notices.\n\n'
@@ -193,7 +198,7 @@ def _tools():
     return compiler, compiler.parent / 'light.exe'
 
 
-def build(payload, stage, output, version):
+def build(payload, stage, output, version, legacy=False):
     """Compile and validate the standard MSI, retaining XML and logs on failure.
 
     Args:
@@ -210,7 +215,7 @@ def build(payload, stage, output, version):
     if output.exists():
         raise ValueError('MSI output already exists')
     compiler, linker = _tools()
-    source = author(payload, version, stage / 'installer.wxs')
+    source = author(payload, version, stage / 'installer.wxs', legacy=legacy)
     object_file = stage / 'installer.wixobj'
     run([compiler, '-nologo', '-arch', 'x64', '-out', object_file, source])
     run([linker, '-nologo', '-ext', 'WixUIExtension', '-out', output, object_file])

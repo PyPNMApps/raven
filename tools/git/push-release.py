@@ -111,11 +111,11 @@ def release(part, existing_tag, dry_run, force=False):
             raise RuntimeError(f'HEAD is already tagged v{current}; use git-push.sh --tag v{current} instead of bumping again')
         if local_tag.returncode == 0 or tag_ref in refs:
             raise RuntimeError(f'Tag {tag} already exists; never move a release tag')
-        if (git('log', '-1', '--format=%s').stdout.strip() == f'Refactor: Release PNM Viewer Toolkit v{current}'
+        if (git('log', '-1', '--format=%s').stdout.strip() == f'Refactor: Release RAVEN v{current}'
                 and not (force and published_head)):
             raise RuntimeError(f'HEAD is a release commit without its tag; review and create v{current}, then use --tag v{current}')
     ensure_checkout(starting_commit)
-    print(f'PNM Viewer Toolkit {current} -> {version}; master; tag {tag}', flush=True)
+    print(f'RAVEN {current} -> {version}; master; tag {tag}', flush=True)
     if dry_run:
         print('Dry run: no bump, checks, commit, tag or push performed')
         return
@@ -139,13 +139,13 @@ def release(part, existing_tag, dry_run, force=False):
     if not existing_tag:
         git('add', '--', *changes)
         candidate_tree = git('write-tree').stdout.strip()
-        git('commit', '-m', f'Refactor: Release PNM Viewer Toolkit {tag}')
+        git('commit', '-m', f'Refactor: Release RAVEN {tag}')
         release_commit = git('rev-parse', 'HEAD').stdout.strip()
         ensure_checkout(release_commit)
         if (git('rev-parse', 'HEAD^{tree}').stdout.strip() != candidate_tree
                 or git('rev-parse', 'HEAD^').stdout.strip() != starting_commit):
             raise RuntimeError('Release commit differs from the validated candidate; no tag or push performed')
-        git('tag', '-a', tag, release_commit, '-m', f'PNM Viewer Toolkit {version}')
+        git('tag', '-a', tag, release_commit, '-m', f'RAVEN {version}')
         tag_object = git('rev-parse', tag_ref).stdout.strip()
     else:
         release_commit = starting_commit

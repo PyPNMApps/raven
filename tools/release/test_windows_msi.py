@@ -23,7 +23,7 @@ class WindowsMsiTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.payload = self.root / 'payload & spaces'
         self.payload.mkdir()
-        for name in ('pnm-viewer.exe', 'pnm-decode.exe', 'platforms/qwindows.dll'):
+        for name in ('raven.exe', 'pnm-decode.exe', 'platforms/qwindows.dll'):
             path = self.payload / name
             path.parent.mkdir(exist_ok=True)
             path.write_bytes(b'synthetic fixture')
@@ -93,11 +93,30 @@ class WindowsMsiTests(unittest.TestCase):
         with self.assertRaises(FileExistsError):
             windows_msi.author(self.payload, '1.0.0', self.root / 'maximum.wxs')
         # Distinct case spellings can coexist only on a case-sensitive host.
-        duplicate = self.payload / 'PNM-VIEWER.exe'
+        duplicate = self.payload / 'RAVEN.exe'
         if not duplicate.exists():
             duplicate.write_bytes(b'collision')
             with self.assertRaisesRegex(ValueError, 'collision'):
                 windows_msi.author(self.payload, '1.0.0', self.root / 'collision.wxs')
+
+    def test_raven_replaces_legacy_family_without_reusing_moved_component_guids(self):
+        """Retain the upgrade family while giving relocated key paths new owners."""
+        import shutil
+        legacy_payload = self.root / 'legacy-payload'
+        shutil.copytree(self.payload, legacy_payload)
+        (legacy_payload / 'raven.exe').rename(legacy_payload / 'pnm-viewer.exe')
+        old = ET.parse(windows_msi.author(
+            legacy_payload, '0.0.0', self.root / 'legacy.wxs', legacy=True)).find('w:Product', self.names)
+        new = ET.parse(windows_msi.author(
+            self.payload, '0.3.6', self.root / 'raven.wxs')).find('w:Product', self.names)
+        self.assertEqual(old.get('Name'), 'PNM Viewer Toolkit')
+        self.assertEqual(new.get('Name'), 'RAVEN')
+        self.assertEqual(new.get('UpgradeCode'), '54ACD1D9-4027-47BA-9A41-B9A04109C7CE')
+        self.assertEqual(old.get('UpgradeCode'), new.get('UpgradeCode'))
+        old_guids = {item.get('Guid') for item in old.findall('.//w:Component', self.names)}
+        new_guids = {item.get('Guid') for item in new.findall('.//w:Component', self.names)}
+        self.assertTrue(old_guids.isdisjoint(new_guids))
+        self.assertEqual(new.find('.//w:Directory[@Id="INSTALLFOLDER"]', self.names).get('Name'), 'RAVEN')
 
 
 if __name__ == '__main__':

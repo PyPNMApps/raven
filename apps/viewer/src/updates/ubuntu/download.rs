@@ -46,7 +46,7 @@ pub fn download(
             }
             let received = agent
                 .get(address.as_str())
-                .set("User-Agent", "PNM-Viewer-Toolkit")
+                .set("User-Agent", crate::identity::DISPLAY_NAME)
                 .call()
                 .map_err(|_| "Unable to download the update. Check your connection.")?;
             match received.status() {

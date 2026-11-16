@@ -164,10 +164,10 @@ class PackageContractTests(unittest.TestCase):
         """Keep reports/archives internal while verifying all original bytes."""
         version = common.release_version()
         packages = {
-            ('Linux', 'x64'): [f'pnm-viewer-toolkit_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'],
-            ('Windows', 'x64'): [f'PNM-Viewer-Toolkit-{version}-windows-x64.msi'],
-            ('Darwin', 'arm64'): [f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg'],
-            ('Darwin', 'x64'): [f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg'],
+            ('Linux', 'x64'): [f'raven_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'],
+            ('Windows', 'x64'): [f'RAVEN-{version}-windows-x64.msi'],
+            ('Darwin', 'arm64'): [f'RAVEN-{version}-macos-arm64.dmg'],
+            ('Darwin', 'x64'): [f'RAVEN-{version}-macos-x64.dmg'],
         }
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

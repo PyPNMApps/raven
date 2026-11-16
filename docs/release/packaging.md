@@ -16,7 +16,7 @@ External signing and Apple notarization remain separate actions.
 
 | Native builder | Viewer | Standalone CLI |
 | --- | --- | --- |
-| Ubuntu 22.04 x64 | `pnm-viewer-toolkit_VERSION_amd64.deb` plus CLI DEB dependency | DEB and `.tar.gz` |
+| Ubuntu 22.04 x64 | `raven_VERSION_amd64.deb` plus CLI DEB dependency | DEB and `.tar.gz` |
 | Windows x64 | `PNM-Viewer-Toolkit-VERSION-windows-x64.msi` | `.zip` |
 | macOS Apple Silicon | `PNM-Viewer-Toolkit-VERSION-macos-arm64.dmg` | `.tar.gz` |
 | macOS Intel | `PNM-Viewer-Toolkit-VERSION-macos-x64.dmg` | `.tar.gz` |
@@ -25,8 +25,8 @@ The desktop is Qt Quick. UI packages contain
 or depend on the same-version `pnm-decode` and manual. The UI calls shared Rust
 libraries directly; it does not launch the CLI to decode files.
 
-Linux uses a private Qt runtime under `/opt/pnm-viewer-toolkit`, a desktop entry,
-icon, and `pnm-viewer` launcher. Its separate `pnm-decode` dependency owns
+Linux uses a private Qt runtime under `/opt/raven`, a desktop entry,
+icon, and `raven` launcher. Its separate `pnm-decode` dependency owns
 `/usr/bin/pnm-decode` and the manual. Removing the UI leaves the CLI installed.
 The same Ubuntu 22.04 artifacts must pass installed tests on 22.04, 24.04 and
 26.04; never rebuild a different DEB to make a newer OS check pass.
@@ -44,11 +44,11 @@ range. File contents and staged source timestamps remain unchanged.
 
 The DMG contains the app and an Applications shortcut. Copy the app to an
 Applications directory. Its bundled decoder is at
-`PNM Viewer Toolkit.app/Contents/MacOS/pnm-decode`; the manual and notices live
+`RAVEN.app/Contents/MacOS/pnm-decode`; the manual and notices live
 under `Contents/Resources/share`. macOS builds use ad-hoc integrity signing,
 not an Apple Developer certificate or notarization. Gatekeeper may require
 explicit user approval. The deployment baseline is macOS 13 or newer.
-The bundle includes `pnm-viewer.icns`, referenced by `CFBundleIconFile`, for
+The bundle includes `raven.icns`, referenced by `CFBundleIconFile`, for
 Finder and Dock integration. Users can create a desktop alias in Finder; the DMG
 does not change Desktop automatically. See [branding inputs](../../packaging/README.md).
 

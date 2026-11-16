@@ -8,17 +8,17 @@ on Windows Server 2022, which does not prove interactive Windows 11 approval UI.
 
 ## Install and launch
 
-1. Open [GitHub Releases](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases).
+1. Open [GitHub Releases](https://github.com/PyPNMApps/raven/releases).
    Download `PNM-Viewer-Toolkit-<version>-windows-x64.msi` and `SHA256SUMS`.
 2. Run `Get-FileHash .\<msi-filename> -Algorithm SHA256` in PowerShell and compare
    the matching checksum entry. Use the project release assets, not source ZIPs.
 3. Double-click the MSI and follow Windows Installer's prompts, including UAC.
    On **Desktop shortcut**, select **Create a desktop shortcut** if wanted.
    The checkbox starts unchecked; Start-menu integration is always installed.
-4. Launch **PNM Viewer Toolkit** from Start or the selected desktop shortcut
+4. Launch **RAVEN** from Start or the selected desktop shortcut
    as your normal user. The installer and shortcuts use the navy/teal app icon.
 
-The default installation directory is `C:\Program Files\PNM Viewer Toolkit`.
+The default installation directory is `C:\Program Files\RAVEN`.
 Qt, the MSVC runtime DLLs, CLI, manual and notices are bundled app-local.
 The application does not require an administrator account to run or modify PATH.
 Capture, archive and folder selection starts in the bundled [demo files](../ui/examples.md)
@@ -40,7 +40,7 @@ right-click → Install, or start Windows Installer with logging from PowerShell
 $msi = Get-ChildItem "$env:USERPROFILE\Downloads\PNM-Viewer-Toolkit-*-windows-x64.msi" |
     Sort-Object LastWriteTime -Descending | Select-Object -First 1
 if (!$msi) { throw 'Download the Windows x64 MSI first.' }
-$log = "$env:TEMP\pnm-viewer-install.log"
+$log = "$env:TEMP\raven-install.log"
 Write-Host "Installing: $($msi.FullName)"
 $result = Start-Process "$env:SystemRoot\System32\msiexec.exe" -ArgumentList "/i `"$($msi.FullName)`" /norestart /L*V `"$log`"" -Wait -PassThru
 Write-Host "Installer exit code: $($result.ExitCode); log: $log"
@@ -79,7 +79,7 @@ shows the version of the running process, which stays unchanged until relaunch.
 Use the copy bundled with the viewer:
 
 ```powershell
-& "$env:ProgramFiles\PNM Viewer Toolkit\pnm-decode.exe" --help
+& "$env:ProgramFiles\RAVEN\pnm-decode.exe" --help
 ```
 
 Without the viewer, [build the CLI from source](source.md) or extract the
@@ -89,10 +89,10 @@ limited retention). Standalone CLI ZIPs are not public release assets.
 ## Uninstall
 
 In Windows builds, **About → Software → Uninstall…** opens Windows **Installed apps**.
-Close the viewer, select **PNM Viewer Toolkit**, then choose **Uninstall**.
+Close the viewer, select **RAVEN**, then choose **Uninstall**.
 You can also open this page directly:
 
-Settings → Apps → Installed apps → PNM Viewer Toolkit → Uninstall.
+Settings → Apps → Installed apps → RAVEN → Uninstall.
 Windows Installer owns removal; no separate `uninstall.exe` is installed.
 A separately extracted CLI is independent. Keep captures outside installation
 folders; removing the viewer does not remove captures in your own folders.

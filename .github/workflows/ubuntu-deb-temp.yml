@@ -194,4 +194,4 @@ jobs:
         run: |
           python3 scripts/release/publish.py --assets release-assets --notes release-page.md \
             --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" \
-            --title "PNM Viewer Toolkit $RELEASE_TAG — Ubuntu 22.04 development"
+            --title "RAVEN $RELEASE_TAG — Ubuntu 22.04 development"

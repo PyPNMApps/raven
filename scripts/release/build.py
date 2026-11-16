@@ -3,7 +3,7 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-"""Build native PNM Viewer Toolkit packages without installing or publishing."""
+"""Build native RAVEN packages without installing or publishing."""
 import argparse
 import json
 from pathlib import Path

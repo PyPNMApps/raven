@@ -48,7 +48,7 @@ Timer {
                 Qt.exit(1)
                 return
             }
-            if (Qt.platform.os === "linux" && Qt.application.name !== "pnm-viewer-toolkit") {
+            if (Qt.platform.os === "linux" && Qt.application.name !== "raven") {
                 console.error("UI_SMOKE_FAILED: desktop application identity mismatch")
                 stop()
                 Qt.exit(1)

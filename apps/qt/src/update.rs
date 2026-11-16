@@ -16,6 +16,7 @@ mod bridge {
         #[qproperty(QString, update_status)]
         #[qproperty(QString, latest_version)]
         #[qproperty(QString, release_url)]
+        #[qproperty(QString, project_url)]
         #[qproperty(QString, download_url)]
         #[qproperty(QString, download_label)]
         #[qproperty(QString, issue_report_url)]
@@ -59,6 +60,7 @@ pub struct UpdateBackendRust {
     update_status: QString,
     latest_version: QString,
     release_url: QString,
+    project_url: QString,
     download_url: QString,
     download_label: QString,
     issue_report_url: QString,
@@ -80,6 +82,7 @@ impl Default for UpdateBackendRust {
             update_status: QString::from("Updates have not been checked."),
             latest_version: QString::default(),
             release_url: QString::from(RELEASES_URL),
+            project_url: QString::from(viewer::identity::PROJECT_URL),
             download_url: QString::default(),
             download_label: QString::from("Download installer"),
             issue_report_url: QString::from(viewer::support::issue_report_url(

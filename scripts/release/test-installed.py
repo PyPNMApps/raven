@@ -17,7 +17,7 @@ import tempfile
 import tarfile
 import zipfile
 
-from common import native_target, run
+from common import PRODUCT, PROJECT_URL, native_target, run
 from smoke import smoke
 
 
@@ -35,30 +35,70 @@ def linux(packages):
     Intended only for disposable CI hosts with explicit --ci-disposable-host.
     Require same artifact checksums in the workflow before invoking this script.
     """
-    gui = one(packages, 'pnm-viewer-toolkit_*.deb')
+    gui = one(packages, 'raven_*.deb')
     cli = one(packages, 'pnm-decode_*.deb')
-    installed_gui = Path('/opt/pnm-viewer-toolkit/pnm-viewer-qt')
+    installed_gui = Path('/opt/raven/raven')
     try:
+        linux_legacy_migration(cli, gui)
         run(['sudo', 'apt-get', 'install', '-y', cli, gui])
-        desktop_entry = Path('/usr/share/applications/pnm-viewer-toolkit.desktop')
+        if Path('/opt/pnm-viewer-toolkit/pnm-viewer-qt').exists() or Path('/usr/bin/pnm-viewer').exists():
+            raise ValueError('Legacy viewer files survived the RAVEN package transition')
+        desktop_entry = Path('/usr/share/applications/raven.desktop')
         if not desktop_entry.is_file():
             raise ValueError('Desktop integration missing')
         launcher = desktop_entry.read_text(encoding='utf-8').splitlines()
-        for field in ('Exec=pnm-viewer', 'Icon=pnm-viewer-toolkit',
-                      'StartupWMClass=pnm-viewer-toolkit'):
+        for field in ('Exec=raven', 'Icon=raven',
+                      'StartupWMClass=raven'):
             if launcher.count(field) != 1:
                 raise ValueError(f'Desktop integration missing or duplicated: {field}')
         smoke(installed_gui, Path('/usr/bin/pnm-decode'))
         linux_upgrade(cli, gui, installed_gui)
     finally:
-        run(['sudo', 'apt-get', 'remove', '-y', 'pnm-viewer-toolkit'])
-        if installed_gui.exists() or Path('/usr/bin/pnm-viewer').exists():
+        run(['sudo', 'apt-get', 'remove', '-y', 'raven'])
+        if installed_gui.exists() or Path('/usr/bin/raven').exists():
             raise ValueError('Viewer removal left installed executable')
         # Separate CLI ownership must survive removing the viewer.
         run(['/usr/bin/pnm-decode', '--version'])
         run(['sudo', 'apt-get', 'remove', '-y', 'pnm-decode'])
         if Path('/usr/bin/pnm-decode').exists():
             raise ValueError('CLI removal left installed executable')
+
+
+def linux_legacy_migration(cli, gui):
+    """Install a synthetic legacy layout before testing the new DEB replacement.
+
+    Use this build's bytes under the old package/executable/desktop identities,
+    not a claim of historical application behavior. Run only through the guarded
+    disposable-host entry point. APT must remove the conflicting legacy package
+    when the caller installs RAVEN; no maintainer script deletes foreign files.
+    """
+    with tempfile.TemporaryDirectory(prefix='raven-legacy-deb-') as directory:
+        workspace = Path(directory)
+        stage = workspace / 'legacy'
+        run(['dpkg-deb', '-R', gui, stage])
+        control = stage / 'DEBIAN/control'
+        lines = control.read_text().splitlines()
+        lines = [line for line in lines if not line.startswith(('Conflicts:', 'Replaces:'))]
+        lines = ['Package: pnm-viewer-toolkit' if line.startswith('Package:') else
+                 line + '~legacy-test' if line.startswith('Version:') else line for line in lines]
+        control.write_text('\n'.join(lines) + '\n')
+        payload = stage / 'opt/raven'
+        payload.rename(stage / 'opt/pnm-viewer-toolkit')
+        (stage / 'opt/pnm-viewer-toolkit/raven').rename(stage / 'opt/pnm-viewer-toolkit/pnm-viewer-qt')
+        (stage / 'usr/bin/raven').unlink()
+        (stage / 'usr/bin/pnm-viewer').symlink_to('/opt/pnm-viewer-toolkit/pnm-viewer-qt')
+        desktop = stage / 'usr/share/applications/raven.desktop'
+        legacy_desktop = desktop.with_name('pnm-viewer-toolkit.desktop')
+        legacy_desktop.write_text(desktop.read_text().replace('Name=RAVEN', 'Name=PNM Viewer Toolkit')
+                                  .replace('Exec=raven', 'Exec=pnm-viewer')
+                                  .replace('Icon=raven', 'Icon=pnm-viewer-toolkit')
+                                  .replace('StartupWMClass=raven', 'StartupWMClass=pnm-viewer-toolkit'))
+        desktop.unlink()
+        icon = stage / 'usr/share/icons/hicolor/256x256/apps/raven.png'
+        icon.rename(icon.with_name('pnm-viewer-toolkit.png'))
+        output = workspace / 'legacy.deb'
+        run(['dpkg-deb', '--root-owner-group', '-Znone', '--build', stage, output])
+        run(['sudo', 'apt-get', 'install', '-y', cli, output])
 
 
 def linux_upgrade(cli, gui, installed_gui):
@@ -90,7 +130,7 @@ def linux_upgrade(cli, gui, installed_gui):
                 plan['packages'].append({
                     'name': package.name, 'size': package.stat().st_size,
                     'sha256': hashlib.sha256(package.read_bytes()).hexdigest(),
-                    'url': f'https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/v{version}/{package.name}'})
+                    'url': f'{PROJECT_URL}/releases/download/v{version}/{package.name}'})
             (downloads / 'plan.json').write_text(json.dumps(plan))
             command = ['sudo', 'env', f'PKEXEC_UID={os.getuid()}', installed_gui,
                        '--install-update', downloads]
@@ -103,7 +143,7 @@ def linux_upgrade(cli, gui, installed_gui):
                 raise ValueError('Updater did not reject a corrupted package by hash')
             first.write_bytes(original)
             run(command)
-            for package in ('pnm-decode', 'pnm-viewer-toolkit'):
+            for package in ('pnm-decode', 'raven'):
                 installed = run(['dpkg-query', '-W', '-f=${Version}', package],
                                 capture_output=True, text=True).stdout
                 if installed != version:
@@ -136,7 +176,7 @@ def windows(packages, payload):
                         title = winreg.QueryValueEx(product, 'DisplayName')[0]
                     except FileNotFoundError:
                         continue
-                    if title == 'PNM Viewer Toolkit':
+                    if title in ('RAVEN', 'PNM Viewer Toolkit'):
                         uuid.UUID(name.strip('{}'))
                         found.append((name, winreg.QueryValueEx(product, 'DisplayVersion')[0]))
             return found
@@ -155,7 +195,8 @@ def windows(packages, payload):
 
     if registrations():
         raise ValueError('Existing viewer MSI registration; refusing lifecycle test')
-    desktop_shortcut = Path(os.environ['PUBLIC']) / 'Desktop/PNM Viewer Toolkit.lnk'
+    desktop_shortcut = Path(os.environ['PUBLIC']) / 'Desktop/RAVEN.lnk'
+    start_shortcut = Path(os.environ['ProgramData']) / 'Microsoft/Windows/Start Menu/Programs/RAVEN/RAVEN.lnk'
     if desktop_shortcut.exists():
         raise ValueError('Existing viewer desktop shortcut; refusing lifecycle test')
     if payload is None or not payload.is_dir():
@@ -168,19 +209,30 @@ def windows(packages, payload):
         work = Path(directory)
         prefix = work / 'viewer'
         baseline = work / 'baseline.msi'
-        build(payload, work, baseline, '0.0.0')
+        legacy_payload = work / 'legacy-payload'
+        shutil.copytree(payload, legacy_payload)
+        (legacy_payload / 'raven.exe').rename(legacy_payload / 'pnm-viewer.exe')
+        legacy_stage = work / 'legacy-stage'
+        legacy_stage.mkdir()
+        build(legacy_payload, legacy_stage, baseline, '0.0.0', legacy=True)
+        legacy_prefix = work / 'legacy-install'
+
         try:
-            execute(['/i', baseline, f'INSTALLFOLDER={prefix}', 'CREATE_DESKTOP_SHORTCUT=0'], logs / 'baseline.log')
+            execute(['/i', baseline, f'INSTALLFOLDER={legacy_prefix}', 'CREATE_DESKTOP_SHORTCUT=0'], logs / 'baseline.log')
             if desktop_shortcut.exists():
                 raise ValueError('Desktop shortcut created despite opt-out')
             if len(registrations()) != 1 or registrations()[0][1] != '0.0.0':
                 raise ValueError('MSI baseline registration missing')
             execute(['/i', installer, f'INSTALLFOLDER={prefix}', 'CREATE_DESKTOP_SHORTCUT=1'], logs / 'upgrade.log')
+            if (legacy_prefix / 'pnm-viewer.exe').exists():
+                raise ValueError('Legacy viewer executable survived the upgrade')
+            if not start_shortcut.is_file():
+                raise ValueError('Start menu shortcut missing')
             if not desktop_shortcut.is_file():
                 raise ValueError('Selected desktop shortcut missing')
             if len(registrations()) != 1 or registrations()[0][1] != version:
                 raise ValueError('MSI major upgrade did not replace baseline registration')
-            smoke(prefix / 'pnm-viewer.exe', prefix / 'pnm-decode.exe')
+            smoke(prefix / 'raven.exe', prefix / 'pnm-decode.exe')
             # Resource ID 1 is authored by apps/qt/build.rs from the branded ICO.
             import ctypes
             from ctypes import wintypes
@@ -195,7 +247,7 @@ def windows(packages, payload):
             load_as_image_resource = 0x20
             main_icon_id = 1
             group_icon_resource_type = 14
-            module = library.LoadLibraryExW(str(prefix / 'pnm-viewer.exe'), None,
+            module = library.LoadLibraryExW(str(prefix / 'raven.exe'), None,
                                            load_as_data_file | load_as_image_resource)
             if not module:
                 raise ValueError('Cannot inspect installed Windows icon resources')
@@ -207,13 +259,17 @@ def windows(packages, payload):
                 library.FreeLibrary(module)
             if not (prefix / 'share/pnm-decode.1').is_file():
                 raise ValueError('Bundled CLI manual missing')
-            execute(['/i', baseline, f'INSTALLFOLDER={prefix}'], logs / 'downgrade.log', success=False)
+            execute(['/fa', installer, 'CREATE_DESKTOP_SHORTCUT=1'], logs / 'repair.log')
+            if not desktop_shortcut.is_file() or not start_shortcut.is_file():
+                raise ValueError('Repair did not preserve requested shortcuts')
+            smoke(prefix / 'raven.exe', prefix / 'pnm-decode.exe')
+            execute(['/i', baseline, f'INSTALLFOLDER={legacy_prefix}'], logs / 'downgrade.log', success=False)
             if len(registrations()) != 1 or registrations()[0][1] != version:
                 raise ValueError('Rejected downgrade changed installed version')
         finally:
             for product_code, _version in registrations():
                 execute(['/x', product_code], logs / 'uninstall.log')
-        if registrations() or (prefix / 'pnm-viewer.exe').exists() or (prefix / 'pnm-decode.exe').exists() or desktop_shortcut.exists():
+        if registrations() or (prefix / 'raven.exe').exists() or (prefix / 'pnm-decode.exe').exists() or desktop_shortcut.exists() or start_shortcut.exists():
             raise ValueError('MSI uninstall left application files or registration')
 
 
@@ -228,18 +284,20 @@ def macos(packages, architecture):
         mount = Path(directory) / 'mounted'
         mount.mkdir()
         run(['hdiutil', 'attach', '-readonly', '-nobrowse', '-mountpoint', mount, dmg])
-        app = Path(directory) / 'Applications/PNM Viewer Toolkit.app'
+        app = Path(directory) / 'Applications/RAVEN.app'
         try:
-            run(['ditto', mount / 'PNM Viewer Toolkit.app', app])
+            run(['ditto', mount / 'RAVEN.app', app])
         finally:
             run(['hdiutil', 'detach', mount])
         run(['codesign', '--verify', '--deep', '--strict', app])
         with (app / 'Contents/Info.plist').open('rb') as stream:
             info = plistlib.load(stream)
+        if info.get('CFBundleIdentifier') != PRODUCT['bundle_id'] or info.get('CFBundleExecutable') != 'raven' or info.get('CFBundleName') != 'RAVEN' or info.get('CFBundleDisplayName') != 'RAVEN':
+            raise ValueError('macOS product identity mismatch')
         icon = app / 'Contents/Resources' / info.get('CFBundleIconFile', '')
         if not icon.is_file() or icon.read_bytes()[:4] != b'icns':
             raise ValueError('Bundled macOS application icon missing')
-        smoke(app / 'Contents/MacOS/pnm-viewer', app / 'Contents/MacOS/pnm-decode')
+        smoke(app / 'Contents/MacOS/raven', app / 'Contents/MacOS/pnm-decode')
         if not (app / 'Contents/Resources/share/pnm-decode.1').is_file():
             raise ValueError('Bundled CLI manual missing')
         shutil.rmtree(app)

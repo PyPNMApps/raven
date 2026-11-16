@@ -45,7 +45,7 @@ pub(super) fn select(
         }
         _ => return None,
     };
-    let name = format!("PNM-Viewer-Toolkit-{version}-{suffix}");
+    let name = format!("RAVEN-{version}-{suffix}");
     let mut matching = assets.iter().filter(|asset| asset.name == name);
     let asset = matching.next()?;
     let url = format!("{RELEASES_URL}/download/v{version}/{name}");
@@ -71,9 +71,9 @@ mod tests {
     #[test]
     fn selects_exact_installer_for_each_native_architecture() {
         let assets = [
-            asset("PNM-Viewer-Toolkit-0.3.3-windows-x64.msi"),
-            asset("PNM-Viewer-Toolkit-0.3.3-macos-arm64.dmg"),
-            asset("PNM-Viewer-Toolkit-0.3.3-macos-x64.dmg"),
+            asset("RAVEN-0.3.3-windows-x64.msi"),
+            asset("RAVEN-0.3.3-macos-arm64.dmg"),
+            asset("RAVEN-0.3.3-macos-x64.dmg"),
         ];
         for (system, architecture, suffix, label) in [
             ("windows", "x86_64", "windows-x64.msi", "Download MSI"),
@@ -84,7 +84,7 @@ mod tests {
             assert_eq!(download.label, label);
             assert_eq!(
                 download.url,
-                format!("{RELEASES_URL}/download/v0.3.3/PNM-Viewer-Toolkit-0.3.3-{suffix}")
+                format!("{RELEASES_URL}/download/v0.3.3/RAVEN-0.3.3-{suffix}")
             );
         }
         assert!(select("0.3.3", &assets, "windows", "aarch64").is_none());
@@ -93,7 +93,7 @@ mod tests {
 
     #[test]
     fn rejects_absent_duplicate_empty_or_external_installer_assets() {
-        let name = "PNM-Viewer-Toolkit-0.3.3-windows-x64.msi";
+        let name = "RAVEN-0.3.3-windows-x64.msi";
         assert!(select("0.3.3", &[], "windows", "x86_64").is_none());
         assert!(select("0.3.3", &[asset(name), asset(name)], "windows", "x86_64").is_none());
         let mut empty = asset(name);
@@ -108,7 +108,7 @@ mod tests {
     fn ubuntu_manual_download_requires_both_verified_packages() {
         let assets = [
             asset("pnm-decode_0.3.3_amd64.deb"),
-            asset("pnm-viewer-toolkit_0.3.3_amd64.deb"),
+            asset("raven_0.3.3_amd64.deb"),
         ];
         let download = select("0.3.3", &assets, "linux", "x86_64").unwrap();
         assert_eq!(download.label, "Download packages");

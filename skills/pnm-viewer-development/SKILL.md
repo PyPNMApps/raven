@@ -3,7 +3,7 @@ name: pnm-viewer-development
 description: Use the original PNM Viewer requirements and PyPNM source map when planning desktop architecture, ownership boundaries, retrieval, or packaging in this repository.
 ---
 
-# PNM Viewer development references
+# RAVEN development references
 
 Use root AGENTS.md and the current implementation as the active project contract.
 Qt Quick/QML is now the sole desktop UI; the original web stack and its
@@ -36,3 +36,7 @@ The two versioned OSSI skills use one [PNM evidence workflow](references/pnm-evi
 and [record template](references/evidence-record.json). The former generic
 `docsis-31-ossi` and `docsis-40-ossi` scaffolds have been consolidated into them.
 Names and checksums in the original bootstrap/provenance are historical records.
+
+The RAVEN rebrand retains this skill name for historical bootstrap/source links.
+Use `raven-release` for current product release operations; see
+[the migration guide](../../docs/development/rebranding.md).

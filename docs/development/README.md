@@ -2,7 +2,7 @@
 
 [Documentation index](../README.md) · [Desktop user guide](../ui/README.md)
 
-PNM Viewer Toolkit is under development. Start with setup, then use the guide
+RAVEN is under development. Start with setup, then use the guide
 for the component you are changing. End-user controls belong in `docs/ui/`;
 CLI behavior belongs in `docs/cli/`.
 
@@ -24,3 +24,5 @@ CLI behavior belongs in `docs/cli/`.
 The root `VERSION` is the single version source. Generated consumers must agree;
 run `python3 tools/release/versions.py` before release preparation. Keep detailed
 working plans and private specification evidence in ignored root `development/`.
+
+[RAVEN migration](rebranding.md) records naming, compatibility and repository cutover.

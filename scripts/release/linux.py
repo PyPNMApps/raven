@@ -9,7 +9,7 @@ import os
 from pathlib import Path
 import shutil
 
-from common import ROOT, binary_path, inventory, notices, qt, run
+from common import PRODUCT, ROOT, binary_path, inventory, notices, qt, run
 from samples import DEMO_DIRECTORY, bundle
 
 SYSTEM_DEPENDENCIES = (
@@ -88,11 +88,12 @@ def control(stage, name, version, dependencies, description):
     directory = stage / 'DEBIAN'
     directory.mkdir()
     size = sum(path.stat().st_size for path in stage.rglob('*') if path.is_file()) // 1024
+    replacement = 'Conflicts: pnm-viewer-toolkit\nReplaces: pnm-viewer-toolkit\n' if name == PRODUCT['linux_package'] else ''
     (directory / 'control').write_text(
         f'Package: {name}\nVersion: {version}\nArchitecture: amd64\n'
         'Maintainer: PyPNMApps contributors\nSection: science\nPriority: optional\n'
         f'Installed-Size: {size}\nDepends: {dependencies}\n'
-        f'Description: {description}\n', encoding='utf-8')
+        + replacement + f'Description: {description}\n', encoding='utf-8')
 
 
 def build(stage, output, version):
@@ -115,27 +116,27 @@ def build(stage, output, version):
     run(['dpkg-deb', '--root-owner-group', '-Zxz', '--build', cli_stage,
          output / f'pnm-decode_{version}_amd64.deb'])
     gui_stage = stage / 'viewer-deb'
-    payload = gui_stage / 'opt/pnm-viewer-toolkit'
+    payload = gui_stage / 'opt/raven'
     payload.mkdir(parents=True)
-    shutil.copy2(binary_path(gui=True), payload / 'pnm-viewer-qt')
+    shutil.copy2(binary_path(gui=True), payload / 'raven')
     deploy_qt(payload)
     notices(payload / 'share')
     bundle(payload / DEMO_DIRECTORY)
     launcher = gui_stage / 'usr/bin'
     launcher.mkdir(parents=True)
-    (launcher / 'pnm-viewer').symlink_to('/opt/pnm-viewer-toolkit/pnm-viewer-qt')
+    (launcher / 'raven').symlink_to('/opt/raven/raven')
     applications = gui_stage / 'usr/share/applications'
     applications.mkdir(parents=True)
-    (applications / 'pnm-viewer-toolkit.desktop').write_text(
-        '[Desktop Entry]\nType=Application\nName=PNM Viewer Toolkit\n'
-        'Exec=pnm-viewer\nIcon=pnm-viewer-toolkit\nTerminal=false\n'
-        'StartupWMClass=pnm-viewer-toolkit\nCategories=Science;\n', encoding='utf-8')
+    (applications / 'raven.desktop').write_text(
+        '[Desktop Entry]\nType=Application\nName=RAVEN\n'
+        'Exec=raven\nIcon=raven\nTerminal=false\n'
+        'StartupWMClass=raven\nCategories=Science;\n', encoding='utf-8')
     icons = gui_stage / 'usr/share/icons/hicolor/256x256/apps'
     icons.mkdir(parents=True)
-    shutil.copy2(ROOT / 'docs/images/desktop-icon-dark.png', icons / 'pnm-viewer-toolkit.png')
-    control(gui_stage, 'pnm-viewer-toolkit', version,
+    shutil.copy2(ROOT / 'docs/images/raven-icon-dark.png', icons / 'raven.png')
+    control(gui_stage, 'raven', version,
             f'pnm-decode (= {version}), {SYSTEM_DEPENDENCIES}',
             'Native Qt DOCSIS PNM viewer (development build)')
     inventory(payload, output / 'linux-installed-files.json')
     run(['dpkg-deb', '--root-owner-group', '-Zxz', '--build', gui_stage,
-         output / f'pnm-viewer-toolkit_{version}_amd64.deb'])
+         output / f'raven_{version}_amd64.deb'])

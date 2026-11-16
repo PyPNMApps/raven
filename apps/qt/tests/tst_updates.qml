@@ -23,8 +23,9 @@ RenderTestCase {
         property string latest_version: ""
         property string download_url: ""
         property string download_label: "Download MSI"
-        property string release_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases"
-        property string issue_report_url: "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/issues/new?title=test&body=Environment"
+        property string project_url: "https://github.com/PyPNMApps/raven"
+        property string release_url: "https://github.com/PyPNMApps/raven/releases"
+        property string issue_report_url: "https://github.com/PyPNMApps/raven/issues/new?title=test&body=Environment"
         property bool install_available: false
         property string install_state: "idle"
         property string install_status: ""
@@ -165,8 +166,8 @@ RenderTestCase {
         service.update_state="available"
         service.download_label=data.label
         service.download_url=data.suffix.length
-            ? "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/download/v0.3.3/PNM-Viewer-Toolkit-0.3.3-"+data.suffix
-            : "https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases/tag/v0.3.3"
+            ? "https://github.com/PyPNMApps/raven/releases/download/v0.3.3/RAVEN-0.3.3-"+data.suffix
+            : "https://github.com/PyPNMApps/raven/releases/tag/v0.3.3"
         service.update_status="Version 0.3.3 is available."
         about.open()
         tryCompare(about,"opened",true)

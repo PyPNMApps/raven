@@ -102,11 +102,11 @@ class InstallerSampleTests(unittest.TestCase):
             second = root / 'second/files/demo'
             samples.bundle(first)
             samples.bundle(second)
-            self.assertEqual(samples.installed_directory(root / 'first/pnm-viewer.exe'), first)
+            self.assertEqual(samples.installed_directory(root / 'first/raven.exe'), first)
             mac = root / 'Viewer.app/Contents/Resources/files/demo'
             mac.parent.mkdir(parents=True)
             shutil.copytree(first, mac)
-            self.assertEqual(samples.installed_directory(root / 'Viewer.app/Contents/MacOS/pnm-viewer'), mac)
+            self.assertEqual(samples.installed_directory(root / 'Viewer.app/Contents/MacOS/raven'), mac)
             for archive in first.glob('rxmer/*.zip'):
                 self.assertEqual(archive.read_bytes(), (second / archive.relative_to(first)).read_bytes())
                 with zipfile.ZipFile(archive) as source:
@@ -114,7 +114,7 @@ class InstallerSampleTests(unittest.TestCase):
             alias_capture = first / 'single/rxmer.bin'
             alias_capture.write_bytes(alias_capture.read_bytes() + b'corrupt')
             with self.assertRaisesRegex(ValueError, 'missing or modified'):
-                samples.installed_directory(root / 'first/pnm-viewer.exe')
+                samples.installed_directory(root / 'first/raven.exe')
             with self.assertRaises(FileExistsError):
                 samples.bundle(second)
 
@@ -176,8 +176,8 @@ class SamplePackageTests(unittest.TestCase):
     def test_samples_are_complete_verified_and_read_only_to_the_builder(self):
         """Copy nine approved captures and notices without adding Python tests."""
         for relative, executable in (
-                ('files/demo', 'pnm-viewer.exe'),
-                ('Contents/Resources/files/demo', 'Contents/MacOS/pnm-viewer')):
+                ('files/demo', 'raven.exe'),
+                ('Contents/Resources/files/demo', 'Contents/MacOS/raven')):
             with self.subTest(layout=relative), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
                 destination = root / relative
@@ -201,7 +201,7 @@ class SamplePackageTests(unittest.TestCase):
 
     def test_native_icon_formats_include_shell_sizes(self):
         """Reject missing/corrupt native assets before invoking platform builders."""
-        icon = (samples.ROOT / 'packaging/windows/pnm-viewer.ico').read_bytes()
+        icon = (samples.ROOT / 'packaging/windows/raven.ico').read_bytes()
         reserved, kind, count = struct.unpack_from('<HHH', icon)
         self.assertEqual((reserved, kind), (0, 1))
         sizes = set()
@@ -212,7 +212,7 @@ class SamplePackageTests(unittest.TestCase):
             self.assertGreater(length, 0)
             self.assertLessEqual(offset + length, len(icon))
         self.assertEqual(sizes, {16, 24, 32, 48, 64, 128, 256})
-        mac = (samples.ROOT / 'packaging/macos/pnm-viewer.icns').read_bytes()
+        mac = (samples.ROOT / 'packaging/macos/raven.icns').read_bytes()
         self.assertEqual(mac[:4], b'icns')
         self.assertEqual(struct.unpack_from('>I', mac, 4)[0], len(mac))
         self.assertIn(b'ic10', mac)

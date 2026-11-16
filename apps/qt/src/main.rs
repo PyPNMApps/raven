@@ -8,7 +8,7 @@ mod spectrum_collection;
 mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
 #[cfg(target_os = "linux")]
-const DESKTOP_ID: &str = "pnm-viewer-toolkit";
+use viewer::identity::DESKTOP_ID;
 /// Starts the Qt desktop, or handles authenticated Ubuntu installation before Qt.
 ///
 /// The internal --install-update entry point stages verified packages and invokes

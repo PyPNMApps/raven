@@ -107,10 +107,10 @@ jobs:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
           args=()
-          title="PNM Viewer Toolkit $RELEASE_TAG — Development build"
+          title="RAVEN $RELEASE_TAG — Development build"
           if [[ "$PARTIAL_RELEASE" == true ]]; then
             args+=(--partial)
-            title="PNM Viewer Toolkit $RELEASE_TAG — Partial release — CI failed"
+            title="RAVEN $RELEASE_TAG — Partial release — CI failed"
           fi
           python3 scripts/release/publish.py --assets release-assets --notes release-page.md \
             --tag "$RELEASE_TAG" --repository "$RELEASE_REPOSITORY" \

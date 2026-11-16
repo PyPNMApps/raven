@@ -11,7 +11,7 @@ import shutil
 import tarfile
 import urllib.request
 
-from common import ROOT, qt, run
+from common import PROJECT_URL, ROOT, qt, run
 
 QT_MODULES = ('qtbase', 'qtdeclarative', 'qtshadertools', 'qtsvg')
 MAX_SOURCE_BYTES = 150_000_000
@@ -141,6 +141,6 @@ def collect(destination):
     }, indent=2) + '\n', encoding='utf-8')
     (destination / 'SOURCE.md').write_text(
         'Build instructions: docs/release/packaging.md in the corresponding project tag.\n'
-        'Project source: https://github.com/PyPNMApps/PNM-Viewer-Toolkit\n'
+        f'Project source: {PROJECT_URL}\n'
         'Qt source archives and exact SHA-256 digests: qt-source-provenance.json.\n'
         'Cargo source/version/license metadata: bom.cdx.json and the locked dependency graphs.\n', encoding='utf-8')

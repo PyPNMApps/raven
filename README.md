@@ -1,15 +1,21 @@
-# PNM Viewer Toolkit — Under Development
+# RAVEN
+
+**RF Analysis, Visualization & Engineering Navigator**
+
+*A cross-platform DOCSIS 3.1/4.0 PNM analysis and visualization toolkit.*
+
+**Under development.** See the signal. Reveal the impairment.
 
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/pnm-viewer-toolkit-logo-dark.svg">
-    <source media="(prefers-color-scheme: light)" srcset="docs/images/pnm-viewer-toolkit-logo-light.svg">
-    <img alt="PyPNMApps PNM Viewer Toolkit" src="docs/images/pnm-viewer-toolkit-logo-light.svg" width="461">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/raven-logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/raven-logo-light.png">
+    <img alt="PyPNMApps RAVEN" src="docs/images/raven-logo-light.png" width="461">
   </picture>
 </p>
 
-[![CI](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/ci.yml)
-[![Native releases](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/release.yml/badge.svg)](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/workflows/release.yml)
+[![CI](https://github.com/PyPNMApps/raven/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/PyPNMApps/raven/actions/workflows/ci.yml)
+[![Native releases](https://github.com/PyPNMApps/raven/actions/workflows/release.yml/badge.svg)](https://github.com/PyPNMApps/raven/actions/workflows/release.yml)
 [![Ubuntu matrix](https://img.shields.io/badge/Ubuntu-22.04%20%7C%2024.04%20%7C%2026.04-E95420?logo=ubuntu)](docs/development/ci.md)
 [![Windows matrix](https://img.shields.io/badge/Windows-x64%20MSI-0078D4)](docs/development/ci.md)
 [![macOS matrix](https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel%20DMG-555555?logo=apple)](docs/development/ci.md)
@@ -24,12 +30,12 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/ui/images/home/home-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/ui/images/home/home-light.png">
-  <img alt="PNM Viewer Toolkit starting screen with Single Capture, RxMER, Spectrum Analyzer and US Pre-EQ navigation" src="docs/ui/images/home/home-dark.png" width="1000">
+  <img alt="RAVEN starting screen with Single Capture, RxMER, Spectrum Analyzer and US Pre-EQ navigation" src="docs/ui/images/home/home-dark.png" width="1000">
 </picture>
 
 ## Start here
 
-[Downloads](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases) ·
+[Downloads](https://github.com/PyPNMApps/raven/releases) ·
 [Installation](docs/install/README.md) ·
 [Launch the viewer](docs/ui/README.md#launch) ·
 [User guide](docs/ui/README.md) ·
@@ -54,7 +60,7 @@ double-click to reset; the I/Q dots and density view shows the full capture.
 
 Tag builds automatically publish [native packages](docs/release/packaging.md)
 after all required checks and uploaded-byte verification pass. Automatic tag
-delivery currently covers Ubuntu 22.04 x64 only. Local
+delivery retains Ubuntu, Windows and both macOS architectures. Local
 builds have been exercised on Ubuntu 22.04 x86_64; hosted results for the full
 platform matrix remain pending.
 

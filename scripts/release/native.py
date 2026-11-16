@@ -9,7 +9,7 @@ from pathlib import Path
 import plistlib
 import shutil
 
-from common import ROOT, binary_path, inventory, notices, qt, run
+from common import PRODUCT, ROOT, binary_path, inventory, notices, qt, run
 from samples import DEMO_DIRECTORY, bundle
 
 
@@ -22,7 +22,7 @@ def windows(stage, output, version):
     from windows_msi import build
     payload = stage / 'windows-payload'
     payload.mkdir()
-    gui = payload / 'pnm-viewer.exe'
+    gui = payload / 'raven.exe'
     shutil.copy2(binary_path(gui=True), gui)
     shutil.copy2(binary_path(), payload / 'pnm-decode.exe')
     notices(payload / 'share')
@@ -40,7 +40,7 @@ def windows(stage, output, version):
     for dll in candidates[-1].glob('*.dll'):
         shutil.copy2(dll, payload / dll.name)
     inventory(payload, output / 'windows-installed-files.json')
-    build(payload, stage, output / f'PNM-Viewer-Toolkit-{version}-windows-x64.msi', version)
+    build(payload, stage, output / f'RAVEN-{version}-windows-x64.msi', version)
 
 
 def macos(stage, output, version, architecture):
@@ -51,21 +51,21 @@ def macos(stage, output, version, architecture):
     independent. Native mounted-image and copied-app checks run separately.
     """
     volume = stage / 'macos-volume'
-    app = volume / 'PNM Viewer Toolkit.app'
+    app = volume / 'RAVEN.app'
     contents = app / 'Contents'
     binaries = contents / 'MacOS'
     binaries.mkdir(parents=True)
-    gui = binaries / 'pnm-viewer'
+    gui = binaries / 'raven'
     shutil.copy2(binary_path(gui=True), gui)
     resources = contents / 'Resources'
     resources.mkdir()
-    shutil.copy2(ROOT / 'packaging/macos/pnm-viewer.icns', resources / 'pnm-viewer.icns')
+    shutil.copy2(ROOT / 'packaging/macos/raven.icns', resources / 'raven.icns')
     shutil.copy2(binary_path(), binaries / 'pnm-decode')
     notices(resources / 'share')
     bundle(resources / DEMO_DIRECTORY)
-    info = {'CFBundleExecutable': 'pnm-viewer', 'CFBundleIdentifier': 'org.pypnm.pnm-viewer-toolkit',
-            'CFBundleName': 'PNM Viewer Toolkit', 'CFBundleDisplayName': 'PNM Viewer Toolkit',
-            'CFBundlePackageType': 'APPL', 'CFBundleIconFile': 'pnm-viewer.icns',
+    info = {'CFBundleExecutable': 'raven', 'CFBundleIdentifier': PRODUCT['bundle_id'],
+            'CFBundleName': 'RAVEN', 'CFBundleDisplayName': 'RAVEN',
+            'CFBundlePackageType': 'APPL', 'CFBundleIconFile': 'raven.icns',
             'CFBundleShortVersionString': version,
             'CFBundleVersion': version, 'NSHighResolutionCapable': True,
             'LSMinimumSystemVersion': os.environ.get('MACOSX_DEPLOYMENT_TARGET', '13.0')}
@@ -95,5 +95,5 @@ def macos(stage, output, version, architecture):
     run(['codesign', '--verify', '--deep', '--strict', app])
     inventory(app, output / f'macos-{architecture}-installed-files.json')
     (volume / 'Applications').symlink_to('/Applications')
-    run(['hdiutil', 'create', '-volname', 'PNM Viewer Toolkit', '-srcfolder', volume,
-         '-format', 'UDZO', output / f'PNM-Viewer-Toolkit-{version}-macos-{architecture}.dmg'])
+    run(['hdiutil', 'create', '-volname', 'RAVEN', '-srcfolder', volume,
+         '-format', 'UDZO', output / f'RAVEN-{version}-macos-{architecture}.dmg'])

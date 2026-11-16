@@ -17,7 +17,7 @@ fn windows_icon() {
     }
     let manifest = std::path::PathBuf::from(std::env::var_os("CARGO_MANIFEST_DIR").unwrap());
     let root = manifest.parent().and_then(std::path::Path::parent).unwrap();
-    let icon = root.join("packaging/windows/pnm-viewer.ico");
+    let icon = root.join("packaging/windows/raven.ico");
     println!("cargo:rerun-if-changed={}", icon.display());
     let output = std::path::PathBuf::from(std::env::var_os("OUT_DIR").unwrap());
     let source = output.join("viewer-icon.rc");
@@ -39,10 +39,7 @@ fn windows_icon() {
         .status()
         .expect("Windows SDK rc.exe is required to embed the application icon");
     assert!(status.success(), "Windows icon resource compilation failed");
-    println!(
-        "cargo:rustc-link-arg-bin=pnm-viewer-qt={}",
-        resource.display()
-    );
+    println!("cargo:rustc-link-arg-bin=raven={}", resource.display());
 }
 /// Compiles the Qt bridge and embeds the local QML interface.
 ///

@@ -1,9 +1,13 @@
 [package]
-name = "pnm-viewer-qt"
+name = "raven-desktop"
 version = "0.3.6"
 edition = "2021"
 rust-version = "1.85"
 license = "GPL-3.0-only"
+
+[[bin]]
+name = "raven"
+path = "src/main.rs"
 
 [workspace]
 

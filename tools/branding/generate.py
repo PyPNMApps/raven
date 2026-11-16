@@ -3,7 +3,7 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-"""Convert the existing desktop PNG into native icons and WiX artwork."""
+"""Generate RAVEN shell icons and WiX artwork from approved PNG banners."""
 import argparse
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -24,10 +24,22 @@ def generate(output):
     windows.mkdir()
     macos.mkdir()
     sampling = getattr(Image, 'Resampling', Image).LANCZOS
-    with Image.open(ROOT / 'docs/images/desktop-icon-dark.png') as source:
+    images = output / 'images'
+    images.mkdir()
+    for theme in ('dark', 'light'):
+        with Image.open(ROOT / f'docs/images/raven-logo-{theme}.png') as source:
+            if source.size != (1536, 1024):
+                raise ValueError('Approved RAVEN banner must be 1536x1024')
+            # Use the browser/spectrum/magnifier mark, excluding banner lettering.
+            mark = source.convert('RGBA').crop((64, 280, 610, 780))
+            icon = Image.new('RGBA', (546, 546), (0, 0, 0, 0))
+            icon.paste(mark, (0, 23))
+            icon.save(images / f'raven-icon-{theme}.png')
+            icon.save(images / f'raven-favicon-{theme}.ico', sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
+    with Image.open(images / 'raven-icon-dark.png') as source:
         icon = source.convert('RGBA')
-    icon.save(windows / 'pnm-viewer.ico', sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
-    icon.resize((1024, 1024), sampling).save(macos / 'pnm-viewer.icns')
+    icon.save(windows / 'raven.ico', sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
+    icon.resize((1024, 1024), sampling).save(macos / 'raven.icns')
     dialog = Image.new('RGB', (493, 312), 'white')
     drawing = ImageDraw.Draw(dialog)
     drawing.rectangle((0, 0, 163, 311), fill='#0b1423')

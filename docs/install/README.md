@@ -1,7 +1,7 @@
 # Installation
 
-PNM Viewer Toolkit is **under development**. Open the
-[GitHub Releases page](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/releases)
+RAVEN is **under development**. Open the
+[GitHub Releases page](https://github.com/PyPNMApps/raven/releases)
 and choose a published release with installer assets. Each release page has
 version-specific downloads, installation/removal commands and checksums.
 Tag CI publishes automatically after testing and uploaded-byte verification. If no
@@ -29,7 +29,7 @@ earlier releases contain Ubuntu 22.04 packages only.
 
 Complete releases publish five installers and `SHA256SUMS`. Standalone CLI
 archives and build reports are available in the matching
-[Actions run](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions) artifacts
+[Actions run](https://github.com/PyPNMApps/raven/actions) artifacts
 (GitHub sign-in required, with limited retention). For a lasting CLI-only setup,
 use the Ubuntu CLI DEB or [build from source](source.md).
 
@@ -50,7 +50,7 @@ Quit the viewer before updating. On Ubuntu, install both new-version DEBs using
 APT. On Windows, install the new MSI. On macOS,
 replace the application using the matching architecture's new DMG.
 
-Remove the Ubuntu viewer with `sudo apt remove pnm-viewer-toolkit`; the separate
+Remove the Ubuntu viewer with `sudo apt remove raven`; the separate
 CLI remains installed until you remove `pnm-decode`. On Windows, uninstall through
 Installed apps (Windows Installer manages removal). On macOS, move
 the application to Trash. Independently extracted CLI archives are separate from
@@ -60,3 +60,5 @@ See the [desktop guide](../ui/README.md), [CLI guide](../cli/usage.md),
 [measurement gallery](../ui/measurements.md) and
 [packaging/validation details](../release/packaging.md). Build contributors should
 start with the [development environment](development.md).
+
+Upgrading from PNM Viewer Toolkit: follow the [RAVEN migration guide](../development/rebranding.md#first-migration-from-pnm-viewer-toolkit).

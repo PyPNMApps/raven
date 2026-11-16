@@ -10,7 +10,7 @@ from pathlib import Path
 import re
 from urllib.parse import quote
 
-from common import MAX_PACKAGE_BYTES, ROOT, release_version
+from common import PRODUCT, MAX_PACKAGE_BYTES, ROOT, release_version
 from collect import EXPECTED_TARGETS
 from verify import verify
 
@@ -41,7 +41,7 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False, par
     """
     if tag != 'v' + version:
         raise ValueError('Release tag does not match VERSION')
-    # Whole owner/name validation; PyPNMApps/PNM-Viewer-Toolkit passes.
+    # Whole owner/name validation; PyPNMApps/raven passes.
     # Two name segments exclude URLs, whitespace and extra slashes.
     if not re.fullmatch(r'[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+', repository):
         raise ValueError('Expected a GitHub owner/repository')
@@ -51,10 +51,10 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False, par
         platforms = {('Linux', 'x64'): 'Ubuntu 22.04 x64 only'}
         expected_targets = set(platforms)
     required_packages = {
-        ('Linux', 'x64'): {f'pnm-viewer-toolkit_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'},
-        ('Windows', 'x64'): {f'PNM-Viewer-Toolkit-{version}-windows-x64.msi'},
-        ('Darwin', 'arm64'): {f'PNM-Viewer-Toolkit-{version}-macos-arm64.dmg'},
-        ('Darwin', 'x64'): {f'PNM-Viewer-Toolkit-{version}-macos-x64.dmg'},
+        ('Linux', 'x64'): {f'raven_{version}_amd64.deb', f'pnm-decode_{version}_amd64.deb'},
+        ('Windows', 'x64'): {f'RAVEN-{version}-windows-x64.msi'},
+        ('Darwin', 'arm64'): {f'RAVEN-{version}-macos-arm64.dmg'},
+        ('Darwin', 'x64'): {f'RAVEN-{version}-macos-x64.dmg'},
     }
     base = 'https://github.com/' + repository
     download = base + '/releases/download/' + tag + '/'
@@ -81,12 +81,12 @@ def render(template, manifests, version, tag, repository, ubuntu_only=False, par
             link = f'[{name}]({download}{quote(name)}) ({size / 1_000_000:.2f} MB)'
             if name.startswith('pnm-decode'):
                 cli.append(link)
-            elif name.startswith(('PNM-Viewer-Toolkit-', 'pnm-viewer-toolkit_')):
+            elif name.startswith(('RAVEN-', 'raven_')):
                 viewer.append(link)
             else:
                 raise ValueError('Unrecognized release package')
         if ubuntu_only and not {
-            f'pnm-viewer-toolkit_{version}_amd64.deb',
+            f'raven_{version}_amd64.deb',
             f'pnm-decode_{version}_amd64.deb',
         }.issubset(names):
             raise ValueError('Ubuntu draft requires matching viewer and CLI DEBs')
@@ -125,7 +125,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--assets', type=Path, required=True, help='Verified collected asset directory')
     parser.add_argument('--tag', required=True)
-    parser.add_argument('--repository', default='PyPNMApps/PNM-Viewer-Toolkit')
+    parser.add_argument('--repository', default=PRODUCT['repository'])
     parser.add_argument('--output', type=Path, required=True)
     scope = parser.add_mutually_exclusive_group()
     scope.add_argument('--ubuntu-only', action='store_true',

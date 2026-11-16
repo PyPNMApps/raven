@@ -1,4 +1,4 @@
-# PNM Viewer Toolkit user guide
+# RAVEN user guide
 
 [Project README](../../README.md) · [Measurement gallery](measurements.md)
 
@@ -15,7 +15,7 @@ PyPNM example captures; appearance can vary with the operating system.
 ## Launch
 
 For a packaged application, follow the release page or
-[installation guide](../install/README.md), then launch PNM Viewer Toolkit from
+[installation guide](../install/README.md), then launch RAVEN from
 the application menu (Ubuntu), Start (Windows), or Applications (macOS).
 
 To run from source on the supported Linux development host, follow

@@ -734,7 +734,7 @@ name = "pnm-fixtures"
 version = "0.3.6"
 
 [[package]]
-name = "pnm-viewer-qt"
+name = "raven-desktop"
 version = "0.3.6"
 dependencies = [
  "cxx",

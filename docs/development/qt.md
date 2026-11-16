@@ -45,7 +45,7 @@ in both development and installed builds. An explicit platform-theme setting
 is preserved. The DEB bundles Qt's GTK platform-theme plugin and depends on
 the system GTK runtime. Windows and macOS retain their native defaults.
 For the existing 0.1.6 installation, launch with
-`QT_QPA_PLATFORMTHEME=gtk3 pnm-viewer` from a graphical desktop terminal.
+`QT_QPA_PLATFORMTHEME=gtk3 raven` from a graphical desktop terminal.
 
 [Developer index](README.md) · [Measurement implementation](qt-measurements.md)
 
@@ -322,8 +322,8 @@ owning folder or introduce a relevant feature folder; apply the
 ## Ubuntu launcher identity
 
 Before loading QML, the Linux viewer sets its Qt application name and desktop
-file name to `pnm-viewer-toolkit`. The DEB installs the matching desktop entry
-and `StartupWMClass=pnm-viewer-toolkit`. Keep these identifiers aligned so GNOME
+file name to `raven`. The DEB installs the matching desktop entry
+and `StartupWMClass=raven`. Keep these identifiers aligned so GNOME
 can group running windows and pin the installed launcher. The display title and
 CLI command are separate from this identity. Installed lifecycle checks verify
 the launcher fields. Interactive GNOME pin/unpin behavior needs VM confirmation.

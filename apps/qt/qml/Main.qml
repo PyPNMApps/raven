@@ -16,7 +16,7 @@ ApplicationWindow {
     minimumWidth: 860
     minimumHeight: 680
     visible: true
-    title: "PNM Viewer Toolkit"
+    title: "RAVEN"
     color: appTheme.background
     property ThemePalette themePalette: ThemePalette { targetControl: window; theme: appTheme }
     font.family: "Sans Serif"
@@ -297,7 +297,7 @@ ApplicationWindow {
                     fillMode: Image.PreserveAspectFit
                     mipmap: true
                     Accessible.role: Accessible.Graphic
-                    Accessible.name: "PyPNMApps PNM Viewer Toolkit"
+                    Accessible.name: "PyPNMApps RAVEN"
                     // Blend only the artwork's outer padding into the live theme.
                     // Keep the original README image and logo lettering intact.
                     readonly property color clearSidebar: Qt.rgba(appTheme.sidebar.r, appTheme.sidebar.g, appTheme.sidebar.b, 0)
