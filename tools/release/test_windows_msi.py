@@ -66,6 +66,7 @@ class WindowsMsiTests(unittest.TestCase):
         self.assertEqual(checkbox.get('CheckBoxValue'), '1')
         component = product.find('.//w:Component[@Id="DesktopShortcutComponent"]', self.names)
         self.assertEqual(component.find('w:Condition', self.names).text, 'CREATE_DESKTOP_SHORTCUT = "1"')
+        self.assertIsNone(component.get('Transitive'))
         self.assertEqual(component.find('w:RegistryValue', self.names).get('KeyPath'), 'yes')
         self.assertEqual(component.find('w:Shortcut', self.names).get('Icon'), windows_msi.APPLICATION_ICON_ID)
         self.assertIsNone(product.find('.//w:CustomAction', self.names))

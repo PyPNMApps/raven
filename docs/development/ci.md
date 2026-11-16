@@ -512,3 +512,14 @@ still searches other configured workflows and retains ancestor, fingerprint and
 artifact validation. Permission and server errors still fail the lookup; no
 build, test or installed-package checks are skipped. RAVEN v0.3.7 exposed this
 case after moving to the new repository.
+
+### Windows shortcut maintenance
+
+The v0.3.7 Windows lifecycle run exposed a desktop shortcut left after removal.
+The desktop component was transitive: repair/removal re-evaluated the temporary
+`CREATE_DESKTOP_SHORTCUT` option when it was absent. Keep this optional component
+non-transitive so Windows Installer preserves the initial selected state through
+repair and removes its registered resources on uninstall. Native tests repair
+without re-supplying the checkbox property, then check both shortcuts and product
+registration after removal. Failures list the remaining paths/products.
+See [Microsoft's transitive component guidance](https://learn.microsoft.com/en-us/windows/win32/msi/using-transitive-components).

@@ -120,8 +120,9 @@ def author(payload, version, destination, legacy=False):
     _element('Directory', root, Id='DesktopFolder')
     feature = _element('Feature', product, Id='Complete', Title=display_name, Level='1')
     shortcut_component = _element('Component', install, Id='DesktopShortcutComponent', Win64='yes',
-                                  Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, component_prefix + 'desktop-shortcut')),
-                                  Transitive='yes')
+                                  Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, component_prefix + 'desktop-shortcut')))
+    # Preserve the initial choice during repair/removal when the property is absent.
+    # Transitive components re-evaluate it and can strand the installed shortcut.
     _element('Condition', shortcut_component).text = 'CREATE_DESKTOP_SHORTCUT = "1"'
     _element('Shortcut', shortcut_component, Id='DesktopViewer', Directory='DesktopFolder',
              Name=display_name, Target=f'[INSTALLFOLDER]{executable}',

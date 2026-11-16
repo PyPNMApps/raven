@@ -259,7 +259,7 @@ def windows(packages, payload):
                 library.FreeLibrary(module)
             if not (prefix / 'share/pnm-decode.1').is_file():
                 raise ValueError('Bundled CLI manual missing')
-            execute(['/fa', installer, 'CREATE_DESKTOP_SHORTCUT=1'], logs / 'repair.log')
+            execute(['/fa', installer], logs / 'repair.log')
             if not desktop_shortcut.is_file() or not start_shortcut.is_file():
                 raise ValueError('Repair did not preserve requested shortcuts')
             smoke(prefix / 'raven.exe', prefix / 'pnm-decode.exe')
@@ -269,8 +269,11 @@ def windows(packages, payload):
         finally:
             for product_code, _version in registrations():
                 execute(['/x', product_code], logs / 'uninstall.log')
-        if registrations() or (prefix / 'raven.exe').exists() or (prefix / 'pnm-decode.exe').exists() or desktop_shortcut.exists() or start_shortcut.exists():
-            raise ValueError('MSI uninstall left application files or registration')
+        leftovers = [str(path) for path in (prefix / 'raven.exe', prefix / 'pnm-decode.exe',
+                                           desktop_shortcut, start_shortcut) if path.exists()]
+        remaining_products = registrations()
+        if remaining_products or leftovers:
+            raise ValueError(f'MSI uninstall left files {leftovers} or products {remaining_products}')
 
 
 def macos(packages, architecture):
