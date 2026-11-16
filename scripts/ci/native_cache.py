@@ -205,7 +205,16 @@ def select_run(repository, output):
     runs = []
     for workflow in ('release.yml', 'ubuntu-deb-temp.yml'):
         endpoint = f'repos/{repository}/actions/workflows/{workflow}/runs?event=push&status=success&per_page=30'
-        runs.extend(json.loads(run('gh', 'api', endpoint))['workflow_runs'])
+        try:
+            workflow_runs = run('gh', 'api', endpoint)
+        except subprocess.CalledProcessError as error:
+            # New repositories may not register a manual workflow until it runs.
+            # A missing historical workflow has no cache; other API errors fail.
+            if '(HTTP 404)' not in (error.stderr or ''):
+                raise
+            print(f'Native cache workflow unavailable: {workflow}; building without its cache')
+            continue
+        runs.extend(json.loads(workflow_runs)['workflow_runs'])
     prefix = MACOS_ARTIFACT_NAME if platform.system() == 'Darwin' else ARTIFACT_NAME
     artifact_name = prefix + '-' + identity()[:20]
     selected = None

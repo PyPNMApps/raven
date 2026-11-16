@@ -139,6 +139,36 @@ class NativeCacheTests(unittest.TestCase):
                 CACHE.select_run('owner/repo', output)
             self.assertEqual(output.read_text(), 'run_id=4\nartifact_name=' + CACHE.ARTIFACT_NAME + '-fixture\n')
 
+    def test_unregistered_workflow_is_a_cache_miss_in_a_new_repository(self):
+        """A manual-only workflow returning 404 must not block a cold build."""
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'output'
+            def run(*arguments):
+                if arguments[0] == 'git':
+                    return 'false\n'
+                if 'ubuntu-deb-temp.yml' in arguments[-1]:
+                    raise CACHE.subprocess.CalledProcessError(
+                        1, arguments, stderr='gh: Not Found (HTTP 404)')
+                return json.dumps({'workflow_runs': []})
+            with patch.object(CACHE.platform, 'system', return_value='Linux'), \
+                    patch.object(CACHE, 'identity', return_value='fixture'), \
+                    patch.object(CACHE, 'run', side_effect=run):
+                CACHE.select_run('owner/repo', output)
+            self.assertEqual(output.read_text(),
+                             'run_id=\nartifact_name=' + CACHE.ARTIFACT_NAME + '-fixture\n')
+
+    def test_workflow_permission_and_server_errors_still_fail(self):
+        """A cache miss must not conceal authorization or service failures."""
+        for status in (403, 500):
+            with self.subTest(status=status), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / 'output'
+                failure = CACHE.subprocess.CalledProcessError(
+                    1, ['gh', 'api'], stderr=f'gh: request failed (HTTP {status})')
+                with patch.object(CACHE, 'run', side_effect=['false\n', failure]):
+                    with self.assertRaises(CACHE.subprocess.CalledProcessError):
+                        CACHE.select_run('owner/repo', output)
+                self.assertFalse(output.exists())
+
     def test_shallow_checkout_rejected_before_github_lookup(self):
         """Do not silently miss every ancestor when checkout has one commit."""
         with tempfile.TemporaryDirectory() as directory, \

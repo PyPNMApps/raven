@@ -502,3 +502,13 @@ key now contains the matrix runner and Qt helper fingerprint, so Ubuntu versions
 do not compete for one cache or restore another distribution's compiled targets.
 This intentionally starts new action-cache namespaces; compatible cross-tag
 native artifacts remain available through their separate provenance checks.
+
+### First release in a new repository
+
+A manual-only historical workflow may return HTTP 404 from GitHub's workflow-run
+API until it is registered by a run. Native dependency-cache selection treats
+that missing workflow as an empty source and continues with a cold build. It
+still searches other configured workflows and retains ancestor, fingerprint and
+artifact validation. Permission and server errors still fail the lookup; no
+build, test or installed-package checks are skipped. RAVEN v0.3.7 exposed this
+case after moving to the new repository.
