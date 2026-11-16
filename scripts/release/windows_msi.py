@@ -121,6 +121,7 @@ def author(payload, version, destination, legacy=False):
     feature = _element('Feature', product, Id='Complete', Title=display_name, Level='1')
     shortcut_component = _element('Component', install, Id='DesktopShortcutComponent', Win64='yes',
                                   Guid=str(uuid.uuid5(COMPONENT_NAMESPACE, component_prefix + 'desktop-shortcut')))
+
     # Preserve the initial choice during repair/removal when the property is absent.
     # Transitive components re-evaluate it and can strand the installed shortcut.
     _element('Condition', shortcut_component).text = 'CREATE_DESKTOP_SHORTCUT = "1"'
