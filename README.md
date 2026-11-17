@@ -20,6 +20,7 @@
 [![Windows matrix](https://img.shields.io/badge/Windows-x64%20MSI-0078D4)](docs/development/ci.md)
 [![macOS matrix](https://img.shields.io/badge/macOS-Apple%20Silicon%20%7C%20Intel%20DMG-555555?logo=apple)](docs/development/ci.md)
 [![Component licenses](https://img.shields.io/badge/license-Apache--2.0%20%2F%20GPL--3.0--only-blue)](LICENSE)
+[![AI Assistance](https://img.shields.io/badge/AI_Assistance-Optional-14b8a6)](docs/ui/ai-assistance.md)
 
 Tag releases require the full native matrix: Ubuntu DEBs, Windows MSI, and
 macOS Apple Silicon/Intel DMGs. [Installation by OS](docs/install/README.md).
@@ -53,6 +54,12 @@ add channel estimation, and check the profiles to test. The graph overlays RxMER
 and profile references; **FEC Performance** runs each checked profile and shows
 separate FEC, BER and LDPC results. All simulation runs locally in Rust using
 MERLIN. See the [demo walkthrough](docs/ui/examples.md#ofdm-profile-performance).
+
+Optionally configure OpenAI through **AI Assistance** for further analysis of
+OFDM Profile Performance results. Preview and approve the exact data before
+sending; Rust and MERLIN remain authoritative for calculations. A local Demo AI
+mode lets you try the workflow without an API key. See the
+[AI Assistance guide](docs/ui/ai-assistance.md).
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/ui/measurements/ofdm-profile-performance/images/ofdm-profile-dark.png">
