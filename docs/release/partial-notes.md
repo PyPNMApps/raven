@@ -1,8 +1,6 @@
 # RAVEN {{TAG}} — Partial release
 
-**Under development — CI failed.** Only the platforms below passed their native
-build, package integrity/size and installed lifecycle checks. Other platforms
-failed or were unavailable; the workflow remains failed.
+**Under development — CI failed.** Only the platforms below passed their native build, package integrity/size and installed lifecycle checks. Other platforms failed or were unavailable; the workflow remains failed.
 
 Unavailable platforms: **{{UNAVAILABLE_PLATFORMS}}**.
 
@@ -10,10 +8,7 @@ Unavailable platforms: **{{UNAVAILABLE_PLATFORMS}}**.
 
 {{ASSET_TABLE}}
 
-Download the matching installer and `SHA256SUMS`. These packages use the same
-version {{VERSION}}. Uploaded metadata and re-downloaded bytes were verified
-before publication. This partial release is a **prerelease**, not the latest
-stable release, so automatic stable-update checks do not offer it.
+Download the matching installer and `SHA256SUMS`. These packages use the same version {{VERSION}}. Uploaded metadata and re-downloaded bytes were verified before publication. This partial release is a **prerelease**, not the latest stable release, so automatic stable-update checks do not offer it.
 
 Install/update/uninstall instructions:
 
@@ -23,5 +18,4 @@ Install/update/uninstall instructions:
 
 [Workflow results]({{RUNS_URL}}) · [Desktop user guide]({{SOURCE_URL}}/docs/ui/README.md)
 
-Published assets are immutable. A later fix uses a new version/tag rather than
-adding missing platforms to this public release.
+Published assets are immutable. A later fix uses a new version/tag rather than adding missing platforms to this public release.

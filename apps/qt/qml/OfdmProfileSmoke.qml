@@ -5,7 +5,8 @@
 import QtQuick
 
 // Explicit developer smoke: --ofdm-smoke PROFILE_URL RXMER_URL CHANNEL_URL_OR_NONE
-// OUTPUT_PREFIX [--mce]. Original local files only; no network or installation.
+// OUTPUT_PREFIX [--mce] [--home-only]. Home-only skips capture loading and FEC.
+// Original local files only; no network or installation.
 Timer {
     id: smoke
     required property var service
@@ -25,7 +26,9 @@ Timer {
     function fail(message) { console.error("OFDM_SMOKE_FAILED: " + message); stop(); Qt.exit(1) }
     function snapshot(suffix, next) {
         stop()
-        const target = suffix.indexOf("-fec-") >= 0 ? workspace.resultsSurface : surface
+        const homeOnly = Qt.application.arguments.indexOf("--home-only") >= 0
+        const target = homeOnly ? applicationWindow.contentItem.parent
+            : suffix.indexOf("-fec-") >= 0 ? workspace.resultsSurface : surface
         if (!target.grabToImage(function(image) {
             if (!image.saveToFile(Qt.application.arguments[argumentIndex+4] + suffix)) {
                 smoke.fail("Could not save native workspace frame")
@@ -41,6 +44,13 @@ Timer {
         const args=Qt.application.arguments
         if (stage===0) {
             if (args.length < argumentIndex+5) { fail("Missing smoke arguments"); return }
+            if (args.indexOf("--home-only") >= 0) {
+                applicationWindow.selectWorkspace("single")
+                applicationWindow.navigationVisible=true
+                theme.preference=1
+                stage=20
+                return
+            }
             applicationWindow.selectWorkspace("ofdm")
             theme.preference=1
             service.choose_file("profile",args[argumentIndex+1]);stage=1
@@ -78,6 +88,15 @@ Timer {
             theme.preference=2;stage=10
         } else if (stage===10) {
             snapshot("-fec-light.png",11)
+        } else if (stage===20) {
+            snapshot("-dark.png",21)
+        } else if (stage===21) {
+            theme.preference=2;stage=22
+        } else if (stage===22) {
+            snapshot("-light.png",23)
+        } else if (stage===23) {
+            console.log("HOME_SCREENSHOTS_OK")
+            stop();Qt.quit()
         } else if (stage===11) {
             console.log("OFDM_SMOKE_OK "+service.result_json)
             stop();Qt.quit()

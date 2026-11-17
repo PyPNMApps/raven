@@ -1,20 +1,12 @@
 # RAVEN {{TAG}}
 
-**Under development.** Download the package for your system under **Assets**.
-The native Qt viewer includes the same-version `pnm-decode` CLI and manual;
-Ubuntu installs the CLI as a separate package dependency. Rust, Python and a
-separate Qt SDK are not needed to run the packaged application. APT installs
-required Ubuntu system libraries and may need network access.
+**Under development.** Download the package for your system under **Assets**. The native Qt viewer includes the same-version `pnm-decode` CLI and manual; Ubuntu installs the CLI as a separate package dependency. Rust, Python and a separate Qt SDK are not needed to run the packaged application. APT installs required Ubuntu system libraries and may need network access.
 
 ## Choose your download
 
 {{ASSET_TABLE}}
 
-Sizes above are compressed download bytes expressed in decimal MB, not installed
-sizes. A complete release has five installers and `SHA256SUMS` for verification.
-Build reports and standalone CLI archives remain workflow artifacts linked under
-[workflow results]({{RUNS_URL}}). GitHub's **Source code** ZIP/tar archives contain
-source, not installers.
+Sizes above are compressed download bytes expressed in decimal MB, not installed sizes. A complete release has five installers and `SHA256SUMS` for verification. Build reports and standalone CLI archives remain workflow artifacts linked under [workflow results]({{RUNS_URL}}). GitHub's **Source code** ZIP/tar archives contain source, not installers.
 
 ## Ubuntu 22.04 / 24.04 / 26.04 — x64
 
@@ -25,9 +17,7 @@ sha256sum --ignore-missing --check SHA256SUMS &&
 sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
 ```
 
-Launch **RAVEN** from the application menu, or run `raven`
-inside your graphical desktop session. The CLI is available as `pnm-decode`;
-read its manual with `man pnm-decode`.
+Launch **RAVEN** from the application menu, or run `raven` inside your graphical desktop session. The CLI is available as `pnm-decode`; read its manual with `man pnm-decode`.
 
 **CLI only:** install just `pnm-decode_{{VERSION}}_amd64.deb` using APT.
 
@@ -39,8 +29,7 @@ read its manual with `man pnm-decode`.
 sudo apt remove raven
 ```
 
-This leaves the separately owned CLI installed. To remove it too, run
-`sudo apt remove pnm-decode`.
+This leaves the separately owned CLI installed. To remove it too, run `sudo apt remove pnm-decode`.
 
 [Ubuntu installation and uninstall guide]({{SOURCE_URL}}/docs/install/ubuntu.md)
 
@@ -49,27 +38,19 @@ This leaves the separately owned CLI installed. To remove it too, run
 1. Download and run the **Windows x64 MSI installer** from the table.
 2. Select an installation folder and launch **RAVEN** from Start.
 
-The default per-machine location is `%ProgramFiles%\RAVEN`.
-Qt and Microsoft runtime DLLs are app-local. The bundled CLI is in that folder;
-the installer does not add it to PATH. From PowerShell at the default location:
+The default per-machine location is `%ProgramFiles%\RAVEN`. Qt and Microsoft runtime DLLs are app-local. The bundled CLI is in that folder; the installer does not add it to PATH. From PowerShell at the default location:
 
 ```powershell
 & "$env:ProgramFiles\RAVEN\pnm-decode.exe" --help
 ```
 
-For a standalone CLI without the viewer, use the Windows CLI ZIP from the
-[workflow artifacts]({{RUNS_URL}}), or [build from source]({{SOURCE_URL}}/docs/install/source.md).
+For a standalone CLI without the viewer, use the Windows CLI ZIP from the [workflow artifacts]({{RUNS_URL}}), or [build from source]({{SOURCE_URL}}/docs/install/source.md).
 
-The MSI is unsigned. Verify the project release and SHA-256 before approving
-Windows security/UAC prompts. If double-click does not start installation, use the
-[PowerShell installer/logging instructions]({{SOURCE_URL}}/docs/install/windows.md#windows-11-security-prompts-or-an-msi-that-does-not-open).
-These steps do not disable SmartScreen, Defender, or company policy.
+The MSI is unsigned. Verify the project release and SHA-256 before approving Windows security/UAC prompts. If double-click does not start installation, use the [PowerShell installer/logging instructions]({{SOURCE_URL}}/docs/install/windows.md#windows-11-security-prompts-or-an-msi-that-does-not-open). These steps do not disable SmartScreen, Defender, or company policy.
 
 **Update:** quit the viewer and install the new MSI (older MSIs upgrade; downgrades are refused).
 
-**Uninstall:** Settings → Apps → Installed apps → RAVEN → Uninstall,
-managed by Windows Installer. A separately extracted CLI
-is independent of the desktop installation.
+**Uninstall:** Settings → Apps → Installed apps → RAVEN → Uninstall, managed by Windows Installer. A separately extracted CLI is independent of the desktop installation.
 
 [Windows installation and uninstall guide]({{SOURCE_URL}}/docs/install/windows.md)
 
@@ -79,10 +60,7 @@ is independent of the desktop installation.
 2. Open the matching DMG and drag **RAVEN** onto **Applications**.
 3. Eject the disk image and open the app from Applications.
 
-The deployment target is macOS 13 or newer; native CI uses macOS 15 runners.
-The app includes Qt and the CLI. It is ad-hoc signed, without Developer ID
-signing or Apple notarization. If macOS blocks opening it, verify the download
-source and checksum, then use the operating system's application-approval controls.
+The deployment target is macOS 13 or newer; native CI uses macOS 15 runners. The app includes Qt and the CLI. It is ad-hoc signed, without Developer ID signing or Apple notarization. If macOS blocks opening it, verify the download source and checksum, then use the operating system's application-approval controls.
 
 The bundled CLI can be run from a terminal:
 
@@ -90,35 +68,23 @@ The bundled CLI can be run from a terminal:
 "/Applications/RAVEN.app/Contents/MacOS/pnm-decode" --help
 ```
 
-For a standalone CLI without the viewer, use the matching Darwin CLI archive from
-[workflow artifacts]({{RUNS_URL}}), or [build from source]({{SOURCE_URL}}/docs/install/source.md).
+For a standalone CLI without the viewer, use the matching Darwin CLI archive from [workflow artifacts]({{RUNS_URL}}), or [build from source]({{SOURCE_URL}}/docs/install/source.md).
 
 **Update:** quit the viewer and replace the app in Applications from the new DMG.
 
-**Uninstall:** quit the app and move it from Applications to Trash. Any separately
-extracted CLI remains independent.
+**Uninstall:** quit the app and move it from Applications to Trash. Any separately extracted CLI remains independent.
 
 [macOS installation and uninstall guide]({{SOURCE_URL}}/docs/install/macos.md)
 
 ## First use
 
-Choose **Open capture**, **Open**, Ctrl+O (Cmd+O on macOS), or drop one local PNM file onto the
-window. The viewer detects its type from its contents. It supports RxMER,
-Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation
-Profile, Constellation Display, current US pre-EQ and last-update US pre-EQ.
-Inspect the graph and use the export icon to save full-resolution JSON to a new
-file. Choose System, Dark or Light under Settings → System → Appearance.
-Viewing local captures works offline after setup; no modem connection is needed.
+Choose **Open capture**, **Open**, Ctrl+O (Cmd+O on macOS), or drop one local PNM file onto the window. The viewer detects its type from its contents. It supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation Profile, Constellation Display, current US pre-EQ and last-update US pre-EQ. Inspect the graph and use the export icon to save full-resolution JSON to a new file. Choose System, Dark or Light under Settings → System → Appearance. Viewing local captures works offline after setup; no modem connection is needed.
 
-[Desktop guide and screenshots]({{SOURCE_URL}}/docs/ui/README.md) ·
-[Measurement gallery]({{SOURCE_URL}}/docs/ui/measurements.md) ·
-[CLI guide]({{SOURCE_URL}}/docs/cli/usage.md) ·
-[Complete JSON examples]({{SOURCE_URL}}/docs/cli/examples/README.md)
+[Desktop guide and screenshots]({{SOURCE_URL}}/docs/ui/README.md) · [Measurement gallery]({{SOURCE_URL}}/docs/ui/measurements.md) · [CLI guide]({{SOURCE_URL}}/docs/cli/usage.md) · [Complete JSON examples]({{SOURCE_URL}}/docs/cli/examples/README.md)
 
 ## Checksums and validation
 
-Download `SHA256SUMS` with your chosen package and compare its matching entry
-against your local SHA-256 result. Examples from the download directory:
+Download `SHA256SUMS` with your chosen package and compare its matching entry against your local SHA-256 result. Examples from the download directory:
 
 ```bash
 # Ubuntu
@@ -131,13 +97,6 @@ shasum -a 256 RAVEN-{{VERSION}}-macos-arm64.dmg
 Get-FileHash .\RAVEN-{{VERSION}}-windows-x64.msi -Algorithm SHA256
 ```
 
-These packages are assembled only after CodeQL, code checks, the complete native
-matrix, package integrity/size checks and installed-package lifecycle tests pass
-for this tag. Lifecycle tests cover install, open/render/export and removal on
-all three Ubuntu versions, Windows x64, macOS arm64 and macOS x64. See
-[this tag's workflow runs]({{RUNS_URL}}) for results. These development builds
-are not a release-readiness claim. Publication is automatic only after uploaded
-asset metadata and downloaded bytes are verified.
+These packages are assembled only after CodeQL, code checks, the complete native matrix, package integrity/size checks and installed-package lifecycle tests pass for this tag. Lifecycle tests cover install, open/render/export and removal on all three Ubuntu versions, Windows x64, macOS arm64 and macOS x64. See [this tag's workflow runs]({{RUNS_URL}}) for results. These development builds are not a release-readiness claim. Publication is automatic only after uploaded asset metadata and downloaded bytes are verified.
 
-[Packaging, licenses and prerequisites]({{SOURCE_URL}}/docs/release/packaging.md) ·
-[JSON field contracts]({{SOURCE_URL}}/docs/reference/formats.md)
+[Packaging, licenses and prerequisites]({{SOURCE_URL}}/docs/release/packaging.md) · [JSON field contracts]({{SOURCE_URL}}/docs/reference/formats.md)

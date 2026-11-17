@@ -45,7 +45,7 @@ Expand **RxMER** or **Spectrum Analyzer** for **Min-Avg-Max** and **Playback**.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/home/home-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="images/home/home-light.png">
-  <img alt="Starting screen with left navigation pane open and the Open, Settings and About toolbar" src="images/home/home-dark.png" width="1000">
+  <img alt="Starting screen with OFDM Profile Performance in the open navigation pane and the Open, Settings and About toolbar" src="images/home/home-dark.png" width="1000">
 </picture>
 
 1. Drop one local capture file anywhere on the window, or choose **Open capture**,

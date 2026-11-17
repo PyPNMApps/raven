@@ -89,3 +89,21 @@ results pairs under `docs/ui/measurements/ofdm-profile-performance/images/`.
 The results image captures the real popup's counter content. Use supplied CH-EST
 and `--mce --ofdm-profiles=0,1,2,3` with the bundled single captures; do not manufacture
 counter values or substitute QML test mocks for the documentation pictures.
+
+## Refresh the Home pair
+
+The existing native harness can capture Home without loading inputs or running
+FEC. After building, run from the repository root on the Linux development host:
+
+```bash
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software \
+LD_LIBRARY_PATH="$PWD/local/qt/6.8.3/gcc_64/lib" \
+apps/qt/target/debug/raven --ofdm-smoke none none none \
+"$PWD/docs/ui/images/home/home" --home-only
+```
+
+Require `HOME_SCREENSHOTS_OK`. Review both themes for the expanded navigation,
+including OFDM Profile Performance. The command replaces the existing Home pair;
+do not keep dated duplicate PNGs. Before removing other images, check documentation,
+QML and packaging references and update any remaining links. Keep active measurement
+screenshots and original branding resources.

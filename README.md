@@ -30,7 +30,7 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/ui/images/home/home-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="docs/ui/images/home/home-light.png">
-  <img alt="RAVEN starting screen with Single Capture, RxMER, Spectrum Analyzer and US Pre-EQ navigation" src="docs/ui/images/home/home-dark.png" width="1000">
+  <img alt="RAVEN starting screen with Single Capture, OFDM Profile Performance, RxMER, Spectrum Analyzer and US Pre-EQ navigation" src="docs/ui/images/home/home-dark.png" width="1000">
 </picture>
 
 ## Start here
