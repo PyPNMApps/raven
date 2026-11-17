@@ -78,7 +78,8 @@ jobs:
   native-baseline:
     # Let DEB lifecycle checks follow the baseline, without waiting for Mac/Win.
     if: inputs.run_native_checks == true && inputs.package_release == true
-    needs: [codeql, quality]
+    # Overlap CodeQL; Required checks and publication still require its success.
+    needs: [quality]
     uses: ./.github/workflows/native-checks.yml
     with:
       runners: '["ubuntu-22.04"]'
@@ -86,7 +87,8 @@ jobs:
   native:
     # Tags request the full matrix; branch/PR checks use desktop preflight.
     if: inputs.run_native_checks == true
-    needs: [codeql, quality]
+    # Overlap CodeQL; Required checks and publication still require its success.
+    needs: [quality]
     uses: ./.github/workflows/native-checks.yml
     with:
       runners: ${{ inputs.package_release && '["ubuntu-24.04", "ubuntu-26.04", "windows-2022", "macos-15", "macos-15-intel"]' || '["ubuntu-22.04", "ubuntu-24.04", "ubuntu-26.04", "windows-2022", "macos-15", "macos-15-intel"]' }}

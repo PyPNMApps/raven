@@ -6,8 +6,8 @@
 
 A `v*` tag starts [Native releases](../../.github/workflows/release.yml):
 
-1. Validate VERSION and master ancestry, then require CodeQL and code checks.
-2. Run the six-platform native matrix. Build packages on Ubuntu 22.04, Windows
+1. Validate VERSION and master ancestry, then start CodeQL and code checks.
+2. After code checks pass, run the six-platform native matrix alongside CodeQL. Build packages on Ubuntu 22.04, Windows
    x64, macOS arm64 and macOS Intel **in the same jobs after their tests**. This
    reuses dependency outputs instead of starting a second cold packaging matrix.
 3. Exercise Windows MSI baseline/major-upgrade/downgrade/uninstall and both Mac
@@ -59,17 +59,13 @@ requests, manual dispatch, and reusable calls. Master/PR runs use the preflight 
 use the native matrix below.
 
 ```text
-CodeQL + code checks
-         │ both pass
-         ├── Master/PR: desktop preflight
-         │     Windows/Mac packaging tests + both Mac Cocoa QML suites
-         │
-         └── Full native/tag: one native job on each OS
-               Rust tests + tooling tests
-               CLI release build + JSON smoke
-               Qt tests + Clippy + build + QML tests
-                          │ selected scope passes
-                    Required checks
+Code checks ──pass──┬── Master/PR: desktop preflight (also waits for CodeQL)
+                   └── Full native/tag: six native jobs
+                         Rust/tooling tests, CLI build/smoke
+                         Qt Rust/QML tests, Clippy, native build
+                         Packages and installed lifecycle tests
+CodeQL ────────────────────────────────┐
+Code checks + selected native scope ───┴── Required checks → publication
 ```
 
 CodeQL scans Rust, Python tooling and GitHub Actions. Code checks run
@@ -97,7 +93,10 @@ Clippy/build and QML presentation tests. Every matrix uses `fail-fast: false`
 so one failure does not hide results from other platforms.
 
 `native-checks.yml` is a reusable child with no independent push trigger.
-Its six jobs start only after CodeQL and code checks pass. Tests, release CLI
+Its six jobs start after code checks pass and overlap CodeQL analysis.
+Required checks and publication still require CodeQL success, including partial
+release eligibility. A failed CodeQL run can leave unused native outputs, but
+none can be published. Tests, release CLI
 build/smoke and desktop checks share one runner per platform. This replaces the
 three separate six-platform matrices, reducing hosted runner allocations from
 18 to six while retaining every check on every platform. In full mode, a failed,
@@ -253,8 +252,11 @@ Warnings observed in v0.2.2 that need separate follow-up:
   warnings or remove required platform/dialog plugins to make logs look clean.
 
 Native validation and package builds cache the pinned Qt SDK under `local/qt`.
-Keys include the exact runner image label, architecture and SDK setup-script
-hash. Setup still checks the SDK version and presentation-test executable on
+Keys include the runner label, architecture and an SDK-content fingerprint
+exported by `python scripts/qt-sdk.py cache-key`. The fingerprint covers pinned
+Qt/aqt versions, host layout and requested archives. Setup and cache identity
+share the archive list, so unrelated presentation/test-helper changes do not
+force another SDK download. Setup still checks the SDK version and presentation-test executable on
 cache hits; a hit never skips the build or tests. The Python installer virtual
 environment is not cached.
 
@@ -523,3 +525,37 @@ repair and removes its registered resources on uninstall. Native tests repair
 without re-supplying the checkbox property, then check both shortcuts and product
 registration after removal. Failures list the remaining paths/products.
 See [Microsoft's transitive component guidance](https://learn.microsoft.com/en-us/windows/win32/msi/using-transitive-components).
+
+## Release timing investigation — 2026-11-17
+
+[Run 44101213334](https://github.com/PyPNMApps/raven/actions/runs/44101213334)
+showed the following completed step durations during investigation:
+
+| Step | Measured time |
+| --- | --- |
+| CodeQL job | 4 min 55 s |
+| Code checks job | 48 s |
+| Ubuntu 22.04 Qt check | 7 min 7 s |
+| Windows Qt check | 11 min 35 s |
+| Apple Silicon Qt check | 9 min 38 s |
+| Apple Silicon release packaging | 8 min 11 s |
+| Ubuntu cache export, discarded after exceeding archive budget | 1 min 2 s |
+
+Native jobs previously waited for both global checks. Starting them after code
+checks overlaps about four minutes of that run's CodeQL wait; this is a scheduling
+opportunity, not a measured new-run speedup. The Intel Mac was still in its Qt
+check when these measurements were collected. Queue time and platform speed vary.
+
+Native CI now sets `CARGO_PROFILE_DEV_DEBUG=0`, `CARGO_PROFILE_TEST_DEBUG=0` and
+`CARGO_INCREMENTAL=0`. This removes compiler debug symbols and incremental state
+from CI outputs; test cases, optimization levels, debug assertions and overflow
+checks remain unchanged. Release optimization and installer stripping are unchanged.
+Local development retains its normal debugging settings. Dependency artifact
+fingerprints include these profile settings so incompatible outputs are not reused.
+The 1.5 GB compressed and 6 GB expanded cache limits remain enforced.
+
+The first revised run may be cold because compiler-profile and cache keys change.
+A later compatible tag must demonstrate successful export/restoration and timings
+before claiming a cache speedup or a fixed total release duration. All native
+Rust/QML tests, warnings-as-errors, package budgets, byte verification, and installed
+lifecycle checks remain required. No public release or security gate is bypassed.

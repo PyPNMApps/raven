@@ -152,6 +152,49 @@ class QtEnvironmentTests(unittest.TestCase):
             self.assertEqual(environment['LD_LIBRARY_PATH'].split(os.pathsep)[0], str(self.sdk / 'lib'))
 
 
+class QtSdkCacheKeyTests(unittest.TestCase):
+    """Preserve downloads across tooling edits and invalidate changed SDK inputs."""
+
+    def key(self, root, layout=('linux', 'linux_gcc_64', 'gcc_64')):
+        """Export a key in an isolated Actions file without SDK setup or network."""
+        output = root / 'output'
+        output.write_text('existing=value\n')
+        with patch.dict(os.environ, {'GITHUB_OUTPUT': str(output)}), \
+                patch.object(QT, 'sdk_layout', return_value=layout), \
+                patch.object(QT, 'run', side_effect=AssertionError('No SDK commands')):
+            QT.export_sdk_cache_key()
+        values = dict(line.split('=', 1) for line in output.read_text().splitlines())
+        self.assertEqual(values['existing'], 'value')
+        return values['sdk_key']
+
+    def test_same_sdk_survives_unrelated_check_changes(self):
+        """Presentation behavior changes must not force another SDK download."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            initial = self.key(root)
+            with patch.object(QT, 'qml_check', return_value=None):
+                self.assertEqual(self.key(root), initial)
+            self.assertEqual(len(initial), 64)
+
+    def test_version_layout_and_archives_invalidate_download_cache(self):
+        """Changed SDK contents must never restore an incompatible download."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            initial = self.key(root)
+            for name, value in [('QT_VERSION', '6.9.0'), ('AQT_VERSION', '9.0.0')]:
+                with self.subTest(field=name), patch.object(QT, name, value):
+                    self.assertNotEqual(self.key(root), initial)
+            self.assertNotEqual(self.key(root, ('mac', 'clang_64', 'macos')), initial)
+            with patch.object(QT, 'sdk_archives', return_value=['qtbase']):
+                self.assertNotEqual(self.key(root), initial)
+
+    def test_missing_actions_output_fails_without_installation(self):
+        """Do not silently emit a key to an unrelated path outside Actions."""
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaisesRegex(ValueError, 'GITHUB_OUTPUT missing'):
+                QT.export_sdk_cache_key()
+
+
 class QtDownloadTests(unittest.TestCase):
     """Keep download retries bounded and independent of test/build failures."""
 

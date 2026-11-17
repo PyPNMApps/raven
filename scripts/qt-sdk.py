@@ -5,6 +5,7 @@
 #
 """Set up or check the pinned native Qt SDK on Linux, Windows and macOS."""
 import argparse
+import hashlib
 import os
 from pathlib import Path
 import platform
@@ -42,6 +43,36 @@ def sdk_layout():
     if system == 'Darwin' and machine in ('arm64', 'x86_64'):
         return 'mac', 'clang_64', 'macos'
     raise ValueError(f'Unsupported Qt host: {system}/{machine}')
+
+
+def sdk_archives(host):
+    """Return the pinned Qt archive set shared by setup and cache identity.
+
+    host is the validated aqt host from sdk_layout. Linux also needs ICU.
+    No SDK installation, network request or filesystem changes occur.
+    """
+    archives = ['qtbase', 'qtdeclarative', 'qtshadertools', 'qtsvg', 'qttools']
+    if host == 'linux':
+        archives.append('icu')
+    return archives
+
+
+def export_sdk_cache_key():
+    """Append a content-based SDK cache identity to the Actions output file.
+
+    Include pinned Qt/aqt versions, native layout and requested archives. Changes
+    to test orchestration do not invalidate unchanged SDK downloads. Require
+    GITHUB_OUTPUT; no SDK, compiler, credentials or downloads are needed.
+    Unsupported hosts and output errors propagate without changing system state.
+    """
+    layout = sdk_layout()
+    fields = ['qt-sdk-v1', QT_VERSION, AQT_VERSION, *layout, *sdk_archives(layout[0])]
+    digest = hashlib.sha256('\n'.join(fields).encode()).hexdigest()
+    destination = os.environ.get('GITHUB_OUTPUT')
+    if not destination:
+        raise ValueError('GITHUB_OUTPUT missing; this action requires GitHub Actions')
+    with Path(destination).open('a', encoding='utf-8', newline='\n') as output:
+        output.write(f'sdk_key={digest}\n')
 
 
 def sdk_path():
@@ -173,9 +204,7 @@ def setup(download_attempts=1):
         venv.EnvBuilder(with_pip=True).create(tools)
         python = tools / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
         run([python, '-m', 'pip', 'install', f'aqtinstall=={AQT_VERSION}'])
-        archives = ['qtbase', 'qtdeclarative', 'qtshadertools', 'qtsvg', 'qttools']
-        if host == 'linux':
-            archives.append('icu')
+        archives = sdk_archives(host)
         _download_qt([python, '-m', 'aqt', 'install-qt', host, 'desktop', QT_VERSION,
                       architecture, '-O', ROOT / 'local/qt', '--archives', *archives],
                      download_attempts)
@@ -245,7 +274,7 @@ def check():
 def main():
     """Dispatch SDK checks or CI linker export and report failures clearly."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=('setup', 'check', 'qml-test', 'export-msvc-linker'))
+    parser.add_argument('action', choices=('setup', 'check', 'qml-test', 'export-msvc-linker', 'cache-key'))
     parser.add_argument('--download-attempts', type=int, choices=range(1, 4), default=1,
                         help='Qt archive download attempts for setup (default: 1)')
     args = parser.parse_args()
@@ -258,6 +287,8 @@ def main():
             check()
         elif args.action == 'qml-test':
             qml_check()
+        elif args.action == 'cache-key':
+            export_sdk_cache_key()
         else:
             export_msvc_linker()
     except (ValueError, OSError, subprocess.CalledProcessError) as error:

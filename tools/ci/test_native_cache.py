@@ -93,6 +93,21 @@ class NativeCacheTests(unittest.TestCase):
                      'local/ccache/abc/file'):
             self.assertTrue(CACHE.reusable(path, names), path)
 
+    def test_debug_profile_changes_invalidate_compiled_dependency_cache(self):
+        """Never mix symbols/incremental policies under one native artifact key."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            helper = root / 'scripts/qt-sdk.py'
+            helper.parent.mkdir()
+            helper.write_text('synthetic pinned SDK helper')
+            with patch.object(CACHE, 'ROOT', root), \
+                    patch.object(CACHE, 'run', return_value='synthetic compiler'), \
+                    patch.dict(os.environ, {}, clear=True):
+                initial = CACHE.identity()
+                for key in ('CARGO_PROFILE_DEV_DEBUG', 'CARGO_PROFILE_TEST_DEBUG', 'CARGO_INCREMENTAL'):
+                    with self.subTest(setting=key), patch.dict(os.environ, {key: '0'}):
+                        self.assertNotEqual(CACHE.identity(), initial)
+
     def test_fingerprint_mismatch_keeps_current_outputs(self):
         """A toolchain/ABI mismatch is a normal cold fallback, never a test skip."""
         with tempfile.TemporaryDirectory() as directory:

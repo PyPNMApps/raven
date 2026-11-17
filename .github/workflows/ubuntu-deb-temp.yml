@@ -100,11 +100,14 @@ jobs:
         run: python3 scripts/ci/native_cache.py restore --directory local/previous-native-cache
       - name: Initialize compiler cache statistics
         run: ccache --zero-stats
+      - name: Identify pinned native Qt SDK
+        id: qt-sdk-key
+        run: python scripts/qt-sdk.py cache-key
       - name: Cache pinned native Qt SDK
         uses: actions/cache@v5
         with:
           path: local/qt
-          key: qt-sdk-ubuntu-22.04-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
+          key: qt-sdk-ubuntu-22.04-${{ runner.arch }}-${{ steps.qt-sdk-key.outputs.sdk_key }}
       - name: Prepare pinned native Qt SDK
         run: python scripts/qt-sdk.py setup --download-attempts 3
       - name: Run workspace, CLI, tooling and native Qt checks

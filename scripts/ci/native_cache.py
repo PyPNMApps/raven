@@ -31,9 +31,11 @@ def run(*arguments):
 
 def identity():
     """Fingerprint the pinned compiler/Qt setup and runner ABI, not app versions."""
-    fields = ['native-cache-v1', platform.system(), platform.machine(),
+    fields = ['native-cache-v2', platform.system(), platform.machine(),
               os.environ.get('ImageOS', ''), os.environ.get('ImageVersion', ''), run('rustc', '-Vv'),
-              run('c++', '--version'), (ROOT / 'scripts/qt-sdk.py').read_text()]
+              run('c++', '--version'), (ROOT / 'scripts/qt-sdk.py').read_text(),
+              *(os.environ.get(key, '') for key in
+                ('CARGO_PROFILE_DEV_DEBUG', 'CARGO_PROFILE_TEST_DEBUG', 'CARGO_INCREMENTAL'))]
     return hashlib.sha256('\n'.join(fields).encode()).hexdigest()
 
 

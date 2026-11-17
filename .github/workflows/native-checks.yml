@@ -24,6 +24,11 @@ jobs:
         os: ${{ fromJSON(inputs.runners) }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      # Keep assertions and all tests; omit bulky compiler debugging artifacts.
+      CARGO_PROFILE_DEV_DEBUG: '0'
+      CARGO_PROFILE_TEST_DEBUG: '0'
+      CARGO_INCREMENTAL: '0'
     defaults:
       run:
         shell: bash
@@ -145,11 +150,14 @@ jobs:
           "$binary" --help
           "$binary" tests/fixtures/pypnm/tests/files/rxmer.bin --output "$RUNNER_TEMP/rxmer.json"
           test -s "$RUNNER_TEMP/rxmer.json"
+      - name: Identify pinned native Qt SDK
+        id: qt-sdk-key
+        run: python scripts/qt-sdk.py cache-key
       - name: Cache pinned native Qt SDK
         uses: actions/cache@v5
         with:
           path: local/qt
-          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
+          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ steps.qt-sdk-key.outputs.sdk_key }}
       - name: Prepare pinned native Qt SDK
         run: python scripts/qt-sdk.py setup --download-attempts 3
       - name: Check Qt adapter and presentation

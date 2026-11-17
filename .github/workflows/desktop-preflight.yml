@@ -28,12 +28,16 @@ jobs:
         run: python -m unittest discover -s scripts/tests -p 'test_qt_sdk.py'
       - name: Test version and packaging tools
         run: python -m unittest discover -s tools/release -p 'test_*.py'
+      - name: Identify pinned native Qt SDK
+        if: runner.os == 'macOS'
+        id: qt-sdk-key
+        run: python scripts/qt-sdk.py cache-key
       - name: Cache pinned native Qt SDK
         if: runner.os == 'macOS'
         uses: actions/cache@v5
         with:
           path: local/qt
-          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ hashFiles('scripts/qt-sdk.py') }}
+          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ steps.qt-sdk-key.outputs.sdk_key }}
       - name: Prepare pinned native Qt SDK
         if: runner.os == 'macOS'
         run: python scripts/qt-sdk.py setup --download-attempts 3
