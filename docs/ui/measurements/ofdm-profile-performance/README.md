@@ -25,7 +25,8 @@ not modify captures. This popup currently accepts binary PNM captures.
 
 The main graph overlays measured RxMER and the checked profiles' **Shannon
 references (dB)**. That reference shows the ideal relationship to modulation size;
-it is not a guaranteed FEC threshold. PLC carriers are shaded. Drag a section of
+it is not a guaranteed FEC threshold. PLC carriers use pale-yellow shading in dark mode and a warmer amber-yellow
+shade in light mode to stand out against the white graph. Drag a section of
 the plot to zoom and double-click to restore the full frequency range.
 
 Use the workspace's **Profiles to test** checkboxes to choose any combination of

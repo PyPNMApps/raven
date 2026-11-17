@@ -315,41 +315,47 @@ ApplicationWindow {
                     mipmap: true
                     Accessible.role: Accessible.Graphic
                     Accessible.name: "PyPNMApps RAVEN"
-                    // Blend only the artwork's outer padding into the live theme.
-                    // Keep the original README image and logo lettering intact.
+
+                    // Fade the displayed image edges, not its wider layout container.
+                    // Preserve original artwork and blend into either live sidebar theme.
                     readonly property color clearSidebar: Qt.rgba(appTheme.sidebar.r, appTheme.sidebar.g, appTheme.sidebar.b, 0)
-                    Rectangle {
-                        anchors { left: parent.left; right: parent.right; top: parent.top }
-                        height: parent.height * 0.20
-                        gradient: Gradient {
-                            GradientStop { position: 0; color: appTheme.sidebar }
-                            GradientStop { position: 1; color: brandLogo.clearSidebar }
+                    Item {
+                        anchors.centerIn: parent
+                        width: brandLogo.paintedWidth
+                        height: brandLogo.paintedHeight
+                        Rectangle {
+                            anchors { left: parent.left; right: parent.right; top: parent.top }
+                            height: parent.height * 0.20
+                            gradient: Gradient {
+                                GradientStop { position: 0; color: appTheme.sidebar }
+                                GradientStop { position: 1; color: brandLogo.clearSidebar }
+                            }
                         }
-                    }
-                    Rectangle {
-                        anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                        height: parent.height * 0.20
-                        gradient: Gradient {
-                            GradientStop { position: 0; color: brandLogo.clearSidebar }
-                            GradientStop { position: 1; color: appTheme.sidebar }
+                        Rectangle {
+                            anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                            height: parent.height * 0.20
+                            gradient: Gradient {
+                                GradientStop { position: 0; color: brandLogo.clearSidebar }
+                                GradientStop { position: 1; color: appTheme.sidebar }
+                            }
                         }
-                    }
-                    Rectangle {
-                        anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-                        width: parent.width * 0.05
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: appTheme.sidebar }
-                            GradientStop { position: 1; color: brandLogo.clearSidebar }
+                        Rectangle {
+                            anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
+                            width: parent.width * 0.05
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0; color: appTheme.sidebar }
+                                GradientStop { position: 1; color: brandLogo.clearSidebar }
+                            }
                         }
-                    }
-                    Rectangle {
-                        anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
-                        width: parent.width * 0.05
-                        gradient: Gradient {
-                            orientation: Gradient.Horizontal
-                            GradientStop { position: 0; color: brandLogo.clearSidebar }
-                            GradientStop { position: 1; color: appTheme.sidebar }
+                        Rectangle {
+                            anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
+                            width: parent.width * 0.05
+                            gradient: Gradient {
+                                orientation: Gradient.Horizontal
+                                GradientStop { position: 0; color: brandLogo.clearSidebar }
+                                GradientStop { position: 1; color: appTheme.sidebar }
+                            }
                         }
                     }
                 }

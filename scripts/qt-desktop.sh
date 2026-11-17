@@ -4,14 +4,28 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Build/run/check the Qt prototype with a local or explicitly selected Qt SDK.
-# Arguments: run (default), build, check; subsequent run arguments go to the app.
+# Arguments: run (default), --skip-build, build, check; run arguments go to the app.
 # No downloads, system installation or persistent environment changes occur.
 set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 if [[ "${1:-}" == --help ]]; then
-  echo "Usage: scripts/qt-desktop.sh [run|build|check]"
+  echo "Usage: scripts/qt-desktop.sh [run [--skip-build]|--skip-build|build|check] [arguments...]"
   exit 0
+fi
+ACTION="${1:-run}"
+SKIP_BUILD=0
+if [[ $# -gt 0 ]]; then shift; fi
+if [[ "${ACTION}" == --skip-build ]]; then
+  ACTION=run
+  SKIP_BUILD=1
+elif [[ "${1:-}" == --skip-build ]]; then
+  if [[ "${ACTION}" != run ]]; then
+    echo "--skip-build is available only when running the viewer." >&2
+    exit 2
+  fi
+  SKIP_BUILD=1
+  shift
 fi
 QT_SDK_DIR="${QT_SDK_DIR:-${PROJECT_DIR}/local/qt/6.8.3/gcc_64}"
 if [[ ! -x "${QT_SDK_DIR}/bin/qmake" ]]; then
@@ -24,8 +38,6 @@ export QMAKE="${QT_SDK_DIR}/bin/qmake"
 export QT_VERSION_MAJOR=6
 export QT_QUICK_CONTROLS_STYLE=Fusion
 MANIFEST="${PROJECT_DIR}/apps/qt/Cargo.toml"
-ACTION="${1:-run}"
-if [[ $# -gt 0 ]]; then shift; fi
 if [[ -x "${PROJECT_DIR}/local/cargo/bin/cargo" ]]; then
   CARGO_COMMAND=("${SCRIPT_DIR}/cargo-local.sh")
 else
@@ -55,11 +67,20 @@ case "${ACTION}" in
       echo "For SSH, use working X11 forwarding; see docs/development/qt.md." >&2
       exit 1
     fi
+    if [[ "${SKIP_BUILD}" == 1 ]]; then
+      VIEWER_BINARY="${PROJECT_DIR}/apps/qt/target/debug/raven"
+      if [[ ! -x "${VIEWER_BINARY}" ]]; then
+        echo "Viewer binary missing: ${VIEWER_BINARY}" >&2
+        echo "Run ./scripts/qt-desktop.sh build first." >&2
+        exit 1
+      fi
+      exec "${VIEWER_BINARY}" "$@"
+    fi
     exec "${CARGO_COMMAND[@]}" run --manifest-path "${MANIFEST}" --locked -- "$@"
     ;;
   build) exec "${CARGO_COMMAND[@]}" build --manifest-path "${MANIFEST}" --locked "$@" ;;
   check)
     python3 "${SCRIPT_DIR}/qt-sdk.py" check
     ;;
-  *) printf 'Usage: %s [run|build|check]\n' "$0" >&2; exit 2 ;;
+  *) printf 'Usage: %s [run [--skip-build]|--skip-build|build|check]\n' "$0" >&2; exit 2 ;;
 esac

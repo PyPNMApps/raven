@@ -207,8 +207,8 @@ ColumnLayout {
                 const first = Math.max(firstHz, band.first_hz)
                 const last = Math.min(lastHz, band.last_hz)
                 if (last <= first) continue
-                context.fillStyle = chart.theme.accent
-                context.globalAlpha = 0.13
+                context.fillStyle = chart.theme.plcBandColor
+                context.globalAlpha = chart.theme.plcBandOpacity
                 context.fillRect(leftMargin + (first-firstHz)/(lastHz-firstHz)*plotWidth,
                     topMargin, (last-first)/(lastHz-firstHz)*plotWidth, plotHeight)
                 context.globalAlpha = 1

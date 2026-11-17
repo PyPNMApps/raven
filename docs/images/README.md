@@ -21,3 +21,8 @@ locations. Packaging uses `packaging/windows/raven.ico` and
 The source ZIP is retained locally in ignored `development/raven-rebrand/`.
 Application screenshots are captured from the actual Qt window; see
 [the screenshot guide](../development/screenshots.md).
+
+The sidebar blends the displayed logo edges into the active theme in QML. Fade
+bounds follow `Image.paintedWidth` and `paintedHeight` so aspect-fit padding cannot
+leave a rectangular seam. Verify both dark and light themes after changing logo
+layout; preserve the original README PNGs and artwork lettering.

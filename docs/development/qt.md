@@ -70,6 +70,18 @@ scripts/qt-desktop.sh build
 scripts/qt-desktop.sh check
 ```
 
+To launch the existing development binary without invoking Cargo:
+
+```bash
+./scripts/qt-desktop.sh --skip-build
+```
+
+This retains Qt library setup and VM display/session discovery. It opens the
+last built `apps/qt/target/debug/raven`; source edits are visible only after a
+build. If the binary is missing, the launcher asks you to build it first.
+`run --skip-build` is equivalent; following arguments go directly to the app.
+The flag does not apply to `build` or `check`.
+
 ## Windows and macOS
 
 Install Qt 6.8.3 with Declarative/Quick and tools, a native C++ compiler (MSVC

@@ -95,6 +95,11 @@ imports, tests and current source references when moving files.
 
 ## Coding style
 
+Before adding or changing code, review and apply the canonical skills relevant
+to the task, including their documentation and validation requirements. Identify
+newly applied skills in the progress update. Keep changes scoped to the task;
+do not load or apply unrelated skills merely because they are available.
+
 - Apply the coding-style skill for source, tests and scripts.
 - Use the full multiline copyright/SPDX file banner from coding-style, not a
   standalone SPDX line. Preserve upstream notices and the component license.

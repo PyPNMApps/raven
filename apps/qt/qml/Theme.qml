@@ -6,6 +6,8 @@ import QtQuick
 
 QtObject {
     // Chart preferences share the existing session lifetime of Appearance.
+    readonly property color plcBandColor: dark ? "#fff3b0" : "#f2c94c"
+    readonly property real plcBandOpacity: dark ? 0.24 : 0.35
     readonly property real defaultChartLineWidth: 0.75
     property real chartLineWidth: defaultChartLineWidth
     property string traceColorOverride: ""

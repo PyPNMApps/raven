@@ -40,7 +40,6 @@ ColumnLayout {
         Layout.fillWidth:true;Layout.preferredHeight:childrenRect.height;spacing:8
         visible:!!workspace.chart.viewport
         Repeater { model:workspace.chart.chips || [];MetadataChip { required property var modelData;theme:workspace.theme;title:modelData.title;value:modelData.value } }
-        MetadataChip { theme:workspace.theme;title:"Profiles";value:(workspace.chart.selected_profiles || []).join(", ") || "None" }
         MetadataChip { theme:workspace.theme;title:"Receiver";value:workspace.chart.mce ? "MCE" : workspace.chart.supplied_channel ? "Supplied CH-EST" : "Unity channel" }
     }
     RowLayout {

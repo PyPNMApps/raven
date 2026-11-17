@@ -32,6 +32,8 @@ repository root:
 ```
 
 Qt setup is needed once; subsequent launches use `./scripts/qt-desktop.sh`.
+Use `./scripts/qt-desktop.sh --skip-build` to open the last built viewer without
+invoking Cargo; rebuild first when you need to see source changes.
 For VS Code Remote or SSH, see [display connection setup](../development/qt.md#no-display-connection).
 The current UI has been exercised on Ubuntu 22.04 x86_64. Other native platforms
 and packaged installation remain unverified.
