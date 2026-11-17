@@ -1064,7 +1064,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "pnm"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "delaunator",
  "serde",
@@ -1074,7 +1074,7 @@ dependencies = [
 
 [[package]]
 name = "pnm-fixtures"
-version = "0.3.9"
+version = "0.3.10"
 
 [[package]]
 name = "portable-atomic"
@@ -1182,7 +1182,7 @@ dependencies = [
 
 [[package]]
 name = "raven-desktop"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "cxx",
  "cxx-gen",
@@ -1696,7 +1696,7 @@ dependencies = [
 
 [[package]]
 name = "viewer"
-version = "0.3.9"
+version = "0.3.10"
 dependencies = [
  "docsis-ofdm-fec",
  "flate2",
