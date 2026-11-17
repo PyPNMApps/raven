@@ -1,0 +1,47 @@
+{
+  "repository": "https://github.com/mgarcia01752/merlin",
+  "revision": "096d5a476194d4f2e016863d723b225257bb6037",
+  "source_directory": "examples/workbench/cl-192mhz-8mhz-notch",
+  "files": [
+    {
+      "file": "modulation_profile.json",
+      "bytes": 27988,
+      "sha256": "278ce685a7bd72a118c35ac8c1c3d7041d25fc55cd238bf59f4771ab005ee0d2"
+    },
+    {
+      "file": "rxmer-flat-42db.json",
+      "bytes": 76391,
+      "sha256": "0e266bf8d3e13c1e7dfbe95ceaa7d10e270416bf4fcfe1ace7dc2297b3cc01c2"
+    },
+    {
+      "file": "rxmer-notch-10db.json",
+      "bytes": 76391,
+      "sha256": "4c664fccbf46d4810ec69c69a4e6b8bb3cefb9a26457765e504db0aa64e149dc"
+    },
+    {
+      "file": "channel-estimation-adapted.json",
+      "bytes": 495724,
+      "sha256": "d98aacbded4b5c9199b74ea5b9136f830a3c46e5e2e316671ba6859dbafc78df"
+    },
+    {
+      "file": "channel-estimation-provenance.json",
+      "bytes": 782,
+      "sha256": "31418d45a770271c1c0df618b74d9ed4da9d561b4d6fd56679461be993ece8cd"
+    },
+    {
+      "file": "provenance.json",
+      "bytes": 1836,
+      "sha256": "49510aa132b1855cd3c3e83b7649130122063204a7bdcede71af485dc222d24e"
+    },
+    {
+      "file": "LICENSE",
+      "bytes": 11344,
+      "sha256": "0aa9437d384f76ed211727b2136f12ea78a657eda4b4661e6d3fac0ba2656597"
+    },
+    {
+      "file": "NOTICE",
+      "bytes": 861,
+      "sha256": "113e72107b5d21070773e542782b77a186ad6c5841fbf73b70f8b6bffbb060fb"
+    }
+  ]
+}

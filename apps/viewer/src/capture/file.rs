@@ -129,6 +129,13 @@ impl Capture {
             _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation Profile, Constellation Display and current/last-update Upstream Pre-EQ captures. Other formats remain available in pnm-decode.")),
         }
     }
+    /// Borrows the source identity and unchanged bytes for internal adapters.
+    /// # Returns
+    /// Display filename and bytes with this capture's lifetime; no I/O or copy.
+    #[cfg(feature = "merlin-fec")]
+    pub(crate) fn original_source(&self) -> (&str, &[u8]) {
+        (&self.filename, &self.bytes)
+    }
     fn parsed(&self) -> Result<CmDsOfdmRxMer<'_>, Diagnostic> {
         match PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())? {
             DecodedPnm::RxMer(capture) => Ok(capture),

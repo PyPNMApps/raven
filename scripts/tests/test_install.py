@@ -23,6 +23,7 @@ class InstallerTests(unittest.TestCase):
         self.addCleanup(self.workspace.cleanup)
         self.project = Path(self.workspace.name)
         for relative in ("install.sh", "scripts/install-development.sh",
+                         "scripts/fetch-development-dependencies.sh", "scripts/cargo-local.sh",
                          "rust-toolchain.toml"):
             destination = self.project / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
@@ -102,11 +103,33 @@ class InstallerTests(unittest.TestCase):
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text("#!/bin/bash\nexit 0\n")
         target.chmod(0o755)
+        cargo = self.project / "local/cargo/bin/cargo"
+        cargo.write_text('#!/bin/bash\nprintf "%s\\n" "$*" >> "' + str(self.project / 'fetches') + '"\n')
+        cargo.chmod(0o755)
         for attempt in range(2):
             result = self.run_installer("--development")
             self.assertEqual(result.returncode, 0, (attempt, result.stderr))
         self.assertFalse((self.project / "forbidden").exists())
         self.assertEqual(list((self.project / "local").glob("development-install.*")), [])
+        commands = (self.project / "fetches").read_text().splitlines()
+        self.assertEqual(commands, [
+            f"fetch --manifest-path {self.project / 'Cargo.toml'} --locked",
+            f"fetch --manifest-path {self.project / 'apps/qt/Cargo.toml'} --locked",
+        ] * 2)
+
+    @unittest.skipIf(os.geteuid() == 0, "Installer intentionally rejects root")
+    def test_locked_fetch_failure_stops_development_setup(self):
+        """Never report setup ready when pinned sources cannot be fetched."""
+        tools = self.project / "local/cargo/bin"
+        tools.mkdir(parents=True)
+        for name, code in (("rustup", 0), ("cargo", 37)):
+            command = tools / name
+            command.write_text(f"#!/bin/bash\nexit {code}\n")
+            command.chmod(0o755)
+        result = self.run_installer("--development")
+        self.assertEqual(result.returncode, 37, result.stderr)
+        self.assertNotIn("locked sources ready", result.stdout)
+        self.assertFalse((self.project / "forbidden").exists())
 
 
 if __name__ == "__main__":

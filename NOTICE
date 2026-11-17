@@ -9,3 +9,14 @@ file and the LICENSE file, and include the following acknowledgment in a locatio
 appropriate for third-party notices (for example, in documentation, README, or UI credits):
 
   "PyPNM - Proactive Network Maintenance Toolkit"
+
+MERLIN optional FEC engine
+--------------------------
+The optional Rust FEC adapter uses MERLIN (docsis-ofdm-fec), licensed Apache-2.0,
+from https://github.com/mgarcia01752/merlin. Retain the upstream notices and
+license texts under LICENSES/merlin when distributing this integration.
+SOURCE.txt identifies the selected tag and exact commit. The preserved NOTICE
+records ldpc-toolbox provenance, AFF3CT-derived BCH algorithm attribution and
+PyPNM QAM resource acknowledgment. The AFF3CT MIT notice is preserved in
+AFF3CT-LICENSE-MIT.txt. MERLIN's separate Qt application is not consumed.
+These upstream terms do not change RAVEN's component licenses.

@@ -29,3 +29,10 @@ them. See NOTICE and tests/fixtures/pypnm/LICENSE and NOTICE for PyPNM material.
 
 This component split follows the original PNM Viewer bootstrap requirements,
 preserved in skills/pnm-viewer-development/references/bootstrap-guide.md.
+
+Optional MERLIN source dependency
+---------------------------------
+MERLIN's engine retains Apache-2.0 and its third-party notices. See
+LICENSES/merlin/ for the upstream license, NOTICE, AFF3CT MIT notice,
+QAM resource terms and selected source revision. These files are refreshed
+by tools/development/update-merlin.py; they do not relicense upstream work.

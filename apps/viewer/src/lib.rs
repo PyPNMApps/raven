@@ -7,6 +7,8 @@ pub mod capture;
 pub mod identity;
 pub mod measurements;
 pub mod resources;
+#[cfg(feature = "merlin-fec")]
+pub mod simulation;
 pub mod support;
 pub mod updates;
 

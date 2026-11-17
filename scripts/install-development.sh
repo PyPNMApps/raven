@@ -97,6 +97,7 @@ if [[ "$MODE" == check ]]; then
   exit $?
 fi
 if [[ "$MODE" == dry-run ]]; then
+  bash "${SCRIPT_DIR}/fetch-development-dependencies.sh" --dry-run
   printf 'Would install missing Qt/build packages and Rust with rustfmt/Clippy.\nLocal tools: %s/local/; run scripts/setup-qt.sh separately for the Qt SDK.\n' "$PROJECT_DIR"
   exit 0
 fi
@@ -118,5 +119,6 @@ if [[ "$RUST_READY" != 1 ]]; then
   fi
   "${CARGO_HOME}/bin/rustup" toolchain install "$RUST_VERSION" --profile minimal --component rustfmt --component clippy
 fi
+bash "${SCRIPT_DIR}/fetch-development-dependencies.sh"
 bash "${PROJECT_DIR}/install.sh" --development --check
-printf 'Development tools ready. Run scripts/cargo-local.sh test --workspace --locked.\n'
+printf 'Development tools and locked sources ready. Run scripts/cargo-local.sh test --workspace --features viewer/merlin-fec --locked.\n'

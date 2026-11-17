@@ -125,7 +125,7 @@ jobs:
       - name: Test workspace and CLI
         run: |
           python tools/maintenance/rust_clean.py --if-disk-full
-          cargo test --workspace --locked
+          cargo test --workspace --features viewer/merlin-fec --locked
       - name: Test version and packaging tools
         run: python -m unittest discover -s tools/release -p 'test_*.py'
       - name: Test Linux installer and push tooling

@@ -1,0 +1,3 @@
+https://github.com/mgarcia01752/merlin.git
+Tag: v0.4.0
+Commit: 096d5a476194d4f2e016863d723b225257bb6037

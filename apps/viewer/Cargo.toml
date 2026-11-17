@@ -5,7 +5,12 @@ edition = "2021"
 rust-version = "1.85"
 license = "GPL-3.0-only"
 
+[features]
+default = []
+merlin-fec = ["dep:merlin"]
+
 [dependencies]
+merlin = { package = "docsis-ofdm-fec", git = "https://github.com/mgarcia01752/merlin.git", rev = "096d5a476194d4f2e016863d723b225257bb6037", features = ["high-level-api"], optional = true }
 pnm = { path = "../../crates/core" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -26,3 +31,7 @@ pnm-fixtures = { path = "../../tests/fixtures" }
 
 [build-dependencies]
 serde_json = "1"
+
+[[example]]
+name = "fec_notch"
+required-features = ["merlin-fec"]

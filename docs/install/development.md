@@ -37,7 +37,7 @@ exercised on Ubuntu 22.04 x86_64; other combinations require their own evidence.
 Missing OS packages are installed with `sudo apt-get update` and
 `sudo apt-get install -y --no-install-recommends`. Sudo may request your password.
 Configured Ubuntu repositories must provide the packages; the installer adds no
-repositories. Network access is required for missing tools. Package-manager or
+repositories. Network access is required for missing tools and Rust dependency sources. Package-manager or
 download failures stop setup and propagate a nonzero exit status.
 
 ## Dependencies and ownership
@@ -65,6 +65,27 @@ package versions follow the configured Ubuntu repositories. No Node, npm,
 WebKit or WebView toolchain is required. Previously installed system packages
 and old local tool caches are not automatically uninstalled.
 
+## Locked Rust dependency sources
+
+After Rust setup, development installation calls
+`scripts/fetch-development-dependencies.sh`. This fetches both workspace and Qt
+sources with `cargo fetch --locked`, including the optional MERLIN FEC engine
+pinned in `apps/viewer/Cargo.toml`. Cargo keeps sources in `local/cargo`; it does
+not create a separate MERLIN checkout or enable FEC in the desktop application.
+Existing cached sources are reused. Missing sources require network access.
+
+The helper also runs independently:
+
+```bash
+scripts/fetch-development-dependencies.sh --dry-run
+scripts/fetch-development-dependencies.sh
+```
+
+`--development --check` checks host packages and Rust tools only; it does not
+verify dependency-cache completeness or fetch sources. The dry run and check
+modes remain read-only. See the [MERLIN adapter design](../development/merlin-fec.md)
+for the pinned revision, release-update helper and feature-enabled test commands.
+
 ## Use the tools
 
 ```bash
@@ -80,9 +101,9 @@ For native Windows/macOS setup, use the [Qt guide](../development/qt.md#windows-
 ## Validate installer changes
 
 ```bash
-bash -n install.sh scripts/install-development.sh scripts/cargo-local.sh
+bash -n install.sh scripts/install-development.sh scripts/cargo-local.sh scripts/fetch-development-dependencies.sh
 python3 scripts/tests/test_install.py
-shellcheck install.sh scripts/install-development.sh scripts/cargo-local.sh
+shellcheck install.sh scripts/install-development.sh scripts/cargo-local.sh scripts/fetch-development-dependencies.sh
 ./install.sh --development --dry-run
 ./install.sh --development --check
 ```
