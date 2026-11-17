@@ -217,7 +217,7 @@ every profile on and off, checking the exact routed index after each event.
 Native Qt checks run QML before native compilation and preserve explicit text,
 JUnit XML and process logs under `local/qt-test-results/`. CI uploads those files
 as `qml-tests-<runner>` artifacts even when the check fails. They are retained
-for 14 days. See [isolated checks](qt.md#qml-reports-and-isolated-checks).
+for 3 days. See [isolated checks](qt.md#qml-reports-and-isolated-checks).
 
 In [the v0.1.4 Windows job](https://github.com/PyPNMApps/PNM-Viewer-Toolkit/actions/runs/41926580364/job/126914502859),
 workspace tests, the CLI build/smoke, Qt Rust tests, Clippy and native build all
@@ -559,3 +559,23 @@ A later compatible tag must demonstrate successful export/restoration and timing
 before claiming a cache speedup or a fixed total release duration. All native
 Rust/QML tests, warnings-as-errors, package budgets, byte verification, and installed
 lifecycle checks remain required. No public release or security gate is bypassed.
+
+
+## Actions artifact storage retention
+
+Keep transient Actions uploads short-lived. Native release and temporary Ubuntu
+package artifacts expire after **1 day**; QML reports, installer diagnostics,
+preflight reports and DEB lifecycle logs after **3 days**. Reusable native
+dependency artifacts expire after **7 days** to preserve reuse between tags.
+These settings affect new uploads after the workflow changes are pushed.
+
+Published GitHub Release installers are separate from Actions artifacts and
+remain available when transient artifacts expire. Download or publish packages
+promptly; rerunning only a downstream job after its input artifact expires
+requires a fresh full workflow run. These retention settings do not change
+GitHub Actions dependency-cache policies.
+
+Deleting existing artifacts reduces current stored bytes and future accrual;
+it does not erase storage usage already accrued during the billing cycle.
+GitHub may take 6–12 hours to refresh its storage meter. See
+[GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).

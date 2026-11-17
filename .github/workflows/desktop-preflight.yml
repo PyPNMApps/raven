@@ -51,4 +51,4 @@ jobs:
           name: preflight-qml-${{ matrix.os }}
           path: local/qt-test-results/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3

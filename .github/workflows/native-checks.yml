@@ -169,7 +169,7 @@ jobs:
           name: qml-tests-${{ matrix.os }}
           path: local/qt-test-results/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
       - name: Build native release packages
         if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os != 'Linux')
@@ -193,7 +193,7 @@ jobs:
           name: native-${{ matrix.os }}
           path: dist/release/*
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 1
       - name: Export native dependency cache
         if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os == 'macOS')
         id: native-cache-export
@@ -206,7 +206,7 @@ jobs:
           path: local/native-cache-artifact/*
           compression-level: 0
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
       - name: Retain native installer diagnostics
         if: always() && inputs.package_release
         uses: actions/upload-artifact@v6
@@ -219,7 +219,7 @@ jobs:
             dist/release-stage/installer.wixpdb
             dist/release/*.json
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
 
       - name: Report native compiler cache statistics
         if: always() && (runner.os == 'Linux' || runner.os == 'macOS')
@@ -259,3 +259,4 @@ jobs:
           name: lifecycle-${{ matrix.os }}
           path: lifecycle.log
           if-no-files-found: warn
+          retention-days: 3

@@ -128,7 +128,7 @@ jobs:
           name: ubuntu-22.04-deb-${{ github.ref_name }}
           path: dist/release/*
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 1
       - name: Export reusable native build outputs
         id: native-cache-export
         run: python3 scripts/ci/native_cache.py pack
@@ -140,7 +140,7 @@ jobs:
           path: local/native-cache-artifact/*
           compression-level: 0
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7
       - name: Report compiler cache statistics
         if: always()
         run: ccache --show-stats
@@ -155,7 +155,7 @@ jobs:
             local/qt-test-results/
             dist/release/*.json
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 3
       - name: Explain temporary artifact scope
         env:
           RELEASE_TAG: ${{ github.ref_name }}
