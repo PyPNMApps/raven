@@ -28,6 +28,7 @@ ApplicationWindow {
     SpectrumCollectionBackend { id: spectrumBackend }
     ProfilePerformanceBackend { id: ofdmBackend }
     UpdateBackend { id: updateBackend }
+    AiBackend { id: aiBackend }
     readonly property url initialCaptureFolder: {
         const demos = backend.examples_folder()
         if (demos.toString().length > 0) {
@@ -47,16 +48,26 @@ ApplicationWindow {
         exportCaptureDialog: saveDialog
     }
     OfdmProfileSmoke {
+        aiService: aiBackend
         service: ofdmBackend
         workspace: ofdmWorkspace
         surface: captureSurface
         applicationWindow: window
         theme: appTheme
     }
+    AiSetupSmoke {
+        service: aiBackend
+        settingsDialog: aiServices
+        assistanceChip: aiAssistanceChip
+        systemDialog: systemDialog
+        systemAiAction: systemAiSettingsAction
+        theme: appTheme
+        surface: window.contentItem.parent
+    }
     Component.onCompleted: {
         backend.set_dark_icon(appTheme.dark)
         // Packaged smoke checks stay offline; normal launch checks once, asynchronously.
-        if (Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0) {
+        if (Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0 && Qt.application.arguments.indexOf("--ai-setup-smoke") < 0) {
             Qt.callLater(function() { updateBackend.check_updates() })
         }
     }
@@ -108,7 +119,7 @@ ApplicationWindow {
     readonly property var preEqAttachment: JSON.parse(comparisonBackend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(comparisonBackend.pre_eq_json)
     property bool navigationVisible: true
-    readonly property bool blocked: ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aiServices.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -235,6 +246,14 @@ ApplicationWindow {
             ToolButton { text: "About"; enabled: !window.blocked; onClicked: aboutDialog.open() }
             Item { Layout.fillWidth: true }
             BusyIndicator { running: backend.busy; visible: running; Layout.preferredWidth: 24; Layout.preferredHeight: 24; Accessible.name: "Processing capture" }
+            AiAssistanceChip {
+                id: aiAssistanceChip
+                theme: appTheme
+                configuration: JSON.parse(aiBackend.state_json)
+                demoMode: aiBackend.demo_mode
+                enabled: !window.blocked
+                onClicked: aiServices.open()
+            }
             UpdateChip {
                 updates: updateBackend
                 enabled: !window.blocked
@@ -270,8 +289,21 @@ ApplicationWindow {
                 onActivated: appTheme.preference = currentIndex
             }
             Label { text: "System follows your desktop appearance.\nPreferences apply to this session."; color: appTheme.muted }
+            ThemeButton {
+                id: systemAiSettingsAction
+                objectName: "systemAiSettings"
+                theme: appTheme
+                text: "AI…"
+                Layout.fillWidth: true
+                onClicked: { systemDialog.close(); aiServices.open() }
+            }
         }
     }
+    Connections {
+        target: ofdmBackend
+        function onSource_idChanged() { aiBackend.context_changed(ofdmBackend.source_id) }
+    }
+    AiServicesDialog { id: aiServices; theme: appTheme; service: aiBackend; parent: Overlay.overlay }
     ChartSettingsDialog { id: chartSettings; theme: appTheme; anchors.centerIn: parent }
     AboutDialog {
         id: aboutDialog
@@ -320,6 +352,7 @@ ApplicationWindow {
 
                     // Fade the displayed image edges, not its wider layout container.
                     // Preserve original artwork and blend into either live sidebar theme.
+                    readonly property color softSidebar: Qt.rgba(appTheme.sidebar.r, appTheme.sidebar.g, appTheme.sidebar.b, 0.55)
                     readonly property color clearSidebar: Qt.rgba(appTheme.sidebar.r, appTheme.sidebar.g, appTheme.sidebar.b, 0)
                     Item {
                         anchors.centerIn: parent
@@ -327,35 +360,43 @@ ApplicationWindow {
                         height: brandLogo.paintedHeight
                         Rectangle {
                             anchors { left: parent.left; right: parent.right; top: parent.top }
-                            height: parent.height * 0.20
+                            height: parent.height * 0.30
                             gradient: Gradient {
                                 GradientStop { position: 0; color: appTheme.sidebar }
+                                GradientStop { position: 0.15; color: appTheme.sidebar }
+                                GradientStop { position: 0.55; color: brandLogo.softSidebar }
                                 GradientStop { position: 1; color: brandLogo.clearSidebar }
                             }
                         }
                         Rectangle {
                             anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-                            height: parent.height * 0.20
+                            height: parent.height * 0.30
                             gradient: Gradient {
                                 GradientStop { position: 0; color: brandLogo.clearSidebar }
+                                GradientStop { position: 0.45; color: brandLogo.softSidebar }
+                                GradientStop { position: 0.85; color: appTheme.sidebar }
                                 GradientStop { position: 1; color: appTheme.sidebar }
                             }
                         }
                         Rectangle {
                             anchors { left: parent.left; top: parent.top; bottom: parent.bottom }
-                            width: parent.width * 0.05
+                            width: parent.width * 0.14
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
                                 GradientStop { position: 0; color: appTheme.sidebar }
+                                GradientStop { position: 0.15; color: appTheme.sidebar }
+                                GradientStop { position: 0.55; color: brandLogo.softSidebar }
                                 GradientStop { position: 1; color: brandLogo.clearSidebar }
                             }
                         }
                         Rectangle {
                             anchors { right: parent.right; top: parent.top; bottom: parent.bottom }
-                            width: parent.width * 0.05
+                            width: parent.width * 0.14
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
                                 GradientStop { position: 0; color: brandLogo.clearSidebar }
+                                GradientStop { position: 0.45; color: brandLogo.softSidebar }
+                                GradientStop { position: 0.85; color: appTheme.sidebar }
                                 GradientStop { position: 1; color: appTheme.sidebar }
                             }
                         }
@@ -387,7 +428,7 @@ ApplicationWindow {
                     text: (checked ? "▾  " : "▸  ")+"RxMER"
                     Accessible.name: "RxMER tools"
                     checkable: true
-                    checked: true
+                    checked: false
                     Layout.fillWidth: true
                     contentItem: Label {
                         text: rxmerToolGroup.text
@@ -422,7 +463,7 @@ ApplicationWindow {
 
                 }
                 ToolButton {
-                    id:spectrumToolGroup;objectName:"toggleSpectrumTools";text:(checked ? "▾  " : "▸  ")+"Spectrum Analyzer";checkable:true;checked:true;Layout.fillWidth:true
+                    id:spectrumToolGroup;objectName:"toggleSpectrumTools";text:(checked ? "▾  " : "▸  ")+"Spectrum Analyzer";checkable:true;checked:false;Layout.fillWidth:true
                     contentItem:Label {text:spectrumToolGroup.text;color:appTheme.text;font.bold:true;verticalAlignment:Text.AlignVCenter}
                 }
                 ColumnLayout {
@@ -432,7 +473,7 @@ ApplicationWindow {
 
                 }
                 ToolButton {
-                    id:preEqToolGroup;objectName:"togglePreEqTools";text:(checked ? "▾  " : "▸  ")+"US Pre-EQ";checkable:true;checked:true;Layout.fillWidth:true
+                    id:preEqToolGroup;objectName:"togglePreEqTools";text:(checked ? "▾  " : "▸  ")+"US Pre-EQ";checkable:true;checked:false;Layout.fillWidth:true
                     contentItem:Label {text:preEqToolGroup.text;color:appTheme.text;font.bold:true;verticalAlignment:Text.AlignVCenter}
                 }
                 ThemeButton {objectName:"showUsPreEqCompare";Accessible.name:"US Pre-EQ Compare";visible:preEqToolGroup.checked;theme:appTheme;text:"Compare";Layout.fillWidth:true;Layout.leftMargin:14;borderHighlighted:window.comparisonSelected;onClicked:window.selectWorkspace("pre-eq")}
@@ -531,7 +572,8 @@ ApplicationWindow {
                 }
                 OfdmProfileWorkspace {
                     id:ofdmWorkspace;visible:window.ofdmSelected;Layout.fillWidth:true;Layout.fillHeight:true
-                    theme:appTheme;service:ofdmBackend;initialFolder:window.initialCaptureFolder
+                    theme:appTheme;service:ofdmBackend;aiService:aiBackend;initialFolder:window.initialCaptureFolder
+                    onAiSetupRequested: aiServices.open()
                 }
                 PreEqWorkspace {
                     id:preEqWorkspace;visible:window.comparisonSelected;Layout.fillWidth:true;Layout.fillHeight:true

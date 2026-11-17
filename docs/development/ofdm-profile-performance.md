@@ -137,7 +137,9 @@ apps/qt/target/debug/raven --ofdm-smoke \
 
 Replace the channel URL with `none` and omit `--mce` to exercise unity. This mode
 suppresses update checks, saves real dark/light workspace and results frames, and
-fails on preparation, rendering or incomplete FEC execution. The optional
+fails on preparation, rendering or incomplete FEC execution. The smoke imports captures through the same multi-file Rust worker as the input
+popup. Add `--ofdm-input-only` to capture the actual input controls in both themes
+without running FEC. The optional
 `--ofdm-profiles` list selects captured IDs; its default remains Profile 0. No network retrieval,
 system installation or publication occurs. Linux smoke evidence does not establish
 Windows/macOS runtime or native file-picker behavior there. Hosted packaging must
@@ -191,3 +193,26 @@ dependencies are optimized for development. The 10 ms observation, 300-second
 per-case host limit, receiver policy, seeds and decoder settings are unchanged.
 All 194 Rust workspace tests, 159 QML tests, four native Qt adapter tests, Clippy
 and the native build passed. Hosted platform validation remains separate.
+
+## Multi-file input selection
+
+The native input popup offers one OpenFiles picker for two or three binary PNM
+captures. Rust detects roles from decoded contents, rejects duplicate/unsupported
+types, and preflights MAC/channel/frequency-grid/time compatibility using the
+existing MERLIN preparation path before atomically replacing the selection.
+A required-only pair clears stale optional channel estimation. Failed reads and
+preflight leave prior inputs and the prepared chart intact. No simulation runs
+during import. Individual role pickers remain available. URL messages and file
+counts are bounded, file reads use existing capture limits, and preparation stays
+on the owned worker with existing generation guards. Continue revalidates the
+chosen profiles, receiver mode and current time tolerance.
+
+The Ignore channel estimation checkbox bypasses H only in the cloned evaluation
+inputs. The selected immutable channel remains attached and displayed, so turning
+Ignore off restores it without file I/O. MCE is disabled while Ignore is checked.
+Compatibility checks still apply to every attached capture at multi-file import.
+
+For native bypass validation, append `--ignore-channel --ofdm-view-only` to the
+three-capture smoke command and omit `--mce`. The smoke checks unity is used while
+the channel remains attached. Normal smoke preparation uses the same selection
+operation as the input dialog.

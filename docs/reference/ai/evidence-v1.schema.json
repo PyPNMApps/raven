@@ -1,0 +1,269 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "rule_version": {
+      "type": "integer",
+      "const": 1
+    },
+    "raven_version": {
+      "type": "string"
+    },
+    "merlin_revision": {
+      "type": "string"
+    },
+    "run_id": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Complete",
+        "CompletedWithErrors",
+        "Cancelled"
+      ]
+    },
+    "classification": {
+      "type": "string",
+      "const": "Simulated; MERLIN owns all numerical values"
+    },
+    "source_aliases": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_hashes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "settings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "profile_id": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "observation_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "runtime_limit_ms": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "bandwidth_hz": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "zero_frequency_hz": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "first_subcarrier_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "spacing_hz": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "subcarrier_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "cyclic_prefix_samples": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "roll_off_samples": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "interleaver_depth": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "receiver_mode": {
+            "type": "string",
+            "enum": [
+              "MCE",
+              "SuppliedChannel",
+              "Unity"
+            ]
+          },
+          "channel_state": {
+            "type": "string",
+            "enum": [
+              "Used",
+              "Ignored",
+              "NotUsed"
+            ]
+          },
+          "bandwidth_origin": {
+            "type": "string",
+            "enum": [
+              "Explicit",
+              "Derived",
+              "Defaulted"
+            ]
+          },
+          "cyclic_prefix_origin": {
+            "type": "string",
+            "enum": [
+              "Explicit",
+              "Derived",
+              "Defaulted"
+            ]
+          },
+          "roll_off_origin": {
+            "type": "string",
+            "enum": [
+              "Explicit",
+              "Derived",
+              "Defaulted"
+            ]
+          },
+          "interleaver_origin": {
+            "type": "string",
+            "enum": [
+              "Explicit",
+              "Derived",
+              "Defaulted"
+            ]
+          }
+        },
+        "required": [
+          "profile_id",
+          "observation_ms",
+          "runtime_limit_ms",
+          "bandwidth_hz",
+          "zero_frequency_hz",
+          "first_subcarrier_index",
+          "spacing_hz",
+          "subcarrier_count",
+          "cyclic_prefix_samples",
+          "roll_off_samples",
+          "interleaver_depth",
+          "receiver_mode",
+          "channel_state",
+          "bandwidth_origin",
+          "cyclic_prefix_origin",
+          "roll_off_origin",
+          "interleaver_origin"
+        ]
+      }
+    },
+    "metrics": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "profile_id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "codewords",
+              "bits",
+              "ratio",
+              "iterations",
+              "iterations/codeword"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "ObservationWindow",
+              "AllCompleted"
+            ]
+          },
+          "value": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "profile_id",
+          "unit",
+          "scope",
+          "value"
+        ]
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "profile_id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 255
+          },
+          "text": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "profile_id",
+          "text",
+          "references"
+        ]
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "rule_version",
+    "raven_version",
+    "merlin_revision",
+    "run_id",
+    "status",
+    "classification",
+    "source_aliases",
+    "source_hashes",
+    "settings",
+    "metrics",
+    "findings",
+    "limitations"
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RAVEN OFDM evidence v1"
+}

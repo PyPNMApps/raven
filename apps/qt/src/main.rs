@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+mod ai;
 mod backend;
 mod profile_performance;
 mod spectrum_collection;

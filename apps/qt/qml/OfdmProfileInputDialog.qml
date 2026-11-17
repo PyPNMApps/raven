@@ -54,6 +54,15 @@ Dialog {
         nameFilters: ["PNM captures (*)"]
         onAccepted: dialog.service.choose_file(dialog.selectedRole, selectedFile)
     }
+    FileDialog {
+        id: capturePicker
+        objectName: "ofdmMultiInputFileDialog"
+        title: "Select modulation profile, RxMER and optional channel estimation"
+        currentFolder: dialog.initialFolder
+        fileMode: FileDialog.OpenFiles
+        nameFilters: ["PNM captures (*)"]
+        onAccepted: dialog.service.choose_files(JSON.stringify(selectedFiles.map(function(url) { return url.toString() })), Number(tolerance.text))
+    }
     Connections {
         target: dialog.service
         function onBusyChanged() {
@@ -75,6 +84,13 @@ Dialog {
     }
     contentItem: ColumnLayout {
         spacing: 12
+        ThemeButton {
+            objectName: "ofdmChooseCaptures"
+            theme: dialog.theme
+            text: "Select capture files…"
+            enabled: !dialog.service.busy && tolerance.acceptableInput
+            onClicked: capturePicker.open()
+        }
         GridLayout {
             columns: 3
             Layout.fillWidth: true
@@ -104,17 +120,20 @@ Dialog {
             }
         }
         RowLayout {
-            ThemeButton {
-                theme: dialog.theme; text: "Remove channel estimation"
+            ThemeCheckBox {
+                id: ignoreChannel
+                objectName: "ofdmIgnoreChannel"
+                theme: dialog.theme
+                text: "Ignore channel estimation"
                 enabled: !!dialog.inputs.channel && !dialog.service.busy
-                onClicked: { mce.checked = false; dialog.service.clear_channel() }
+                checked: false
             }
             ThemeCheckBox {
                 theme: dialog.theme
                 text: "Use MCE"
                 id: mce
                 objectName: "ofdmUseMce"
-                enabled: !!dialog.inputs.channel && !dialog.service.busy
+                enabled: !!dialog.inputs.channel && !ignoreChannel.checked && !dialog.service.busy
                 checked: false
             }
         }
@@ -153,7 +172,7 @@ Dialog {
                 && tolerance.acceptableInput && !dialog.service.busy
             onClicked: {
                 dialog.awaitingPreparation = true
-                dialog.service.prepare_many(JSON.stringify(dialog.selectedProfiles), mce.enabled && mce.checked, Number(tolerance.text))
+                dialog.service.prepare_selection(JSON.stringify(dialog.selectedProfiles), mce.enabled && mce.checked, ignoreChannel.checked, Number(tolerance.text))
             }
         }
         ThemeButton { theme: dialog.theme; text: "Close"; enabled: !dialog.service.busy; onClicked: dialog.close() }

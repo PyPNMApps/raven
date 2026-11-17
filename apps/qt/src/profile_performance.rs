@@ -17,6 +17,8 @@ mod bridge {
         #[qproperty(QString, inputs_json)]
         #[qproperty(QString, chart_json)]
         #[qproperty(QString, result_json)]
+        #[qproperty(QString, evidence_json)]
+        #[qproperty(QString, source_id)]
         #[qproperty(QString, error_message)]
         #[qproperty(bool, busy)]
         #[qproperty(bool, selection_available)]
@@ -26,9 +28,9 @@ mod bridge {
         /// Reads a bounded binary capture into its explicitly chosen input role.
         #[qinvokable]
         fn choose_file(self: Pin<&mut ProfilePerformanceBackend>, role: &QString, url: &QUrl);
-        /// Removes optional channel estimation; the next prepare uses unity.
+        /// Identifies a bounded multi-file selection and validates compatibility.
         #[qinvokable]
-        fn clear_channel(self: Pin<&mut ProfilePerformanceBackend>);
+        fn choose_files(self: Pin<&mut ProfilePerformanceBackend>, urls: &QString, tolerance: u32);
         /// Validates captured identity/grid and explicit settings on a worker.
         #[qinvokable]
         fn prepare(
@@ -43,6 +45,15 @@ mod bridge {
             self: Pin<&mut ProfilePerformanceBackend>,
             profiles: &QString,
             mce: bool,
+            tolerance: u32,
+        );
+        /// Preflights profiles with an optional per-run channel bypass.
+        #[qinvokable]
+        fn prepare_selection(
+            self: Pin<&mut ProfilePerformanceBackend>,
+            profiles: &QString,
+            mce: bool,
+            ignore_channel: bool,
             tolerance: u32,
         );
         /// Selects the prepared cases to display and run; empty disables Run.
@@ -68,11 +79,16 @@ use viewer::simulation::fec::{batch::BatchSession, engine, workspace::Inputs};
 /// Bound the tiny checkbox-selection message before JSON allocation.
 const MAX_PROFILE_SELECTION_BYTES: usize = 128;
 
+/// Bound the native multi-file URL message before deserialization.
+const MAX_CAPTURE_SELECTION_BYTES: usize = 16_384;
+
 /// Independent native session, with one active worker and stale-callback guards.
 pub struct State {
     inputs_json: QString,
     chart_json: QString,
     result_json: QString,
+    evidence_json: QString,
+    source_id: QString,
     error_message: QString,
     busy: bool,
     prepared: bool,
@@ -90,6 +106,8 @@ impl Default for State {
             inputs_json: QString::from("{}"),
             chart_json: QString::from("{}"),
             result_json: QString::from("{}"),
+            evidence_json: QString::from("{}"),
+            source_id: QString::from("0"),
             error_message: QString::default(),
             busy: false,
             prepared: false,
@@ -112,6 +130,9 @@ impl bridge::ProfilePerformanceBackend {
     fn begin(mut self: Pin<&mut Self>) -> u64 {
         let generation = self.rust().generation.wrapping_add(1);
         self.as_mut().rust_mut().generation = generation;
+        self.as_mut()
+            .set_source_id(QString::from(generation.to_string()));
+        self.as_mut().set_evidence_json(QString::from("{}"));
         self.as_mut().set_error_message(QString::default());
         self.set_busy(true);
         generation
@@ -138,13 +159,51 @@ impl bridge::ProfilePerformanceBackend {
             }
         };
         let role = role.to_string();
+        self.update_inputs(move |inputs| inputs.select(&role, &path));
+    }
+    /// Imports two or three local URLs in arbitrary order on the owned worker.
+    /// # Arguments
+    /// * `urls` - JSON array of native file URLs; bounded to 16 KiB and three files.
+    /// * `tolerance` - Maximum capture association separation in seconds.
+    /// # Errors
+    /// Publishes diagnostics and preserves inputs/chart on invalid selections.
+    pub fn choose_files(self: Pin<&mut Self>, urls: &QString, tolerance: u32) {
+        if self.rust().busy {
+            return;
+        }
+        let urls = urls.to_string();
+        let paths = (|| {
+            if urls.len() > MAX_CAPTURE_SELECTION_BYTES {
+                return Err("Capture selection is too large.".to_string());
+            }
+            let urls: Vec<String> =
+                serde_json::from_str(&urls).map_err(|error| error.to_string())?;
+            if !(2..=3).contains(&urls.len()) {
+                return Err("Select 2 or 3 capture files.".to_string());
+            }
+            urls.iter()
+                .map(|url| {
+                    crate::backend::local_path(&QUrl::from(url.as_str()))
+                        .map_err(|error| error.message)
+                })
+                .collect::<Result<Vec<_>, _>>()
+        })();
+        match paths {
+            Ok(paths) => self.update_inputs(move |inputs| inputs.select_many(&paths, tolerance)),
+            Err(error) => self.fail(error),
+        }
+    }
+    fn update_inputs(
+        mut self: Pin<&mut Self>,
+        load: impl FnOnce(&mut Inputs) -> Result<serde_json::Value, viewer::Diagnostic> + Send + 'static,
+    ) {
         let mut inputs = self.rust().inputs.clone();
         let generation = self.as_mut().begin();
         let thread = self.qt_thread();
         let spawn = std::thread::Builder::new()
             .name("ofdm-input".into())
             .spawn(move || {
-                let result = inputs.select(&role, &path);
+                let result = load(&mut inputs);
                 let _ = thread.queue(move |mut state| {
                     if state.rust().generation != generation {
                         return;
@@ -168,23 +227,6 @@ impl bridge::ProfilePerformanceBackend {
             self.fail(error);
         }
     }
-    /// Removes the optional source and invalidates readiness without deleting files.
-    pub fn clear_channel(mut self: Pin<&mut Self>) {
-        if self.rust().busy {
-            return;
-        }
-        self.as_mut().rust_mut().inputs.channel = None;
-        self.as_mut().rust_mut().session = None;
-        self.as_mut().set_selection_available(false);
-        match self.rust().inputs.catalog() {
-            Ok(catalog) => {
-                self.as_mut()
-                    .set_inputs_json(QString::from(catalog.to_string()));
-                self.set_prepared(false);
-            }
-            Err(error) => self.fail(error.message),
-        }
-    }
     /// Preflights a new session on a worker; failed preparation retains the prior chart.
     /// # Arguments
     /// * `profile` - Captured profile ID, not a positional index.
@@ -201,7 +243,22 @@ impl bridge::ProfilePerformanceBackend {
     /// # Arguments
     /// * `profiles` - JSON array of captured IDs, bounded and validated in Rust.
     /// * `mce`, `tolerance` - Shared receiver and source-association settings.
-    pub fn prepare_many(mut self: Pin<&mut Self>, profiles: &QString, mce: bool, tolerance: u32) {
+    pub fn prepare_many(self: Pin<&mut Self>, profiles: &QString, mce: bool, tolerance: u32) {
+        self.prepare_selection(profiles, mce, false, tolerance);
+    }
+    /// Preflights chosen profiles, retaining any bypassed channel in the selection.
+    /// # Arguments
+    /// * `profiles` - Bounded JSON array of captured profile IDs.
+    /// * `mce` - Request pilot-derived correction; requires an active channel.
+    /// * `ignore_channel` - Use unity for this run without detaching the capture.
+    /// * `tolerance` - Maximum source association separation in seconds.
+    pub fn prepare_selection(
+        mut self: Pin<&mut Self>,
+        profiles: &QString,
+        mce: bool,
+        ignore_channel: bool,
+        tolerance: u32,
+    ) {
         if self.rust().busy {
             return;
         }
@@ -223,8 +280,14 @@ impl bridge::ProfilePerformanceBackend {
         let spawn = std::thread::Builder::new()
             .name("ofdm-prepare".into())
             .spawn(move || {
-                let result = BatchSession::prepare(inputs, profiles, mce, tolerance)
-                    .and_then(|session| session.chart(0, 0).map(|chart| (session, chart)));
+                let result = BatchSession::prepare_selection(
+                    inputs,
+                    profiles,
+                    mce,
+                    tolerance,
+                    ignore_channel,
+                )
+                .and_then(|session| session.chart(0, 0).map(|chart| (session, chart)));
                 let _ = thread.queue(move |mut state| {
                     if state.rust().generation != generation {
                         return;
@@ -277,6 +340,11 @@ impl bridge::ProfilePerformanceBackend {
                 Ok((ready, chart)) => {
                     self.as_mut()
                         .set_chart_json(QString::from(chart.to_string()));
+                    let generation = self.rust().generation.wrapping_add(1);
+                    self.as_mut().rust_mut().generation = generation;
+                    self.as_mut()
+                        .set_source_id(QString::from(generation.to_string()));
+                    self.as_mut().set_evidence_json(QString::from("{}"));
                     self.as_mut().set_result_json(QString::from("{}"));
                     self.as_mut().set_prepared(ready);
                     self.set_error_message(QString::default());
@@ -314,6 +382,9 @@ impl bridge::ProfilePerformanceBackend {
                     state.as_mut().set_busy(false);
                     match result {
                         Ok(report) => {
+                            state.as_mut().set_evidence_json(QString::from(
+                                report["ai_evidence"].to_string(),
+                            ));
                             state.set_result_json(QString::from(report.to_string()));
                         }
                         Err(error) => state.fail(error.message),

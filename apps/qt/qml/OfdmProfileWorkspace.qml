@@ -10,22 +10,32 @@ ColumnLayout {
     id: workspace
     required property Theme theme
     required property var service
+    property var aiService: null
+    signal aiSetupRequested()
     property url initialFolder
     readonly property var chart: JSON.parse(service.chart_json)
     property alias inputsVisible: inputs.visible
     readonly property Item inputSurface: inputs.contentItem
     readonly property var capturePicker: inputs.filePicker
     readonly property Item resultsSurface: results.contentItem
-    readonly property bool popupVisible: inputs.visible || results.visible
+    readonly property bool popupVisible: inputs.visible || results.visible || (!!aiAnalysis.item && aiAnalysis.item.visible)
     function openInputs() { inputs.open() }
     function openResults() { results.open() }
-    function closeDialogs() { inputs.close(); results.close() }
+    function previewAiQuestion() { if (aiAnalysis.item) aiAnalysis.item.previewRequest() }
+    function openAiAnalysis() { if (aiAnalysis.item) aiAnalysis.item.open() }
+    function closeDialogs() { inputs.close(); results.close(); if (aiAnalysis.item) aiAnalysis.item.close() }
     signal inputCompleted()
     spacing: 12
     RowLayout {
         Layout.fillWidth: true
         Label { text: "OFDM Profile Performance"; color:workspace.theme.text;font.pixelSize:20;font.bold:true }
         Item { Layout.fillWidth: true }
+        ThemeButton {
+            objectName: "ofdmAiAnalysis"; theme: workspace.theme; text: "AI Analysis…"
+            visible: !!workspace.aiService
+            enabled: !!workspace.aiService && !workspace.service.busy && !!JSON.parse(workspace.service.result_json).status
+            onClicked: aiAnalysis.item.open()
+        }
         ThemeButton { objectName:"ofdmOpenInputs";theme:workspace.theme;text:"Select captures…";enabled:!workspace.service.busy;onClicked:inputs.open() }
         ThemeButton {
             objectName:"ofdmFecPerformance";theme:workspace.theme;text:"FEC Performance"
@@ -98,6 +108,17 @@ ColumnLayout {
         id:inputs;theme:workspace.theme;service:workspace.service;initialFolder:workspace.initialFolder
         parent:Overlay.overlay
         onCompleted:workspace.inputCompleted()
+    }
+    Loader {
+        id: aiAnalysis
+        active: !!workspace.aiService
+        visible: false
+        sourceComponent: Component {
+            AiAnalysisDialog {
+                theme: workspace.theme; service: workspace.aiService; ofdmService: workspace.service; parent: Overlay.overlay
+                onSetupRequested: workspace.aiSetupRequested()
+            }
+        }
     }
     OfdmFecResultsDialog { id:results;theme:workspace.theme;service:workspace.service;parent:Overlay.overlay }
 }

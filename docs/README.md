@@ -11,6 +11,7 @@ actual published assets and [CI scope](development/ci.md) for validation status.
 
 - [Desktop user guide and starting screen](ui/README.md)
 - [Workspace navigation](ui/README.md#workspaces)
+- [AI Assistance](ui/ai-assistance.md) — OpenAI setup, OFDM request approval and read-only review
 - [OFDM Profile Performance](ui/measurements/ofdm-profile-performance/README.md)
 - [Measurement screenshots](ui/measurements.md)
 - [Bundled example captures](ui/examples.md)

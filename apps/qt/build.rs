@@ -57,6 +57,7 @@ fn main() {
         .qml_module(QmlModule {
             uri: "Pnm.Viewer",
             rust_files: &[
+                "src/ai.rs",
                 "src/backend.rs",
                 "src/update.rs",
                 "src/spectrum_collection.rs",
@@ -64,6 +65,10 @@ fn main() {
             ],
             qml_files: &[
                 "qml/Main.qml",
+                "qml/AiAssistanceChip.qml",
+                "qml/AiServicesDialog.qml",
+                "qml/AiAnalysisDialog.qml",
+                "qml/AiSetupSmoke.qml",
                 "qml/AboutDialog.qml",
                 "qml/UpdateChip.qml",
                 "qml/Theme.qml",

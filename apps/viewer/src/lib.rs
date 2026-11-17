@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Native desktop services organized by responsibility.
+pub mod ai;
 pub mod capture;
 pub mod identity;
 pub mod measurements;

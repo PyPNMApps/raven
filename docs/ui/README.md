@@ -70,6 +70,18 @@ input files are never overwritten. Canceling a picker or opening an invalid file
 keeps the current capture. Unsupported measurements can still be decoded with
 [the CLI](../cli/usage.md) where [format support](../reference/formats.md) allows.
 
+The left sidebar starts open, with RxMER, Spectrum Analyzer and US Pre-EQ
+groups collapsed. Select a group heading to expand its tools.
+
+## AI Assistance setup
+
+Use the clickable **AI Assistance** chip on the top bar, or
+**Settings → System… → AI…**, to configure session-only provider credentials.
+Off is gray; Configured means settings are present. OpenAI supports an explicit
+model-access test and **OFDM Profile Performance → AI Analysis…**, with an exact
+request preview before approval. For credential-free UI testing, launch with
+`./scripts/qt-desktop.sh --ai-demo`. See [AI Assistance](ai-assistance.md).
+
 ## Chart controls
 
 Where axes are shown, Y-axis titles are vertical and include units. They use the

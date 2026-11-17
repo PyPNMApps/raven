@@ -82,6 +82,18 @@ build. If the binary is missing, the launcher asks you to build it first.
 `run --skip-build` is equivalent; following arguments go directly to the app.
 The flag does not apply to `build` or `check`.
 
+## Local Demo AI
+
+`./scripts/qt-desktop.sh --ai-demo` launches normally but locks all AI operations
+to local deterministic demonstration responses. Add `--skip-build` to reuse the
+built binary. Both flags work after explicit `run` too; neither applies to `build`
+or `check`. Normal VM display/session discovery and Qt setup are retained.
+
+This flag is forwarded to the native process. Rust keeps a private launch lock
+independent of QML state; Test connection cannot perform a provider lookup, and
+Analyze cannot construct a live request while locked. It does not disable the
+separate GitHub release check. See [AI Assistance](ai-assistance.md).
+
 ## Windows and macOS
 
 Install Qt 6.8.3 with Declarative/Quick and tools, a native C++ compiler (MSVC

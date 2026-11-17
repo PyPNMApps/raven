@@ -7,11 +7,20 @@ modulation profile against measured RxMER, with optional channel estimation.
 This is a decoder simulation rather than counters collected from your modem.
 
 1. Click **Select captures…** (the input popup opens on first use).
-2. Use **Browse…** to select a modulation-profile PNM file and an RxMER PNM file.
-   The buttons open the operating system's file picker in the demo folder.
-3. Optionally select a downstream channel-estimation PNM file. Enable **Use MCE**
+2. Click **Select capture files…** and select the modulation-profile and RxMER
+   captures together, plus optional downstream channel estimation. Use Ctrl or
+   Command to select multiple files in the operating system's file picker.
+   The app identifies each capture by its contents, regardless of filename or order,
+   and checks compatibility using the capture-separation setting before loading.
+   Duplicate types, missing required inputs and incompatible files leave the current
+   selection unchanged. Selecting only the required pair clears any previous channel.
+   Individual **Browse…** buttons remain available to replace one input.
+3. With channel estimation selected, enable **Use MCE**
    to estimate receiver correction from received pilots. Leave it off to use the
-   supplied correction. Without a channel file, the simulation uses a unity channel.
+   supplied correction. Toggle **Ignore channel estimation** to use a unity channel
+   without removing the selected file. MCE is disabled while the channel is ignored;
+   untoggle Ignore to use the attached capture again. Without a channel file, the
+   simulation also uses a unity channel.
 4. Check the captured profiles to test (all are initially checked), and set the
    maximum capture separation in seconds.
    The default is one day; enter zero to require matching profile/RxMER timestamps.
@@ -54,6 +63,14 @@ the results popup leaves the run active; reopen it with FEC Performance after
 completion or select Run again in the popup for a new run of all checked profiles. Change inputs through
 Select captures and Continue before testing a different profile or receiver mode.
 
+## Select captures together
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/ofdm-inputs-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/ofdm-inputs-light.png">
+  <img src="images/ofdm-inputs-dark.png" alt="OFDM input popup with one multi-file selection button and detected capture roles">
+</picture>
+
 ## Workspace
 
 <picture>
@@ -73,3 +90,10 @@ Select captures and Continue before testing a different profile or receiver mode
 Screenshots show the actual Ubuntu Qt workspace and results content, using the
 bundled single captures and Profiles 0–3 with MCE. They are not modem measurements
 of FEC counters or independent Windows/macOS runtime evidence.
+
+
+## AI review
+
+After a run, use **AI Analysis…** to ask about the outcomes. Preview the exact
+request and approve it before sending. See [AI Assistance](../../ai-assistance.md)
+for OpenAI setup, model testing, evidence limits and conversation export.

@@ -103,7 +103,10 @@ apps/qt/target/debug/raven --ofdm-smoke none none none \
 ```
 
 Require `HOME_SCREENSHOTS_OK`. Review both themes for the expanded navigation,
-including OFDM Profile Performance. The command replaces the existing Home pair;
+including OFDM Profile Performance, with the RxMER, Spectrum Analyzer and US Pre-EQ
+groups collapsed at startup. Check that the banner blends into the sidebar
+in both themes without a rectangular edge and that its lettering remains readable.
+The command replaces the existing Home pair;
 do not keep dated duplicate PNGs. Before removing other images, check documentation,
 QML and packaging references and update any remaining links. Keep active measurement
 screenshots and original branding resources.
@@ -132,3 +135,16 @@ frames must also show **PLC** inside the shaded protected band.
 Qt event-loop exit statuses propagate to the launcher. Failed native smoke or
 screenshot requests return nonzero; successful runs still require their expected
 render marker and a fresh export.
+
+## AI Assistance setup
+
+Run the [offline AI setup smoke](ai-assistance.md#validation) to refresh
+`docs/ui/images/ai/ai-services-{dark,light}.png`. Use no real credentials. Confirm
+the gray Off chip opens setup and System → AI reaches that same popup. Refresh
+the Home pair when the top bar changes. Configured must never imply verified
+access or a working analysis request before those capabilities are implemented.
+
+
+For the native AI request preview, add `--ai-preview-only` to the OFDM smoke
+command, select profile 0 and use output prefix `docs/ui/images/ai/ofdm`.
+Require `AI_PREVIEW_OK`; the key is synthetic and no provider operation runs.

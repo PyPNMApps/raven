@@ -4,14 +4,17 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 # Build/run/check the Qt prototype with a local or explicitly selected Qt SDK.
-# Arguments: run (default), --skip-build, build, check; run arguments go to the app.
+# Arguments: run (default), --skip-build, --ai-demo, build, check.
 # No downloads, system installation or persistent environment changes occur.
 set -euo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 if [[ "${1:-}" == --help ]]; then
-  echo "Usage: scripts/qt-desktop.sh [run [--skip-build]|--skip-build|build|check] [arguments...]"
+  echo "Usage: scripts/qt-desktop.sh [run [--skip-build]|--skip-build|build|check] [--ai-demo] [arguments...]"
   exit 0
+fi
+if [[ "${1:-}" == --ai-demo ]]; then
+  set -- run "$@"
 fi
 ACTION="${1:-run}"
 SKIP_BUILD=0
@@ -19,14 +22,24 @@ if [[ $# -gt 0 ]]; then shift; fi
 if [[ "${ACTION}" == --skip-build ]]; then
   ACTION=run
   SKIP_BUILD=1
-elif [[ "${1:-}" == --skip-build ]]; then
-  if [[ "${ACTION}" != run ]]; then
-    echo "--skip-build is available only when running the viewer." >&2
-    exit 2
-  fi
-  SKIP_BUILD=1
-  shift
 fi
+RUN_ARGUMENTS=()
+for argument in "$@"; do
+  if [[ "${argument}" == --skip-build ]]; then
+    if [[ "${ACTION}" != run ]]; then
+      echo "--skip-build is available only when running the viewer." >&2
+      exit 2
+    fi
+    SKIP_BUILD=1
+  else
+    if [[ "${argument}" == --ai-demo && "${ACTION}" != run ]]; then
+      echo "--ai-demo is available only when running the viewer." >&2
+      exit 2
+    fi
+    RUN_ARGUMENTS+=("${argument}")
+  fi
+done
+set -- "${RUN_ARGUMENTS[@]}"
 QT_SDK_DIR="${QT_SDK_DIR:-${PROJECT_DIR}/local/qt/6.8.3/gcc_64}"
 if [[ ! -x "${QT_SDK_DIR}/bin/qmake" ]]; then
   printf 'Qt SDK missing: %s\nSee docs/development/qt.md for setup.\n' "${QT_SDK_DIR}" >&2

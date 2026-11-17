@@ -70,6 +70,11 @@ fn cancellation_keeps_a_separate_not_started_row_for_every_selected_profile() {
     control.cancel();
     let report = batch.run(&control).unwrap();
     assert_eq!(report["status"], "Cancelled");
+    let evidence =
+        viewer::ai::evidence::Evidence::parse(&report["ai_evidence"].to_string()).unwrap();
+    assert_eq!(evidence.status, "Cancelled");
+    assert!(evidence.metrics.iter().all(|metric| metric.value.is_none()));
+    assert!(!evidence.findings_text().contains("No bit errors observed"));
     let entries = report["entries"].as_array().unwrap();
     assert_eq!(entries.len(), 3);
     for (entry, profile) in entries.iter().zip([0, 1, 3]) {
@@ -77,4 +82,30 @@ fn cancellation_keeps_a_separate_not_started_row_for_every_selected_profile() {
         assert_eq!(entry["status"], "NotStarted");
         assert!(entry["fec"].is_null());
     }
+}
+
+#[test]
+fn ignored_channel_is_explicit_and_excluded_from_used_source_evidence() {
+    let mut selection = inputs();
+    selection.channel = Some(Arc::new(
+        Capture::from_bytes(
+            pnm_fixtures::CHANNEL_ESTIMATE.to_vec(),
+            "private-source-name.bin".into(),
+        )
+        .unwrap(),
+    ));
+    let mut batch =
+        BatchSession::prepare_selection(selection, vec![0], false, 86400, true).unwrap();
+    let control = engine::RunControl::new();
+    control.cancel();
+    let report = batch.run(&control).unwrap();
+    let evidence =
+        viewer::ai::evidence::Evidence::parse(&report["ai_evidence"].to_string()).unwrap();
+    assert_eq!(evidence.settings[0].channel_state, "Ignored");
+    assert_eq!(evidence.settings[0].receiver_mode, "Unity");
+    assert_eq!(evidence.source_hashes.len(), 2);
+    assert_eq!(evidence.source_aliases, vec!["modulation-profile", "rxmer"]);
+    assert!(!report["ai_evidence"]
+        .to_string()
+        .contains("private-source-name"));
 }

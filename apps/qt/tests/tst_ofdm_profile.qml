@@ -26,12 +26,16 @@ RenderTestCase {
         property string error_message:""
         property int preparations:0
         property bool requestedMce:false
+        property bool ignoredChannel:false
         property int selectedProfile:-1
         property int runs:0
         property var selectedProfiles:[]
+        property string selectedUrls: ""
+        property int selectedTolerance: -1
+        function choose_files(urls,tolerance){selectedUrls=urls;selectedTolerance=tolerance}
         function choose_file(role,url){}
-        function clear_channel(){inputs_json=JSON.stringify({profile:"profile.bin",rxmer:"rxmer.bin",profiles:[0,3]});prepared=false}
         function prepare_many(profiles,mce,tolerance){busy=true;preparations++;selectedProfiles=JSON.parse(profiles);selectedProfile=selectedProfiles[0];requestedMce=mce}
+        function prepare_selection(profiles,mce,ignore,tolerance){ignoredChannel=ignore;prepare_many(profiles,mce,tolerance)}
         function select_profiles(profiles){
             const chart=JSON.parse(chart_json)
             chart.selected_profiles=JSON.parse(profiles)
@@ -49,6 +53,17 @@ RenderTestCase {
         service.inputs_json="{}";service.chart_json="{}";service.result_json="{}";service.error_message=""
         service.preparations=0;service.runs=0
         workspace.closeDialogs()
+    }
+    function test_multi_picker_is_native_and_busy_disables_selection(){
+        workspace.openInputs()
+        const picker=findChild(workspace,"ofdmMultiInputFileDialog")
+        verify(picker !== null)
+        compare(picker.fileMode,FileDialog.OpenFiles)
+        compare(picker.options & FileDialog.DontUseNativeDialog,0)
+        const button=findChild(workspace,"ofdmChooseCaptures")
+        verify(button.enabled)
+        service.busy=true
+        verify(!button.enabled)
     }
     function test_required_inputs_mce_and_continue_wait_for_preflight(){
         compare(workspace.capturePicker.options & FileDialog.DontUseNativeDialog,0)
@@ -71,6 +86,29 @@ RenderTestCase {
         compare(service.requestedMce,true)
         service.prepared=true;service.busy=false
         tryCompare(workspace,"inputsVisible",false)
+    }
+    function test_ignore_channel_preserves_attachment_and_can_be_reenabled(){
+        workspace.openInputs()
+        service.inputs_json=JSON.stringify({profile:"profile.bin",rxmer:"rxmer.bin",channel:"channel.bin",profiles:[0,3]})
+        const ignore=findChild(workspace,"ofdmIgnoreChannel")
+        const mce=findChild(workspace,"ofdmUseMce")
+        const next=findChild(workspace,"ofdmContinue")
+        ignore.checked=false
+        tryCompare(ignore,"enabled",true)
+        mce.checked=true
+        verify(waitForFrame(ignore))
+        mouseClick(ignore)
+        verify(ignore.checked && ignore.enabled)
+        verify(!mce.enabled)
+        mouseClick(next)
+        verify(service.ignoredChannel && !service.requestedMce)
+        compare(JSON.parse(service.inputs_json).channel,"channel.bin")
+        service.busy=false
+        mouseClick(ignore)
+        verify(!ignore.checked && mce.enabled)
+        mouseClick(next)
+        verify(!service.ignoredChannel && service.requestedMce)
+        compare(JSON.parse(service.inputs_json).channel,"channel.bin")
     }
     function test_checkboxes_choose_a_subset_and_disable_empty_runs(){
         workspace.openInputs()

@@ -107,3 +107,114 @@ fn cancelled_run_never_invents_zero_fec_or_ldpc_counters() {
     assert!(result["fec"].is_null());
     assert!(result["ldpc"].is_null());
 }
+
+#[test]
+fn multi_selection_uses_contents_in_any_order_and_clears_omitted_channel() {
+    let directory = tempfile::tempdir().unwrap();
+    let paths: Vec<_> = [
+        ("rxmer.txt", pnm_fixtures::CHANNEL_ESTIMATE),
+        ("channel.txt", pnm_fixtures::MODULATION_PROFILE),
+        ("profile.txt", pnm_fixtures::RXMER),
+    ]
+    .into_iter()
+    .map(|(name, bytes)| {
+        let path = directory.path().join(name);
+        std::fs::write(&path, bytes).unwrap();
+        path
+    })
+    .collect();
+    let mut selected = Inputs::default();
+    let catalog = selected.select_many(&paths, 86_400).unwrap();
+    assert_eq!(catalog["profile"], "channel.txt");
+    assert_eq!(catalog["rxmer"], "profile.txt");
+    assert_eq!(catalog["channel"], "rxmer.txt");
+    let catalog = selected
+        .select_many(&[paths[2].clone(), paths[1].clone()], 86_400)
+        .unwrap();
+    assert!(catalog["channel"].is_null());
+    assert!(selected.channel.is_none());
+}
+
+#[test]
+fn multi_selection_rejects_invalid_sets_without_replacing_inputs() {
+    let directory = tempfile::tempdir().unwrap();
+    let mut selected = inputs(true);
+    let original = selected.catalog().unwrap();
+    let profile = directory.path().join("profile");
+    let rxmer = directory.path().join("rxmer");
+    let channel = directory.path().join("channel");
+    let invalid = directory.path().join("invalid");
+    let unsupported = directory.path().join("unsupported");
+    std::fs::write(&profile, pnm_fixtures::MODULATION_PROFILE).unwrap();
+    std::fs::write(&rxmer, pnm_fixtures::RXMER).unwrap();
+    std::fs::write(&channel, pnm_fixtures::CHANNEL_ESTIMATE).unwrap();
+    std::fs::write(&invalid, b"not a capture").unwrap();
+    std::fs::write(&unsupported, pnm_fixtures::HISTOGRAM).unwrap();
+    for paths in [
+        vec![],
+        vec![profile.clone()],
+        vec![
+            profile.clone(),
+            rxmer.clone(),
+            channel.clone(),
+            invalid.clone(),
+        ],
+        vec![profile.clone(), profile.clone()],
+        vec![profile.clone(), channel.clone()],
+        vec![profile.clone(), invalid],
+        vec![profile.clone(), unsupported],
+        vec![profile.clone(), directory.path().join("missing")],
+    ] {
+        assert!(selected.select_many(&paths, 86_400).is_err());
+        assert_eq!(selected.catalog().unwrap(), original);
+    }
+    assert!(selected
+        .select_many(&[profile.clone(), rxmer.clone()], 0)
+        .is_err());
+    assert_eq!(selected.catalog().unwrap(), original);
+    let offset = pnm::pnm::parser::pnm_file::PnmFile::from_bytes(pnm_fixtures::RXMER)
+        .header()
+        .unwrap()
+        .payload_offset();
+    for position in [offset, offset + 1, offset + 7] {
+        let mut bytes = pnm_fixtures::RXMER.to_vec();
+        bytes[position] ^= 1;
+        std::fs::write(&rxmer, bytes).unwrap();
+        assert!(selected
+            .select_many(&[profile.clone(), rxmer.clone()], 86_400)
+            .is_err());
+        assert_eq!(selected.catalog().unwrap(), original);
+    }
+}
+
+#[test]
+fn ignored_channel_uses_unity_without_detaching_the_capture() {
+    let selected = inputs(true);
+    let ignored = selected.for_evaluation(true);
+    assert!(ignored.channel.is_none());
+    assert!(selected.channel.is_some());
+    assert!(Arc::ptr_eq(
+        selected.profile.as_ref().unwrap(),
+        ignored.profile.as_ref().unwrap()
+    ));
+    assert!(Arc::ptr_eq(
+        selected.rxmer.as_ref().unwrap(),
+        ignored.rxmer.as_ref().unwrap()
+    ));
+    let chart = Session::prepare(ignored, 0, false, 86_400)
+        .unwrap()
+        .chart(0, 0)
+        .unwrap();
+    assert_eq!(chart["supplied_channel"], false);
+    let restored = selected.for_evaluation(false);
+    assert!(Arc::ptr_eq(
+        selected.channel.as_ref().unwrap(),
+        restored.channel.as_ref().unwrap()
+    ));
+    let chart = Session::prepare(restored, 0, true, 86_400)
+        .unwrap()
+        .chart(0, 0)
+        .unwrap();
+    assert_eq!(chart["supplied_channel"], true);
+    assert_eq!(chart["mce"], true);
+}

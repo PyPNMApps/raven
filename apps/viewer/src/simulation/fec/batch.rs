@@ -69,6 +69,34 @@ impl BatchSession {
         })
     }
 
+    /// Prepares a selection while preserving whether a supplied channel was ignored.
+    /// # Arguments
+    /// * `inputs`, `profiles`, `mce`, `tolerance` - Original selection and run settings.
+    /// * `ignore_channel` - Explicit per-run bypass; originals remain attached.
+    /// # Returns
+    /// A prepared run with the bypass recorded independently of absent input.
+    /// # Errors
+    /// Propagates the same geometry and association checks as prepare.
+    pub fn prepare_selection(
+        inputs: Inputs,
+        profiles: Vec<ProfileId>,
+        mce: bool,
+        tolerance: u32,
+        ignore_channel: bool,
+    ) -> Result<Self, Diagnostic> {
+        let ignored = ignore_channel && inputs.channel.is_some();
+        let mut batch = Self::prepare(
+            inputs.for_evaluation(ignore_channel),
+            profiles,
+            mce,
+            tolerance,
+        )?;
+        for session in &mut batch.sessions {
+            session.channel_ignored = ignored;
+        }
+        Ok(batch)
+    }
+
     /// Changes the run/overlay subset without reinterpreting or rerunning captures.
     /// # Arguments
     /// * `profiles` - Unique prepared IDs; empty is allowed and disables execution.
@@ -177,6 +205,42 @@ impl BatchSession {
         } else {
             "Complete"
         };
-        Ok(json!({"status":status, "entries":entries}))
+        let mut report = json!({"status":status, "entries":entries});
+        let evidence = self
+            .sessions
+            .iter()
+            .filter(|session| self.selected.contains(&session.profile_id))
+            .map(Session::ai_settings)
+            .collect::<Result<Vec<_>, _>>()
+            .and_then(|settings| {
+                crate::ai::evidence::Evidence::from_run(
+                    &report,
+                    settings,
+                    super::MERLIN_REVISION,
+                    [
+                        &self.inputs.profile,
+                        &self.inputs.rxmer,
+                        &self.inputs.channel,
+                    ]
+                    .iter()
+                    .filter_map(|capture| {
+                        capture
+                            .as_ref()
+                            .map(|capture| crate::ai::protocol::digest(capture.original_source().1))
+                    })
+                    .collect(),
+                )
+            });
+        match evidence {
+            Ok(evidence) => {
+                report["ai_evidence"] = serde_json::to_value(evidence)
+                    .map_err(|_| Diagnostic::new("AiEvidence", "Could not encode evidence."))?
+            }
+            Err(_) => {
+                report["ai_evidence_error"] =
+                    json!("AI evidence unavailable; original numerical results remain usable.")
+            }
+        }
+        Ok(report)
     }
 }
