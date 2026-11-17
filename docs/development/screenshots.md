@@ -81,3 +81,11 @@ precheck and explicitly select Adjust. Keep the CM and CMTS MACs sanitized.
 Store `pre-eq-comparison-{dark,light}.png`, `pre-eq-comparison-delay-{dark,light}.png`
 and `pre-eq-comparison-iq-{dark,light}.png` beside the current Pre-EQ guide. Never
 publish screenshots of private lab identities without separate sanitization.
+
+For OFDM Profile Performance, use the native
+[`--ofdm-smoke` workflow](ofdm-profile-performance.md#validation), which renders
+real input snapshots and runs the Rust decoder. Store dark/light workspace and
+results pairs under `docs/ui/measurements/ofdm-profile-performance/images/`.
+The results image captures the real popup's counter content. Use supplied CH-EST
+and `--mce` with the bundled single captures and Profile 0; do not manufacture
+counter values or substitute QML test mocks for the documentation pictures.

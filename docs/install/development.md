@@ -71,7 +71,7 @@ After Rust setup, development installation calls
 `scripts/fetch-development-dependencies.sh`. This fetches both workspace and Qt
 sources with `cargo fetch --locked`, including the optional MERLIN FEC engine
 pinned in `apps/viewer/Cargo.toml`. Cargo keeps sources in `local/cargo`; it does
-not create a separate MERLIN checkout or enable FEC in the desktop application.
+not create a separate MERLIN checkout. The desktop enables FEC in its Cargo dependency.
 Existing cached sources are reused. Missing sources require network access.
 
 The helper also runs independently:

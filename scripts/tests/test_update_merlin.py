@@ -47,6 +47,8 @@ class MerlinUpdateTests(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes((ROOT / relative).read_bytes())
         (root / 'Cargo.lock').write_text('original lock\n')
+        (root / 'apps/qt').mkdir(parents=True, exist_ok=True)
+        (root / 'apps/qt/Cargo.lock').write_text('original Qt lock\n')
         legal_root = root / 'LICENSES/merlin'
         legal_root.mkdir(parents=True)
         (legal_root / 'NOTICE').write_text('old notice\n')
@@ -60,7 +62,9 @@ class MerlinUpdateTests(unittest.TestCase):
 
             def failing_cargo(*arguments, **keywords):
                 (root / 'Cargo.lock').write_text('partial lock')
-                raise subprocess.CalledProcessError(37, arguments[0])
+                if 'apps/qt/Cargo.toml' in arguments[0][4]:
+                    (root / 'apps/qt/Cargo.lock').write_text('partial Qt lock')
+                    raise subprocess.CalledProcessError(37, arguments[0])
 
             with patch.object(updater.subprocess, 'run', side_effect=failing_cargo):
                 with self.assertRaises(subprocess.CalledProcessError):
@@ -79,6 +83,7 @@ class MerlinUpdateTests(unittest.TestCase):
             self.assertIn('MERLIN_REVISION: &str = "new"', (root / 'apps/viewer/src/simulation/fec/mod.rs').read_text())
             self.assertEqual((root / 'LICENSES/merlin/NOTICE').read_bytes(), b'upstream notice')
             self.assertIn('Tag: v0.5.0', (root / 'LICENSES/merlin/SOURCE.txt').read_text())
+            self.assertEqual(cargo.call_count, 2)
             self.assertEqual(cargo.call_args.args[0][-4:], ['-p', 'docsis-ofdm-fec', '--precise', 'new'])
 
 

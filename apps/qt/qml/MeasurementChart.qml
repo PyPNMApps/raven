@@ -11,6 +11,10 @@ ColumnLayout {
     id: chart
     required property Theme theme
     property var viewport: ({start: 0, total: 0, points: []})
+    property var extraSeries: []
+    property var shadedBands: []
+    onExtraSeriesChanged: plot.requestPaint()
+    onShadedBandsChanged: plot.requestPaint()
     property bool spectrumEnabled: false
     property bool rxmerEnabled: false
     property bool showRxmerMinimum: true
@@ -198,6 +202,17 @@ ColumnLayout {
             const plotHeight = dataBottom - topMargin
             const firstHz = points.length ? points[0].frequency_hz : 0
             const lastHz = points.length ? points[points.length - 1].frequency_hz : firstHz
+            for (const band of chart.shadedBands) {
+                if (lastHz <= firstHz) continue
+                const first = Math.max(firstHz, band.first_hz)
+                const last = Math.min(lastHz, band.last_hz)
+                if (last <= first) continue
+                context.fillStyle = chart.theme.accent
+                context.globalAlpha = 0.13
+                context.fillRect(leftMargin + (first-firstHz)/(lastHz-firstHz)*plotWidth,
+                    topMargin, (last-first)/(lastHz-firstHz)*plotWidth, plotHeight)
+                context.globalAlpha = 1
+            }
             context.font = "11px sans-serif"
             context.strokeStyle = chart.theme.line
             context.fillStyle = chart.theme.muted
@@ -230,6 +245,7 @@ ColumnLayout {
             if (!overlays && chart.showSpectrumAverage && chart.viewport.spectrum_average) {
                 traces.push({points: chart.viewport.spectrum_average.points, color: chart.theme.spectrumAverage, dashed: !!statistics})
             }
+            for (const extra of chart.extraSeries) traces.push(extra)
             for (let traceIndex = 0; traceIndex < traces.length; traceIndex++) {
                 const trace = traces[traceIndex]
                 const points = trace.points
@@ -250,7 +266,7 @@ ColumnLayout {
                         : leftMargin + (point.frequency_hz - firstHz) / (lastHz - firstHz) * plotWidth
                     const vertical = topMargin + (chart.maximum - point.value) / (chart.maximum - chart.minimum) * plotHeight
                     if (connected) {
-                        if (chart.stepPlot) { context.lineTo(horizontal, previousVertical) }
+                        if (chart.stepPlot || trace.step) { context.lineTo(horizontal, previousVertical) }
                         context.lineTo(horizontal, vertical)
                     } else {
                         context.moveTo(horizontal, vertical)

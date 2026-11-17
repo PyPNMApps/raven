@@ -83,6 +83,9 @@ directory permissions before testing future in-app updates.
 
 ## Uninstall
 
+**About → Uninstall…** at the bottom of the dialog opens these platform-specific
+instructions. Follow the removal steps below; the viewer does not remove itself.
+
 Remove both the viewer and CLI:
 
 ```bash

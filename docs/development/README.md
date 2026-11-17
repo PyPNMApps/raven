@@ -12,6 +12,7 @@ CLI behavior belongs in `docs/cli/`.
 | Build, launch and check native Qt | [Qt setup](qt.md) |
 | Understand charts and Rust/QML ownership | [Qt measurement internals](qt-measurements.md) |
 | Understand spectrum integration and range tabs | [dBmV integration math](spectrum-power.md) |
+| Build the multi-file OFDM profile workspace | [OFDM Profile Performance](ofdm-profile-performance.md) |
 | Use or update MERLIN for three-capture FEC simulation | [Rust FEC adapter](merlin-fec.md) |
 | Work on core APIs, parsers and math | [Rust development](rust.md) |
 | Change compiled QAM resources | [QAM conversion and geometry](qam-resources.md) |

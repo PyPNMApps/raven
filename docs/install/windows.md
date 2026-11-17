@@ -88,7 +88,7 @@ limited retention). Standalone CLI ZIPs are not public release assets.
 
 ## Uninstall
 
-In Windows builds, **About → Software → Uninstall…** opens Windows **Installed apps**.
+In Windows builds, **About → Uninstall…** at the bottom of the dialog opens Windows **Installed apps**.
 Close the viewer, select **RAVEN**, then choose **Uninstall**.
 You can also open this page directly:
 

@@ -44,8 +44,9 @@ Enable Cargo feature `viewer/merlin-fec`. The initial integration pins v0.4.0 re
 consumed; MERLIN's Qt application and Python bindings are not imported or copied.
 The GPL-3.0-only RAVEN adapter remains in the desktop service crate.
 
-The dependency is optional and disabled in ordinary desktop builds. Local and
-hosted validation explicitly enable it, while existing packages remain unchanged.
+The dependency remains optional for standalone library consumers. The Qt desktop
+now enables it for OFDM Profile Performance; local and hosted validation also
+explicitly enable it. See [workspace design](ofdm-profile-performance.md).
 Building with the feature needs the pinned Git source/crates available in Cargo's
 cache; running the resulting simulation does not access the network.
 
@@ -158,7 +159,8 @@ Local validation: six adapter contracts, the workspace feature-enabled suite,
 153 QML tests and four Qt adapter tests passed. Workflow/shell lint, version
 consistency, fixture hygiene and copied-file hashes passed. Windows/macOS
 execution of the new optional adapter remains for native CI; this work has not
-been published or added to the installed GUI.
+been published. The subsequent native workspace integrates it into the GUI;
+its verification is recorded in the workspace design.
 
 Development setup calls the separate
 `scripts/fetch-development-dependencies.sh` helper after Rust preparation.
@@ -183,9 +185,9 @@ scripts/cargo-local.sh clippy -p viewer --all-targets --features merlin-fec --lo
 The helper resolves public Git tags; latest means the highest stable
 `vMAJOR.MINOR.PATCH`, excluding prereleases. It writes the resolved exact commit
 to the existing MERLIN dependency in `apps/viewer/Cargo.toml`, updates the adapter's
-revision constant, and runs a targeted Cargo update for `Cargo.lock`. Unrelated
+revision constant, and runs targeted Cargo updates for root and Qt `Cargo.lock` files. Unrelated
 TOML settings remain intact. Compatible transitive lockfile changes may result;
-review the complete diff. This prepares sources without enabling FEC in Qt.
+review the complete diff. The Qt application enables FEC independently through its viewer dependency.
 
 It also refreshes upstream license/NOTICE files under `LICENSES/merlin/`, including
 the AFF3CT MIT notice and QAM resource attribution. `SOURCE.txt` records the tag
@@ -194,7 +196,7 @@ licenses. Existing PyPNM fixture notices remain in place. Cargo dependency
 license collection remains responsible for other resolved third-party crates.
 
 Missing tags, unavailable legal files or remote failures stop the update.
-If Cargo resolution fails, the manifest, lockfile, runtime revision and legal
+If Cargo resolution fails, the manifest, both lockfiles, runtime revision and legal
 files are restored. Cargo's downloaded cache remains. Do not run concurrently
 with other dependency edits. The helper does not commit, push, build or execute
 tests; a new MERLIN release still needs adapter compatibility testing.

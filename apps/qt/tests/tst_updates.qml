@@ -183,7 +183,7 @@ RenderTestCase {
         service.download_url=""
         verify(!button.visible)
     }
-    function test_windows_uninstall_link_is_platform_specific_data() {
+    function test_uninstall_action_is_platform_specific_data() {
         const cases=[]
         for (const platform of ["windows", "linux", "osx"]) {
             for (const preference of [1, 2]) {
@@ -192,14 +192,14 @@ RenderTestCase {
         }
         return cases
     }
-    function test_windows_uninstall_link_is_platform_specific(data) {
+    function test_uninstall_action_is_platform_specific(data) {
         about.platformOs=data.platform
         appearance.preference=data.preference
         about.open()
         tryCompare(about,"opened",true)
-        const button=findChild(about,"windowsUninstallButton")
-        compare(button.parent,findChild(about,"softwareActions"))
-        compare(button.visible,data.platform==="windows")
+        const button=findChild(about,"uninstallButton")
+        compare(button.parent,findChild(about,"aboutUninstallActions"))
+        compare(button.visible,true)
         if (data.platform==="windows") {
             verify(waitForPolish(button))
             verify(waitForFrame(button))
@@ -208,7 +208,11 @@ RenderTestCase {
             compare(uninstallOpened.count,1)
             verify(about.opened)
         } else {
+            verify(waitForPolish(button))
+            mouseClick(button)
             compare(uninstallOpened.count,0)
+            compare(releaseOpened.count,1)
+            verify(releaseOpened.signalArguments[0][0].toString().indexOf(data.platform==="osx" ? "macos.md#update-and-uninstall" : "ubuntu.md#uninstall") >= 0)
         }
     }
     function test_install_success_automatically_requests_restart_once() {
@@ -250,7 +254,9 @@ RenderTestCase {
         compare(restartRequested.count, 0)
         verify(about.opened)
         service.restartSucceeds = true
-        mouseClick(findChild(about, "restartUpdateButton"))
+        const restart = findChild(about, "restartUpdateButton")
+        verify(waitForFrame(restart))
+        mouseClick(restart)
         tryCompare(restartRequested, "count", 1)
         compare(service.restarts, 2)
     }
@@ -277,11 +283,14 @@ RenderTestCase {
         verify(!install.visible)
         service.install_available = true
         verify(install.visible)
+        verify(waitForFrame(install))
         mouseClick(install)
         compare(service.installs, 1)
         verify(!install.enabled)
         verify(!findChild(about, "checkUpdatesButton").enabled)
-        mouseClick(findChild(about, "cancelUpdateButton"))
+        const cancel = findChild(about, "cancelUpdateButton")
+        verify(waitForFrame(cancel))
+        mouseClick(cancel)
         compare(service.cancels, 1)
         service.install_state = "installing"
         verify(!findChild(about, "cancelUpdateButton").visible)

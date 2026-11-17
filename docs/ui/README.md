@@ -6,6 +6,9 @@
 are the initial location for capture, archive and folder selection under
 `files/demo`. Standalone CLI archives do not include them.
 
+Use [OFDM Profile Performance](measurements/ofdm-profile-performance/README.md) in the
+left pane for profile/RxMER simulation with optional channel estimation and MCE.
+
 Use [Settings → Charts…](settings.md) for global line thickness and trace colors.
 
 The application is **under development**. This guide describes the native Qt

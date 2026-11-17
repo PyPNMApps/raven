@@ -97,14 +97,15 @@ def apply_update(root, tag, revision, legal):
     changes.update({legal_root / name: content for name, content in legal.items()})
     changes[legal_root / 'SOURCE.txt'] = f'{REMOTE}\nTag: {tag}\nCommit: {revision}\n'.encode()
     backups = {path: path.read_bytes() if path.exists() else None
-               for path in [*changes, root / 'Cargo.lock']}
+               for path in [*changes, root / 'Cargo.lock', root / 'apps/qt/Cargo.lock']}
     try:
         for path, content in changes.items():
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(content)
-        subprocess.run(['bash', str(root / 'scripts/cargo-local.sh'), 'update',
-                        '--manifest-path', str(root / 'Cargo.toml'),
-                        '-p', 'docsis-ofdm-fec', '--precise', revision], check=True)
+        for manifest_path in (root / 'Cargo.toml', root / 'apps/qt/Cargo.toml'):
+            subprocess.run(['bash', str(root / 'scripts/cargo-local.sh'), 'update',
+                            '--manifest-path', str(manifest_path),
+                            '-p', 'docsis-ofdm-fec', '--precise', revision], check=True)
     except BaseException:
         for path, content in backups.items():
             if content is None:
@@ -140,7 +141,7 @@ def main():
             legal = {destination: run(['git', '-C', directory, 'show', f'{revision}:{source}'])
                      for source, destination in LEGAL_FILES.items()}
         apply_update(ROOT, tag, revision, legal)
-        print('Updated pin, Cargo.lock, adapter revision and MERLIN notices.')
+        print('Updated pin, both Cargo lockfiles, adapter revision and MERLIN notices.')
         print('Review the diff and run feature-enabled tests before committing.')
     except (ValueError, OSError, subprocess.CalledProcessError) as failure:
         parser.exit(1, f'MERLIN update failed: {failure}\n')

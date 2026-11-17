@@ -108,13 +108,6 @@ Dialog {
                 text: "Release notes"
                 onClicked: dialog.openReleaseRequested(dialog.updates.release_url)
             }
-            ThemeButton {
-                theme: dialog.theme
-                objectName: "windowsUninstallButton"
-                text: "Uninstall…"
-                visible: dialog.platformOs === "windows"
-                onClicked: dialog.openUninstallRequested()
-            }
         }
         RowLayout {
             ThemeButton {
@@ -160,6 +153,22 @@ Dialog {
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
             color: dialog.theme.text
+        }
+        RowLayout {
+            objectName: "aboutUninstallActions"
+            Layout.fillWidth: true
+            ThemeButton {
+                theme: dialog.theme
+                objectName: "uninstallButton"
+                text: "Uninstall…"
+                enabled: !dialog.installBusy && !dialog.captureBusy
+                visible: ["windows", "linux", "osx"].indexOf(dialog.platformOs) >= 0
+                onClicked: {
+                    if (dialog.platformOs === "windows") dialog.openUninstallRequested()
+                    else dialog.openReleaseRequested(dialog.updates.project_url + "/blob/master/docs/install/"
+                        + (dialog.platformOs === "osx" ? "macos.md#update-and-uninstall" : "ubuntu.md#uninstall"))
+                }
+            }
         }
     }
 }

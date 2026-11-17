@@ -4,6 +4,8 @@
  */
 //! Single-channel FEC experiments backed by MERLIN's pinned public Rust API.
 //! Preparation never runs simulation. Call execution on a worker, not Qt's thread.
+pub mod batch;
+pub mod workspace;
 use crate::{Capture, Diagnostic, MAX_INPUT_BYTES};
 use pnm::pnm::{data_type::ProfileId, parser::pnm_file::DecodedPnm};
 use std::fmt;
@@ -56,6 +58,31 @@ impl FecExperiment {
         channel_estimate: &Capture,
         settings: FecSettings,
     ) -> Result<Self, FecError> {
+        Self::with_optional_channel(profile, rxmer, Some(channel_estimate), settings)
+    }
+
+    /// Prepares a profile with measured RxMER and an optional supplied channel.
+    /// # Arguments
+    /// * `profile`, `rxmer` - Original profile and RxMER captures on one grid.
+    /// * `channel_estimate` - Supplied H, or None for an explicit unity channel.
+    /// * `settings` - Physical settings, receiver policy and association tolerance.
+    /// # Returns
+    /// Idle validated experiment. No channel capture means no invented measured H.
+    /// # Errors
+    /// Rejects incompatible sources, invalid policies and MCE without supplied H.
+    pub fn with_optional_channel(
+        profile: &Capture,
+        rxmer: &Capture,
+        channel_estimate: Option<&Capture>,
+        settings: FecSettings,
+    ) -> Result<Self, FecError> {
+        if channel_estimate.is_none()
+            && settings.options.receiver_mode == engine::ReceiverMode::MerlinChannelEstimated
+        {
+            return Err(
+                Diagnostic::new("MissingChannel", "Attach channel estimation to use MCE.").into(),
+            );
+        }
         let (original_profile, decoded_profile) = sources(profile)?;
         let dpd = engine::Dpd::from_decoded(
             &original_profile,
@@ -65,9 +92,14 @@ impl FecExperiment {
         )?;
         let (original_rxmer, decoded_rxmer) = sources(rxmer)?;
         let mer = engine::RxMer::from_decoded(&original_rxmer, &decoded_rxmer, None)?;
-        let (original_channel, decoded_channel) = sources(channel_estimate)?;
-        let channel =
-            engine::ChannelEstimate::from_decoded(&original_channel, &decoded_channel, None)?;
+        let channel = channel_estimate
+            .map(|capture| {
+                let (original, decoded) = sources(capture)?;
+                Ok::<_, FecError>(engine::ChannelEstimate::from_decoded(
+                    &original, &decoded, None,
+                )?)
+            })
+            .transpose()?;
         Self::from_inputs(dpd, mer, channel, settings)
     }
 
@@ -88,7 +120,7 @@ impl FecExperiment {
         let dpd = engine::Dpd::from_bytes(profile, engine::ProfileId::new(settings.profile_id)?)?;
         let mer = engine::RxMer::from_bytes(rxmer)?;
         let channel = engine::ChannelEstimate::from_bytes(channel_estimate)?;
-        Self::from_inputs(dpd, mer, channel, settings)
+        Self::from_inputs(dpd, mer, Some(channel), settings)
     }
 
     /// Discovers captured profile IDs without running or guessing a profile.
@@ -115,6 +147,37 @@ impl FecExperiment {
         Ok(self.simulation.ocd()?.configuration())
     }
 
+    /// Reads the engine's protected PLC neighborhood for consistent plot shading.
+    /// # Returns
+    /// Half-open absolute Hz range from the validated MERLIN physical layout.
+    /// # Errors
+    /// Preserves invalid configuration, layout or frequency arithmetic errors.
+    pub fn plc_neighborhood(
+        &self,
+    ) -> Result<std::ops::Range<pnm::pnm::data_type::FrequencyHz>, FecError> {
+        let configuration = self.configuration()?;
+        let spacing = [
+            engine::SubcarrierSpacing::Khz25,
+            engine::SubcarrierSpacing::Khz50,
+        ]
+        .into_iter()
+        .find(|spacing| spacing.frequency_hz() == configuration.grid().spacing_hz)
+        .ok_or_else(|| Diagnostic::new("Spacing", "Unsupported OFDM spacing."))?;
+        let transmission = merlin::transmission::TransmissionSettings {
+            occupied_bandwidth_hz: configuration.bandwidth().value().value(),
+            subcarrier_spacing: spacing,
+            cyclic_prefix_samples: configuration.cyclic_prefix().value().value(),
+            roll_off_samples: configuration.roll_off().value().value(),
+            time_interleaver_depth: configuration.interleaver_depth().value().value(),
+        };
+        let layout =
+            merlin::transmission::layout::CarrierLayout::new(&transmission, configuration.layout())
+                .map_err(engine::ApiError::from)?;
+        Ok(layout
+            .plc_neighborhood_hz()
+            .map_err(engine::ApiError::from)?)
+    }
+
     /// Executes the existing PRBS/TX/channel/RX/FEC pipeline on the caller's worker.
     /// # Arguments
     /// * `control` - Cloneable cooperative cancellation handle for another thread.
@@ -130,7 +193,7 @@ impl FecExperiment {
     fn from_inputs(
         dpd: engine::Dpd,
         mer: engine::RxMer,
-        channel: engine::ChannelEstimate,
+        channel: Option<engine::ChannelEstimate>,
         settings: FecSettings,
     ) -> Result<Self, FecError> {
         let mut simulation = engine::Simulation::new();
@@ -140,12 +203,17 @@ impl FecExperiment {
             settings.ocd_overrides,
         )?;
         let rxmer_id = simulation.add_rxmer(mer)?;
-        let channel_id = simulation.add_channel_estimate(channel)?;
+        let channel_selection = match channel {
+            Some(channel) => {
+                engine::ChannelSelection::Explicit(simulation.add_channel_estimate(channel)?)
+            }
+            None => engine::ChannelSelection::Unity,
+        };
         simulation.set_options(
             settings
                 .options
                 .with_rxmer_selection(engine::RxMerSelection::Individual(rxmer_id))
-                .with_channel_selection(engine::ChannelSelection::Explicit(channel_id)),
+                .with_channel_selection(channel_selection),
         )?;
         simulation.prepare()?;
         Ok(Self { simulation })

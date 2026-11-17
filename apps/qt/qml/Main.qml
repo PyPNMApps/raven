@@ -26,6 +26,7 @@ ApplicationWindow {
     ViewerBackend { id: backend }
     ViewerBackend { id: comparisonBackend }
     SpectrumCollectionBackend { id: spectrumBackend }
+    ProfilePerformanceBackend { id: ofdmBackend }
     UpdateBackend { id: updateBackend }
     readonly property url initialCaptureFolder: {
         const demos = backend.examples_folder()
@@ -40,13 +41,20 @@ ApplicationWindow {
         surface: captureSurface
         openCaptureDialog: openDialog
         captureSelectionDialogs: [openDialog, collectionFolderDialog, collectionArchiveDialog,
-            spectrumFolderDialog, spectrumArchiveDialog, preEqOriginalDialog, preEqOpenDialog]
+            spectrumFolderDialog, spectrumArchiveDialog, preEqOriginalDialog, preEqOpenDialog, ofdmWorkspace.capturePicker]
         exportCaptureDialog: saveDialog
+    }
+    OfdmProfileSmoke {
+        service: ofdmBackend
+        workspace: ofdmWorkspace
+        surface: captureSurface
+        applicationWindow: window
+        theme: appTheme
     }
     Component.onCompleted: {
         backend.set_dark_icon(appTheme.dark)
         // Packaged smoke checks stay offline; normal launch checks once, asynchronously.
-        if (Qt.application.arguments.indexOf("--smoke-test") < 0) {
+        if (Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0) {
             Qt.callLater(function() { updateBackend.check_updates() })
         }
     }
@@ -76,15 +84,21 @@ ApplicationWindow {
             bitLoadingDialog.close()
         }
     }
+    Connections {
+        target: ofdmBackend
+        function onError_messageChanged() { fileError.showError(ofdmBackend.error_message) }
+    }
     function selectWorkspace(name) {
         rxmerCollection.pausePlayback()
         spectrumCollection.pausePlayback()
         rxmerCollectionSelected=name==="rxmer"
         spectrumCollectionSelected=name==="spectrum"
         comparisonSelected=name==="pre-eq"
+        ofdmSelected=name==="ofdm"
     }
     property bool spectrumCollectionSelected:false
     property bool spectrumPlaybackSelected:false
+    property bool ofdmSelected: false
     property bool comparisonSelected: false
     property bool rxmerCollectionSelected: false
     property bool rxmerPlaybackSelected: false
@@ -92,14 +106,14 @@ ApplicationWindow {
     readonly property var preEqAttachment: JSON.parse(comparisonBackend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(comparisonBackend.pre_eq_json)
     property bool navigationVisible: true
-    readonly property bool blocked: spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
         anchors.fill: parent
         z: 1
         theme: appTheme
-        blocked: window.blocked || settingsMenu.visible || spectrumTools.popupVisible
+        blocked: window.ofdmSelected || window.blocked || settingsMenu.visible || spectrumTools.popupVisible
         attachmentTarget: comparisonBackend.pre_eq_current && window.comparisonSelected ? preEqWorkspace.updateTarget : null
         onAttachmentDropped: captureUrl => comparisonBackend.attach_pre_eq_update(captureUrl)
         onFileDropped: captureUrl => {
@@ -263,14 +277,17 @@ ApplicationWindow {
         theme: appTheme
         updates: updateBackend
         appVersion: backend.app_version
-        captureBusy: backend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumBackend.busy || backend.rxmer_collection_busy
+        captureBusy: ofdmBackend.busy || backend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumBackend.busy || backend.rxmer_collection_busy
         onRestartRequested: Qt.quit()
         onOpenReleaseRequested: address => Qt.openUrlExternally(address)
         onOpenIssueRequested: address => Qt.openUrlExternally(address)
         onOpenUninstallRequested: Qt.openUrlExternally("ms-settings:appsfeatures")
     }
-    RowLayout {
+    Rectangle {
         id: captureSurface
+        anchors.fill: parent
+        color: appTheme.background
+        RowLayout {
         anchors.fill: parent
         spacing: 0
         Rectangle {
@@ -338,12 +355,23 @@ ApplicationWindow {
                 }
 
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
-                Label { text: window.comparisonSelected ? "US Pre-EQ" : window.spectrumCollectionSelected ? "Spectrum Analyzer" : window.rxmerCollectionSelected ? "RxMER" : backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                Label { text: window.ofdmSelected ? "OFDM Profile Performance" : window.comparisonSelected ? "US Pre-EQ" : window.spectrumCollectionSelected ? "Spectrum Analyzer" : window.rxmerCollectionSelected ? "RxMER" : backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
                 ThemeButton {
                     objectName:"showSingleCapture"
                     theme:appTheme;text:"Single Capture";Layout.fillWidth:true
-                    borderHighlighted:!window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.comparisonSelected
+                    borderHighlighted:!window.ofdmSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.comparisonSelected
                     onClicked:window.selectWorkspace("single")
+                }
+                ThemeButton {
+                    objectName: "showOfdmProfilePerformance"
+                    theme: appTheme
+                    text: "OFDM Profile Performance"
+                    Layout.fillWidth: true
+                    borderHighlighted: window.ofdmSelected
+                    onClicked: {
+                        window.selectWorkspace("ofdm")
+                        if (!ofdmBackend.prepared && !ofdmBackend.busy) ofdmWorkspace.openInputs()
+                    }
                 }
                 ToolButton {
                     id: rxmerToolGroup
@@ -446,7 +474,7 @@ ApplicationWindow {
                 Accessible.role: Accessible.AlertMessage
             }
                 Rectangle {
-                    visible: !backend.loaded && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.comparisonSelected
+                    visible: !backend.loaded && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.comparisonSelected && !window.ofdmSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     color: appTheme.panel
@@ -493,13 +521,17 @@ ApplicationWindow {
                     theme:appTheme;service:spectrumBackend;playbackMode:window.spectrumPlaybackSelected;playbackBlocked:window.blocked
                     onChooseDirectory:spectrumFolderDialog.open();onChooseArchive:spectrumArchiveDialog.open();onExportRequested:spectrumSaveDialog.open()
                 }
+                OfdmProfileWorkspace {
+                    id:ofdmWorkspace;visible:window.ofdmSelected;Layout.fillWidth:true;Layout.fillHeight:true
+                    theme:appTheme;service:ofdmBackend;initialFolder:window.initialCaptureFolder
+                }
                 PreEqWorkspace {
                     id:preEqWorkspace;visible:window.comparisonSelected;Layout.fillWidth:true;Layout.fillHeight:true
                     theme:appTheme;service:comparisonBackend
                     onChooseOriginal:preEqOriginalDialog.open();onChooseUpdate:preEqOpenDialog.open();onExportRequested:preEqSaveDialog.open()
                 }
                 Rectangle {
-                    visible: backend.loaded && !window.comparisonSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected
+                    visible: backend.loaded && !window.comparisonSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.ofdmSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 300
@@ -688,5 +720,6 @@ ApplicationWindow {
                 }
 
         }
+    }
     }
 }
