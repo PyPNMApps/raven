@@ -9,7 +9,7 @@ the preserved repository fixtures, never customer captures.
 ## Build and capture
 
 ```bash
-cd /home/dev01/Projects/PNM-Viewer-Toolkit &&
+cd /home/dev01/Projects/raven &&
 ./scripts/qt-desktop.sh build &&
 ./scripts/qt-desktop.sh
 ```
@@ -87,5 +87,5 @@ For OFDM Profile Performance, use the native
 real input snapshots and runs the Rust decoder. Store dark/light workspace and
 results pairs under `docs/ui/measurements/ofdm-profile-performance/images/`.
 The results image captures the real popup's counter content. Use supplied CH-EST
-and `--mce` with the bundled single captures and Profile 0; do not manufacture
+and `--mce --ofdm-profiles=0,1,2,3` with the bundled single captures; do not manufacture
 counter values or substitute QML test mocks for the documentation pictures.

@@ -39,9 +39,28 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 [Installation](docs/install/README.md) ·
 [Launch the viewer](docs/ui/README.md#launch) ·
 [User guide](docs/ui/README.md) ·
+[Workspaces](docs/ui/README.md#workspaces) ·
 [Screenshots and measurements](docs/ui/measurements.md)
 
-The current viewer supports:
+## Workspaces
+
+Use **Single Capture** to open individual files. The left navigation also offers
+RxMER and Spectrum Analyzer collections, US Pre-EQ comparison, and
+[**OFDM Profile Performance**](docs/ui/measurements/ofdm-profile-performance/README.md).
+
+For OFDM performance, select modulation-profile and RxMER captures, optionally
+add channel estimation, and check the profiles to test. The graph overlays RxMER
+and profile references; **FEC Performance** runs each checked profile and shows
+separate FEC, BER and LDPC results. All simulation runs locally in Rust using
+MERLIN. See the [demo walkthrough](docs/ui/examples.md#ofdm-profile-performance).
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/ui/measurements/ofdm-profile-performance/images/ofdm-profile-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="docs/ui/measurements/ofdm-profile-performance/images/ofdm-profile-light.png">
+  <img alt="OFDM workspace with profile checkboxes, RxMER overlay and shaded PLC carriers" src="docs/ui/measurements/ofdm-profile-performance/images/ofdm-profile-dark.png" width="1000">
+</picture>
+
+## Supported views
 
 | Capture | Views |
 | --- | --- |

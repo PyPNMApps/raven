@@ -52,6 +52,26 @@ PyPNM captures cover each supported measurement view. Single CM/CMTS MACs use
 `00:ca:00:00:00:01`. LICENSE/NOTICE and provenance retain upstream attribution
 and hashes. See the [source provenance](../../tests/fixtures/pypnm/README.md).
 
+## OFDM Profile Performance
+
+Choose **OFDM Profile Performance** in the left pane. In its input popup, select
+these files from **files → demo → single**:
+
+| Input | Example |
+| --- | --- |
+| Modulation profile | `modulation_profile.bin` |
+| RxMER | `rxmer.bin` |
+| Channel estimation (optional) | `channel_estimation.bin` |
+
+Keep the default capture-time tolerance for this example. Check the profiles to
+prepare and press **Continue**, then choose **FEC Performance** to test them.
+Enable **Use MCE** with the channel-estimation file to exercise pilot-based
+receiver correction. Without that file, leave MCE off to use a unity channel.
+
+Source-checkout copies are under `tests/fixtures/pypnm/tests/files/`. The
+[OFDM guide](measurements/ofdm-profile-performance/README.md) explains the overlay,
+profile checkboxes, cancellation and separate per-profile results.
+
 ## RxMER collections
 
 Select **RxMER → Min-Avg-Max** or **Playback** in the left navigation pane, then

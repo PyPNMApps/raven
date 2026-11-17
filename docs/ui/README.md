@@ -39,7 +39,8 @@ and packaged installation remain unverified.
 ## Starting screen
 
 The left navigation pane opens by default. Use the pane button at the top right
-to hide or show it. Expand **RxMER** to choose **Min-Avg-Max** or **Playback**.
+to hide or show it. Choose a workflow from the [workspace navigation](#workspaces).
+Expand **RxMER** or **Spectrum Analyzer** for **Min-Avg-Max** and **Playback**.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/home/home-dark.png">
@@ -109,8 +110,11 @@ The panel button at the top right shows or hides the left navigation pane.
 software-update status line. A background check runs once per normal launch;
 it does not delay opening captures. Offline or failed checks leave the viewer
 usable. **Check for updates** retries manually and reports the outcome. On Windows,
-**Software → Uninstall…** opens Windows Installed apps; close the viewer and select its
-Uninstall action there. See the [Windows uninstall guide](../install/windows.md#uninstall).
+**Uninstall…** at the bottom of About opens Windows Installed apps; close the
+viewer and select its Uninstall action there. On Ubuntu and macOS, this button
+opens the corresponding uninstall instructions. See the [Windows](../install/windows.md#uninstall),
+[Ubuntu](../install/ubuntu.md#uninstall), and
+[macOS](../install/macos.md#update-and-uninstall) guides.
 
 **Report issue** opens a GitHub draft in your browser, prefilled with the viewer
 version, OS family and architecture. Add reproduction steps and review the draft
@@ -159,13 +163,40 @@ from the left gutter, with a mandatory pair precheck and explicit Adjust/Set mod
 
 ## Workspaces
 
-Use **Single Capture** for individual PNM files. The top Open action returns to
-that view after a successful decode. The left gutter contains RxMER and Spectrum
-Analyzer **Min-Avg-Max / Playback**, plus **US Pre-EQ → Compare**. Each workflow
-keeps independent in-memory state when navigating; opening a single file does not
-replace a comparison or spectrum collection. Drops are routed to the selected
-workflow. [Spectrum collections](measurements/spectrum-analyzer/collections.md)
-use MAC → capture settings → epoch chronology.
+Choose a workspace in the left navigation pane. Use the top-right pane button
+if navigation is hidden.
+
+| Workspace | Start with | Purpose |
+| --- | --- | --- |
+| **Single Capture** | **Open** or one dropped PNM file | Inspect one capture and export decoded JSON |
+| [**OFDM Profile Performance**](measurements/ofdm-profile-performance/README.md) | **Select captures…** | Compare profile references with RxMER and simulate FEC/LDPC performance |
+| [**RxMER → Min-Avg-Max / Playback**](measurements/rxmer/README.md) | A capture folder or archive | Aggregate or play captures over time |
+| [**Spectrum Analyzer → Min-Avg-Max / Playback**](measurements/spectrum-analyzer/collections.md) | A capture folder or archive | Compare compatible spectrum captures over time |
+| [**US Pre-EQ → Compare**](measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) | Original and last-update captures | Compare the original correction with the predicted updated response |
+
+Each workflow keeps independent in-memory state when navigating. The top **Open**
+action returns to Single Capture after a successful decode. File drops follow the
+selected capture or collection workflow; OFDM inputs use the popup's separate
+**Browse…** buttons so each file has an explicit role. Spectrum collections group
+by MAC → capture settings → capture time.
+
+### OFDM Profile Performance
+
+1. Select **OFDM Profile Performance** in the left pane.
+2. Browse for modulation-profile and RxMER binary PNM files. Optionally add
+   channel estimation and enable **Use MCE** for receiver pilot-based correction.
+3. Check the captured profiles to prepare, then press **Continue**. The inputs
+   must pass device, channel, frequency-grid and capture-time checks.
+4. Use **Profiles to test** to choose any combination of prepared profiles.
+   Each checkbox controls its graph trace and inclusion in the next simulation.
+5. Press **FEC Performance**. Results show a separate row for each tested profile.
+   **Stop** requests cancellation; **Run again** starts a new batch.
+
+Clearing every profile disables testing. Changing a selection clears previous
+results. Closing the results popup leaves an active run running. These are
+simulated counters, not FEC counters captured from a modem. See the
+[complete guide and screenshots](measurements/ofdm-profile-performance/README.md)
+and [bundled demo walkthrough](examples.md#ofdm-profile-performance).
 
 To compare pre-EQ files, select **US Pre-EQ → Compare**, press **Open original…**,
 then **Browse…** for Last Update or drop it on the attachment target. Choose the

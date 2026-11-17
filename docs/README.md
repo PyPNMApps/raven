@@ -10,6 +10,8 @@ actual published assets and [CI scope](development/ci.md) for validation status.
 ## Use the toolkit
 
 - [Desktop user guide and starting screen](ui/README.md)
+- [Workspace navigation](ui/README.md#workspaces)
+- [OFDM Profile Performance](ui/measurements/ofdm-profile-performance/README.md)
 - [Measurement screenshots](ui/measurements.md)
 - [Bundled example captures](ui/examples.md)
 
