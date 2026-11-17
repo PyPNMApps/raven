@@ -90,6 +90,9 @@ source/notice collection. Packages include project licenses, NOTICE and CLI
 usage/manual. Desktop installers additionally include the nine explicitly
 approved single [example captures](../ui/examples.md), generated RxMER demo ZIPs
 and the pre-EQ comparison pair, with applicable license/NOTICE and provenance.
+The `ofdm-profile-performance/` demo groups unchanged copies of the matching
+modulation-profile, RxMER and channel-estimation singles with a walkthrough and
+the same upstream notices. All platform builders use this shared bundle.
 Python tests and unregistered fixtures remain excluded. Standalone CLI
 archives contain no captures. Private PDFs, customer files and development tools
 are never packaged.
@@ -220,7 +223,7 @@ Build a fresh local examples payload for inspection:
 python3 scripts/release/samples.py --output local/installer-examples-review
 ```
 
-Installed lifecycle checks verify `single/`, generated ZIP member bytes and the
-pre-EQ pair against repository sources. The initial Open folder remains the
+Installed lifecycle checks verify `single/`, the three OFDM Profile Performance
+inputs, generated ZIP member bytes and the pre-EQ pair against repository sources. The initial Open folder remains the
 examples root. See the [installed examples guide](../ui/examples.md). CLI-only
 packages remain capture-free; existing per-installer size gates still apply.

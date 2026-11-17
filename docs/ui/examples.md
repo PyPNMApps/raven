@@ -1,7 +1,7 @@
 # Bundled example captures
 
-Desktop installers include single captures, RxMER and Spectrum collections, and
-an upstream pre-EQ comparison pair. No download, modem or server is required.
+Desktop installers include single captures, an OFDM Profile Performance demo,
+RxMER and Spectrum collections, and an upstream pre-EQ comparison pair. No download, modem or server is required.
 
 Capture, archive and folder selection starts in **files → demo**. Choose
 **Open** for a single capture or use the left-gutter collection/compare actions.
@@ -22,6 +22,11 @@ files/demo/
 │   ├── const_display.bin
 │   ├── us_pre_equalizer_coef.bin
 │   ├── us_pre_equalizer_coef_last.bin
+│   └── README.md, LICENSE, NOTICE, provenance.json
+├── ofdm-profile-performance/
+│   ├── modulation_profile.bin
+│   ├── rxmer.bin
+│   ├── channel_estimation.bin
 │   └── README.md, LICENSE, NOTICE, provenance.json
 ├── rxmer/
 │   ├── single-channel.zip
@@ -55,13 +60,23 @@ and hashes. See the [source provenance](../../tests/fixtures/pypnm/README.md).
 ## OFDM Profile Performance
 
 Choose **OFDM Profile Performance** in the left pane. In its input popup, select
-these files from **files → demo → single**:
+these files from **files → demo → ofdm-profile-performance**:
 
 | Input | Example |
 | --- | --- |
 | Modulation profile | `modulation_profile.bin` |
 | RxMER | `rxmer.bin` |
 | Channel estimation (optional) | `channel_estimation.bin` |
+
+Installed demo folder by platform:
+
+- Windows: `C:\Program Files\RAVEN\files\demo\ofdm-profile-performance`
+- Ubuntu: `/opt/raven/files/demo/ofdm-profile-performance`
+- macOS: `/Applications/RAVEN.app/Contents/Resources/files/demo/ofdm-profile-performance`
+
+The folder includes a walkthrough and unchanged copies of the matching single
+captures, with their license, notices and provenance. It is included in the next
+release installers; existing installations gain it after upgrading.
 
 Keep the default capture-time tolerance for this example. Check the profiles to
 prepare and press **Continue**, then choose **FEC Performance** to test them.

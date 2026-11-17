@@ -25,6 +25,8 @@ DEMO_MANIFEST = DEMO_ROOT / 'installer-demos.json'
 HYGIENE_TOOL = ROOT / 'tools/security/pnm-mac-updater.py'
 MAX_DEMO_BYTES = 16 * 1024 * 1024
 DEMO_DIRECTORY = Path('files/demo')
+PROFILE_PERFORMANCE_DIRECTORY = 'ofdm-profile-performance'
+PROFILE_PERFORMANCE_CAPTURES = ('modulation_profile.bin', 'rxmer.bin', 'channel_estimation.bin')
 
 
 def digest(path):
@@ -150,6 +152,25 @@ def bundle(destination):
             '# Single captures\n\nSanitized PyPNM fixtures for offline exploration. '
             'CM/CMTS MAC addresses are 00:ca:00:00:00:01. '
             'LICENSE, NOTICE and provenance.json retain upstream terms and hashes.\n', encoding='utf-8')
+        performance = payload / PROFILE_PERFORMANCE_DIRECTORY
+        performance.mkdir()
+        for name in (*PROFILE_PERFORMANCE_CAPTURES, 'LICENSE', 'NOTICE', 'provenance.json'):
+            shutil.copy2(singles / name, performance / name)
+        (performance / 'README.md').write_text(
+            '# OFDM Profile Performance demo\n\n'
+            '1. Select OFDM Profile Performance in the left navigation.\n'
+            '2. Browse to this folder from the input popup.\n'
+            '3. Select modulation_profile.bin for Modulation profile.\n'
+            '4. Select rxmer.bin for RxMER.\n'
+            '5. Optionally select channel_estimation.bin for Channel estimation.\n'
+            '   Enable Use MCE to test pilot-based receiver correction.\n'
+            '   Without channel estimation, leave MCE off for a unity channel.\n'
+            '6. Keep the default one-day capture separation and check profiles.\n'
+            '7. Press Continue, then FEC Performance to run the checked profiles.\n\n'
+            'Results are simulated, not modem FEC counters. These sanitized files '
+            'are unchanged copies of the corresponding single/ fixtures. LICENSE, '
+            'NOTICE and provenance.json retain upstream attribution and hashes. '
+            'Installed examples are read-only; export to a writable folder.\n', encoding='utf-8')
         for entry in datasets:
             directory = DEMO_ROOT / entry['source']
             output = payload / entry['output']
@@ -164,6 +185,7 @@ def bundle(destination):
         (payload / 'README.md').write_text(
             '# Demo PNM captures\n\n'
             '- single/: nine captures; open with the main Open action.\n'
+            '- ofdm-profile-performance/: matching profile, RxMER and optional channel estimation; use OFDM Profile Performance.\n'
             '- rxmer/: ZIP collections for Min-Avg-Max and Playback.\n'
             '- spectrum/: explicitly synthetic standard PNN9 temporal demo.\n'
             '- us-pre-eq/comparison/: original.bin and last-update.bin; use Compare.\n\n'
@@ -192,6 +214,10 @@ def installed_directory(gui):
             expected = ROOT / 'tests/fixtures/pypnm/tests/files' / name
             if digest(directory / 'single' / name) != digest(expected):
                 raise ValueError(f'Bundled example missing or modified: {name}')
+        for name in PROFILE_PERFORMANCE_CAPTURES:
+            expected = ROOT / 'tests/fixtures/pypnm/tests/files' / name
+            if digest(directory / PROFILE_PERFORMANCE_DIRECTORY / name) != digest(expected):
+                raise ValueError(f'Bundled profile performance example modified: {name}')
         inventory = json.loads((directory / 'manifest.json').read_text(encoding='utf-8'))['files']
         for item in inventory:
             if digest(directory / str(relative_path(item['path']))) != item['sha256']:

@@ -177,6 +177,7 @@ class SamplePackageTests(unittest.TestCase):
         """Copy nine approved captures and notices without adding Python tests."""
         for relative, executable in (
                 ('files/demo', 'raven.exe'),
+                ('files/demo', 'raven'),
                 ('Contents/Resources/files/demo', 'Contents/MacOS/raven')):
             with self.subTest(layout=relative), tempfile.TemporaryDirectory() as directory:
                 root = Path(directory)
@@ -184,6 +185,17 @@ class SamplePackageTests(unittest.TestCase):
                 samples.bundle(destination)
                 self.assertEqual(len(list((destination / 'single').glob('*.bin'))), 9)
                 self.assertFalse(list(destination.rglob('*.py')))
+                performance = destination / samples.PROFILE_PERFORMANCE_DIRECTORY
+                self.assertEqual(sorted(path.name for path in performance.glob('*.bin')),
+                                 sorted(samples.PROFILE_PERFORMANCE_CAPTURES))
+                for name in samples.PROFILE_PERFORMANCE_CAPTURES:
+                    self.assertEqual((performance / name).read_bytes(),
+                                     (destination / 'single' / name).read_bytes())
+                for name in ('README.md', 'LICENSE', 'NOTICE', 'provenance.json'):
+                    self.assertTrue((performance / name).is_file())
+                instructions = (performance / 'README.md').read_text(encoding='utf-8')
+                self.assertIn('Use MCE', instructions)
+                self.assertIn('one-day capture separation', instructions)
                 for name in ('LICENSE', 'NOTICE', 'provenance.json', 'README.md'):
                     self.assertTrue((destination / 'single' / name).is_file())
                 self.assertEqual(samples.installed_directory(root / executable), destination)
@@ -192,6 +204,26 @@ class SamplePackageTests(unittest.TestCase):
                 (destination / 'single/rxmer.bin').write_bytes(b'corrupt')
                 with self.assertRaisesRegex(ValueError, 'modified: rxmer.bin'):
                     samples.installed_directory(root / executable)
+
+    def test_profile_demo_is_verified_independently_of_its_inventory(self):
+        """Reject corrupt performance inputs even if their inventory was rewritten."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            destination = root / 'files/demo'
+            samples.bundle(destination)
+            capture = destination / samples.PROFILE_PERFORMANCE_DIRECTORY / 'rxmer.bin'
+            capture.write_bytes(b'corrupt')
+            inventory_path = destination / 'manifest.json'
+            inventory = json.loads(inventory_path.read_text())
+            for item in inventory['files']:
+                if item['path'] == capture.relative_to(destination).as_posix():
+                    item['sha256'] = samples.digest(capture)
+            inventory_path.write_text(json.dumps(inventory))
+            with self.assertRaisesRegex(ValueError, 'profile performance example modified'):
+                samples.installed_directory(root / 'raven')
+            capture.unlink()
+            with self.assertRaises(ValueError):
+                samples.installed_directory(root / 'raven')
 
     def test_absent_installed_examples_fail_the_package_gate(self):
         """Never silently fall back to checkout fixtures in deployed smoke tests."""

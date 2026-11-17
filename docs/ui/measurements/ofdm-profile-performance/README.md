@@ -18,8 +18,10 @@ This is a decoder simulation rather than counters collected from your modem.
 5. Click **Continue**. The MAC address, channel and frequency grids must match.
    A bad input opens an error popup and leaves the input popup available to fix it.
 
-The bundled single captures `modulation_profile.bin`, `rxmer.bin`, and
-`channel_estimation.bin` can be used together with the default time tolerance.
+The bundled **files → demo → ofdm-profile-performance** folder contains
+`modulation_profile.bin`, `rxmer.bin`, `channel_estimation.bin` and a walkthrough.
+Use these together with the default time tolerance. See the
+[installed demo locations](../../examples.md#ofdm-profile-performance).
 Close dismisses input selection without running a simulation. File selection does
 not modify captures. This popup currently accepts binary PNM captures.
 
