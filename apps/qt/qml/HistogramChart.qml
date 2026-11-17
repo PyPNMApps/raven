@@ -47,7 +47,7 @@ ColumnLayout {
             const plotWidth = width - leftMargin - rightMargin
             const plotHeight = height - topMargin - bottomMargin
             if (plotWidth <= 0 || plotHeight <= 0) { return }
-            context.font = "11px sans-serif"
+            context.font = chart.theme.axisFont
             context.fillStyle = chart.theme.muted
             context.strokeStyle = chart.theme.line
             for (let tick = 0; tick <= 4; tick++) {
@@ -66,9 +66,12 @@ ColumnLayout {
                     context.fillText(Math.round(chart.viewport.start + fraction * (chart.viewport.count - 1)).toString(), leftMargin + fraction * plotWidth, height - 23)
                 }
             }
-            context.textAlign = "left"
-            context.fillText(chart.histogram.grouped ? "Hit count · summed bins" : "Hit count", leftMargin, 13)
             context.textAlign = "center"
+            context.save()
+            context.translate(13, topMargin + plotHeight / 2)
+            context.rotate(-Math.PI / 2)
+            context.fillText(chart.histogram.grouped ? "Histogram · summed hits" : "Histogram · hits", 0, 0)
+            context.restore()
             context.fillText("Bin index", leftMargin + plotWidth / 2, height - 3)
             const bars = chart.histogram.bars
             context.fillStyle = chart.theme.accent

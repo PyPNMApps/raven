@@ -96,7 +96,7 @@ ColumnLayout {
                 }
                 const lower = chart.density.minimum
                 const upper = chart.density.maximum
-                context.font = "11px sans-serif"
+                context.font = chart.theme.axisFont
                 context.lineWidth = 1
                 for (let tick = 0; tick <= 4; tick++) {
                     const fraction = tick / 4
@@ -138,11 +138,11 @@ ColumnLayout {
                 context.globalAlpha = 1
                 context.fillStyle = chart.theme.muted
                 context.textAlign = "center"
-                context.fillText("In-phase (I)", margin + size / 2, size + 58)
+                context.fillText("In-phase (I) · unitless", margin + size / 2, size + 58)
                 context.save()
                 context.translate(14, 20 + size / 2)
                 context.rotate(-Math.PI / 2)
-                context.fillText("Quadrature (Q)", 0, 0)
+                context.fillText("Quadrature (Q) · unitless", 0, 0)
                 context.restore()
                 if (cells.length === 0) {
                     context.fillText("No valid I/Q samples", margin + size / 2, 20 + size / 2)

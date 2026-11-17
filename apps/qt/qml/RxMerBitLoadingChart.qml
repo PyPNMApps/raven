@@ -44,7 +44,7 @@ ColumnLayout {
             const last = selection.stop_frequency_hz || first
             const span = Math.max(1, last - first)
             const maximum = model.maximum_bit_loading || 13
-            context.font = "11px sans-serif"
+            context.font = chart.theme.axisFont
             context.lineWidth = 1
             for (let tick = 0; tick <= 4; tick++) {
                 const fraction = tick / 4
@@ -114,7 +114,7 @@ ColumnLayout {
             context.textAlign = "center"
             context.fillText("Frequency · MHz", (left + right) / 2, height - 4)
             context.save(); context.translate(13, (top + bottom) / 2); context.rotate(-Math.PI / 2)
-            context.fillText("Bits per symbol", 0, 0); context.restore()
+            context.fillText("Bit loading · bits/symbol", 0, 0); context.restore()
             if (points.length === 0) {
                 context.fillText("No analysis available", (left + right) / 2, (top + bottom) / 2)
             }

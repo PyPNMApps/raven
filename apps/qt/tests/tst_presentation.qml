@@ -304,7 +304,7 @@ RenderTestCase {
             points: [{sample_index: 0, frequency_hz: 640000000, value: null}, {sample_index: 2, frequency_hz: 640050000, value: null}],
             modulation_profiles: {series: [], carrier_lanes: ["continuous_pilot"], markers: [
                 {profile_id: 0, profile_index: 0, carrier_type: "continuous_pilot", first_frequency_hz: 640025000, last_frequency_hz: 640025000, count: 1}]}}
-        compare(chart.verticalTitle, "dB")
+        compare(chart.verticalTitle, "MER · dB")
         const plot = findChild(chart, "measurementPlot")
         wait(50)
         const horizontal = (plot.width + plot.leftMargin - plot.rightMargin) / 2
@@ -313,7 +313,7 @@ RenderTestCase {
         const tooltip = findChild(chart, "carrierTypeTooltip")
         tryCompare(tooltip, "visible", true)
         chart.unit = "bits/symbol"
-        compare(chart.verticalTitle, "Bit loading")
+        compare(chart.verticalTitle, "Bit loading · bits/symbol")
         chart.viewport = Object.assign({}, chart.viewport, {modulation_profiles: {series: [], carrier_lanes: ["plc"], markers: [
             {profile_id: 3, profile_index: 0, carrier_type: "plc", first_frequency_hz: 640000000, last_frequency_hz: 640050000, count: 2}]}})
         wait(50)

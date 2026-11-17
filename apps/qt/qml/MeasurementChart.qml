@@ -38,7 +38,7 @@ ColumnLayout {
     property int selectedIndex: 0
     property string carrierHoverText: ""
     readonly property var carrierLanes: viewport.modulation_profiles ? (viewport.modulation_profiles.carrier_lanes || []) : []
-    readonly property string verticalTitle: viewport.modulation_profiles ? (unit === "dB" ? "dB" : "Bit loading") : axisLabel + " · " + unit
+    readonly property string verticalTitle: viewport.modulation_profiles ? (unit === "dB" ? "MER · dB" : "Bit loading · bits/symbol") : axisLabel + " · " + unit
     function carrierAt(horizontal, vertical) {
         const points = viewport.points
         const overlays = viewport.modulation_profiles
@@ -165,7 +165,7 @@ ColumnLayout {
     TextMetrics {
         id: axisLabelMetrics
         font.family: "sans-serif"
-        font.pixelSize: 11
+        font.pixelSize: chart.theme.axisFontPixelSize
         text: "-000.000"
     }
     // Qt Quick Canvas is rendered by Qt; no HTML document or WebView is used.
@@ -179,7 +179,7 @@ ColumnLayout {
         Accessible.role: Accessible.Graphic
         Accessible.name: chart.axisLabel + " in " + chart.unit + " versus frequency in MHz; drag to zoom, double-click to reset"
         // Leave room for negative dB labels with three decimal places.
-        property real leftMargin: Math.max(64, Math.ceil(axisLabelMetrics.width) + 16)
+        property real leftMargin: Math.max(84, Math.ceil(axisLabelMetrics.width) + 36)
         onLeftMarginChanged: requestPaint()
         property real rightMargin: Math.max(18, Math.ceil(axisLabelMetrics.width) / 2 + 8)
         property real topMargin: 22
@@ -202,6 +202,7 @@ ColumnLayout {
             const plotHeight = dataBottom - topMargin
             const firstHz = points.length ? points[0].frequency_hz : 0
             const lastHz = points.length ? points[points.length - 1].frequency_hz : firstHz
+            context.font = chart.theme.axisFont
             for (const band of chart.shadedBands) {
                 if (lastHz <= firstHz) continue
                 const first = Math.max(firstHz, band.first_hz)
@@ -212,8 +213,15 @@ ColumnLayout {
                 context.fillRect(leftMargin + (first-firstHz)/(lastHz-firstHz)*plotWidth,
                     topMargin, (last-first)/(lastHz-firstHz)*plotWidth, plotHeight)
                 context.globalAlpha = 1
+                const labelHalfWidth = context.measureText("PLC").width / 2
+                const bandCenter = leftMargin + ((first + last) / 2 - firstHz) / (lastHz - firstHz) * plotWidth
+                const labelCenter = Math.max(leftMargin + labelHalfWidth,
+                    Math.min(leftMargin + plotWidth - labelHalfWidth, bandCenter))
+                context.fillStyle = chart.theme.plcBandLabelColor
+                context.textAlign = "center"
+                context.fillText("PLC", labelCenter, topMargin + chart.theme.axisFontPixelSize + 4)
             }
-            context.font = "11px sans-serif"
+            context.font = chart.theme.axisFont
             context.strokeStyle = chart.theme.line
             context.fillStyle = chart.theme.muted
             context.lineWidth = 1
@@ -231,10 +239,13 @@ ColumnLayout {
                 context.textAlign = "center"
                 context.fillText((frequency / chart.hzPerMhz).toFixed(2), leftMargin + fraction * plotWidth, height - 23)
             }
-            context.textAlign = "left"
-            context.fillText(chart.verticalTitle, leftMargin, 12)
             context.textAlign = "center"
-            context.fillText("Frequency · MHz", width / 2, height - 3)
+            context.save()
+            context.translate(13, topMargin + plotHeight / 2)
+            context.rotate(-Math.PI / 2)
+            context.fillText(chart.verticalTitle, 0, 0)
+            context.restore()
+            context.fillText("Frequency · MHz", leftMargin + plotWidth / 2, height - 3)
             const overlays = chart.viewport.modulation_profiles
             const statistics = chart.viewport.rxmer_statistics || chart.viewport.spectrum_statistics
             const traces = overlays ? overlays.series : (statistics && !chart.showRxmerAverage ? [] : [{points: chart.viewport.points, color: statistics ? chart.theme.rxmerAverage : chart.theme.chartLineColor}])

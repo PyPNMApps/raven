@@ -36,6 +36,8 @@ ApplicationWindow {
         return StandardPaths.standardLocations(StandardPaths.HomeLocation)[0]
     }
     SmokeTest {
+        theme: appTheme
+        iqChart: singleIqChart
         viewerBackend: backend
         applicationWindow: window
         surface: captureSurface
@@ -678,6 +680,7 @@ ApplicationWindow {
                             onResetRequested: backend.select_view(0)
                         }
                         IqScatterChart {
+                            id: singleIqChart
                             visible: window.metadata.view_index === 2
                             theme: appTheme
                             density: window.viewport.iq_density || ({})

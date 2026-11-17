@@ -107,3 +107,28 @@ including OFDM Profile Performance. The command replaces the existing Home pair;
 do not keep dated duplicate PNGs. Before removing other images, check documentation,
 QML and packaging references and update any remaining links. Keep active measurement
 screenshots and original branding resources.
+
+## Capture single-measurement axes
+
+The native smoke helper can export a capture and save both themed chart frames:
+
+```bash
+./scripts/qt-desktop.sh --skip-build --smoke-test \
+"file://$PWD/tests/fixtures/pypnm/tests/files/rxmer.bin" \
+"file://$PWD/local/rxmer-screenshot-export.json" \
+--screenshots "$PWD/docs/ui/measurements/rxmer/images/rxmer"
+```
+
+The JSON output must be a new path. Require `UI_SCREENSHOTS_OK`. Optional
+`--view INDEX` selects a non-default capture view before export and rendering;
+indices follow that capture's view buttons. Append `--density` after `--view 2`
+to capture I/Q Density; omit it for Dots. Invalid views fail the capture.
+The default installed `--smoke-test INPUT OUTPUT` still performs the original
+render/export lifecycle check. Screenshots use actual parsed files and Rust
+viewports, not QML mocks. Review vertical Y titles, explicit units, matching X/Y
+title fonts, and labels that fit beside the tick values in both themes. OFDM
+frames must also show **PLC** inside the shaded protected band.
+
+Qt event-loop exit statuses propagate to the launcher. Failed native smoke or
+screenshot requests return nonzero; successful runs still require their expected
+render marker and a fresh export.

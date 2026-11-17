@@ -82,12 +82,19 @@ ColumnLayout {
             const usableWidth = Math.max(1, width - leftMargin - rightMargin)
             const usableHeight = Math.max(1, height - topMargin - bottomMargin)
             const points = chart.fec.points || []
-            context.font = "11px sans-serif"
+            context.font = chart.theme.axisFont
             context.fillStyle = chart.theme.muted
-            context.textAlign = "left"
-            context.fillText("Total CW / interval", leftMargin, 13)
-            context.textAlign = "right"
-            context.fillText("Error CW / interval", width - rightMargin, 13)
+            context.textAlign = "center"
+            context.save()
+            context.translate(13, topMargin + usableHeight / 2)
+            context.rotate(-Math.PI / 2)
+            context.fillText("Total · CW/interval", 0, 0)
+            context.restore()
+            context.save()
+            context.translate(width - 13, topMargin + usableHeight / 2)
+            context.rotate(Math.PI / 2)
+            context.fillText("Errors · CW/interval", 0, 0)
+            context.restore()
             for (let tick = 0; tick <= 4; tick += 1) {
                 const fraction = tick / 4
                 const vertical = topMargin + usableHeight * (1 - fraction)

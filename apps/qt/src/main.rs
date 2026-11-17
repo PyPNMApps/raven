@@ -8,6 +8,7 @@ mod profile_performance;
 mod spectrum_collection;
 mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};
+use std::process::ExitCode;
 #[cfg(target_os = "linux")]
 use viewer::identity::DESKTOP_ID;
 /// Starts the Qt desktop, or handles authenticated Ubuntu installation before Qt.
@@ -15,9 +16,12 @@ use viewer::identity::DESKTOP_ID;
 /// The internal --install-update entry point stages verified packages and invokes
 /// apt only from the installed Ubuntu executable with administrator identity.
 ///
+/// # Returns
+/// Preserves Qt event-loop exit codes from 0 through 255; other codes fail.
+///
 /// # Panics
 /// Terminates if Qt cannot create its application or QML engine.
-fn main() {
+fn main() -> ExitCode {
     if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--install-update")) {
         let arguments: Vec<_> = std::env::args_os().skip(2).collect();
         let result = if arguments.len() == 1 {
@@ -29,7 +33,7 @@ fn main() {
             eprintln!("Update installation failed: {message}");
             std::process::exit(1);
         }
-        return;
+        return ExitCode::SUCCESS;
     }
     // Select native GTK open/save dialogs before Qt starts any threads.
     // Keep explicit desktop-portal or other platform-theme preferences.
@@ -56,8 +60,9 @@ fn main() {
         .as_mut()
         .expect("Qt QML engine unavailable")
         .load(&QUrl::from("qrc:/qt/qml/Pnm/Viewer/qml/Main.qml"));
-    application
+    let qt_exit_status = application
         .as_mut()
         .expect("Qt application unavailable")
         .exec();
+    ExitCode::from(u8::try_from(qt_exit_status).unwrap_or(1))
 }

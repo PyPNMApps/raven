@@ -47,7 +47,7 @@ ColumnLayout {
         function y(value) {return bottom-(value*factor-minimum)/(maximum-minimum)*(bottom-top)}
         function valid(point,field) {return point[field]!==null && point[field]!==undefined && isFinite(point[field])}
         const gaps=delay ? result.delay_gaps || [] : result.magnitude_gaps || []
-        context.font="11px sans-serif";context.lineWidth=1
+        context.font=chart.theme.axisFont;context.lineWidth=1
         for (let tick=0;tick<=4;tick++) {
             const fraction=tick/4,horizontal=left+fraction*(right-left),vertical=bottom-fraction*(bottom-top)
             context.strokeStyle=chart.theme.line;context.beginPath();context.moveTo(left,vertical);context.lineTo(right,vertical);context.moveTo(horizontal,top);context.lineTo(horizontal,bottom);context.stroke()

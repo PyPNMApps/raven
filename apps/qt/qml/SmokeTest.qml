@@ -6,8 +6,12 @@ import QtQuick
 import QtQuick.Dialogs
 
 // Explicit CI-only command: --smoke-test INPUT_FILE_URL NEW_OUTPUT_FILE_URL.
-// Exercise the real asynchronous backend and one rendered frame, then exit.
+// Optional developer capture: --screenshots OUTPUT_PREFIX [--view INDEX] [--density].
+// Exercise the real asynchronous backend, JSON export and rendered frames, then exit.
 Timer {
+    id: smoke
+    required property var theme
+    required property var iqChart
     required property var viewerBackend
     required property var applicationWindow
     required property Item surface
@@ -15,11 +19,35 @@ Timer {
     required property var captureSelectionDialogs
     required property var exportCaptureDialog
     readonly property int argumentIndex: Qt.application.arguments.indexOf("--smoke-test")
+    readonly property bool screenshots: Qt.application.arguments[argumentIndex + 3] === "--screenshots"
+    readonly property real viewIndex: Qt.application.arguments[argumentIndex + 5] === "--view"
+        ? Number(Qt.application.arguments[argumentIndex + 6]) : 0
+    readonly property bool densityCapture: Qt.application.arguments[Qt.application.arguments.length - 1] === "--density"
     property int stage: 0
     property int ticks: 0
     interval: 150
     repeat: true
     running: argumentIndex >= 0
+    /**
+     * Save a native frame for the requested theme and advance the capture state.
+     * suffix selects the output filename; next is the state after a successful save.
+     * A failed capture exits with failure rather than reusing an earlier image.
+     */
+    function snapshot(suffix, next) {
+        stop()
+        if (!surface.grabToImage(function(image) {
+            if (!image.saveToFile(Qt.application.arguments[argumentIndex + 4] + suffix)) {
+                console.error("UI_SMOKE_FAILED: screenshot save failed")
+                Qt.exit(1)
+                return
+            }
+            stage = next
+            start()
+        })) {
+            console.error("UI_SMOKE_FAILED: frame request rejected")
+            Qt.exit(1)
+        }
+    }
     onTriggered: {
         ticks += 1
         if (ticks > 260 || viewerBackend.error_message.length > 0) {
@@ -54,11 +82,22 @@ Timer {
                 Qt.exit(1)
                 return
             }
-            if (Qt.application.arguments.length !== argumentIndex + 3) {
+            const applicationArguments = Qt.application.arguments
+            const plainSmoke = applicationArguments.length === argumentIndex + 3
+            const captureLength = applicationArguments.length - (densityCapture ? 1 : 0)
+            const captureSmoke = screenshots && (captureLength === argumentIndex + 5 ||
+                (captureLength === argumentIndex + 7 && applicationArguments[argumentIndex + 5] === "--view")) &&
+                Number.isInteger(viewIndex) && viewIndex >= 0 && (!densityCapture || viewIndex === 2)
+            if (!plainSmoke && !captureSmoke) {
                 console.error("UI_SMOKE_FAILED: expected input and new output file URLs")
                 stop()
                 Qt.exit(2)
                 return
+            }
+            if (screenshots) {
+                theme.preference = 1
+                applicationWindow.navigationVisible = false
+                iqChart.densityMode = densityCapture
             }
             viewerBackend.open_file(Qt.application.arguments[argumentIndex + 1])
             stage = 1
@@ -70,9 +109,28 @@ Timer {
                 Qt.exit(1)
                 return
             }
+            if (screenshots && viewIndex > 0) {
+                const metadata = JSON.parse(viewerBackend.metadata_json)
+                if (viewIndex >= (metadata.views || []).length) {
+                    console.error("UI_SMOKE_FAILED: unavailable view")
+                    stop()
+                    Qt.exit(2)
+                    return
+                }
+                viewerBackend.select_view(viewIndex)
+                stage = 6
+            } else {
+                viewerBackend.export_json(Qt.application.arguments[argumentIndex + 2])
+                stage = 2
+            }
+        } else if (stage === 6 && !viewerBackend.busy) {
             viewerBackend.export_json(Qt.application.arguments[argumentIndex + 2])
             stage = 2
         } else if (stage === 2 && !viewerBackend.busy && viewerBackend.status === "Full-resolution JSON exported") {
+            if (screenshots) {
+                snapshot("-dark.png", 10)
+                return
+            }
             stage = 3
             stop()
             const queued = surface.grabToImage(function(result) {
@@ -88,6 +146,15 @@ Timer {
                 console.error("UI_SMOKE_FAILED: frame request rejected")
                 Qt.exit(1)
             }
+        } else if (stage === 10) {
+            theme.preference = 2
+            stage = 11
+        } else if (stage === 11) {
+            snapshot("-light.png", 12)
+        } else if (stage === 12) {
+            console.log("UI_SCREENSHOTS_OK")
+            stop()
+            Qt.quit()
         }
     }
 }

@@ -72,6 +72,11 @@ keeps the current capture. Unsupported measurements can still be decoded with
 
 ## Chart controls
 
+Where axes are shown, Y-axis titles are vertical and include units. They use the
+same font size as the X-axis title: dB or dBmV for levels, µs for group delay,
+bits/symbol for bit loading, hits for histograms, and CW/interval for FEC counts.
+I/Q coefficient axes are unitless.
+
 - Drag across the plot to select and zoom into a frequency or bin range.
 - Use the mouse wheel to zoom around the pointer; double-click to reset.
 - Read the selected range at the bottom left. Histogram also shows its hit total.
