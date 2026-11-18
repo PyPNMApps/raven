@@ -368,7 +368,7 @@ completed output (`AiEnvelope`), report JSON (`AiReportJson`), schema
 (`AiReportSchema`), limits (`AiReportLimit`), claim requirements (`AiReportClaim`),
 metric identity/value/unit/scope (`AiReference`) and mixed-profile claims
 (`AiReferenceProfile`). Messages and `viewer::ai` logs identify local rules only;
-they do not include raw response text, field names, credentials or questions.
+they do not include raw response text, provider-controlled field names, credentials or questions.
 
 Requirements mapping: AI-16/17/18/20 retain scientific ownership, deterministic
 findings, closed evidence and exact-reference validation. Protocol regressions in
@@ -380,3 +380,16 @@ unsupported output diagnostics without reflecting injected provider fields.
 Follow-up validation: all 227 workspace Rust tests, 176 QML tests and six Qt
 adapter tests pass; workspace/Qt Clippy passes with warnings denied and the
 Ubuntu native build succeeds. The live response was not inspected and no analysis request was sent by this work.
+
+## Readable review and prepared questions
+
+Request review now displays a Rust-generated plain-language description of frozen
+evidence, full metric names and explicit scopes. Technical details retains the
+complete original outbound bytes, destination, model and digest. Qt uses one
+bounded-width plain-text scrolling component for review, findings, reports and
+history. Three editable versioned OFDM questions are exposed by the Rust session
+catalog. Selecting or editing one invalidates approval without contacting a
+provider. No scientific calculation or evidence/report schema changes.
+
+See [prepared-question requirements](ai-prepared-prompts.md) for each PNM analysis,
+current/future scope and AI-27/28 acceptance-test mapping.

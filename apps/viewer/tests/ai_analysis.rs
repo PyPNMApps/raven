@@ -462,3 +462,44 @@ fn multi_profile_reports_require_separate_claims_and_explain_rejection() {
         assert!(sent[0].contains("32768 UTF-8 bytes"));
     }
 }
+
+#[test]
+fn readable_review_and_prepared_questions_preserve_exact_approved_request() {
+    let mut session = setup();
+    let prompts = session.catalog()["analysis_prompts"]
+        .as_array()
+        .unwrap()
+        .clone();
+    assert_eq!(prompts.len(), 3);
+    let mut identifiers = std::collections::BTreeSet::new();
+    for prompt in prompts {
+        assert!(identifiers.insert(prompt["id"].as_str().unwrap().to_owned()));
+        assert_eq!(prompt["version"], 1);
+        let question = prompt["question"].as_str().unwrap();
+        let preview = session
+            .prepare_analysis(
+                &serde_json::to_string(&evidence()).unwrap(),
+                question,
+                "run-1",
+            )
+            .unwrap();
+        let review = preview["review_text"].as_str().unwrap();
+        assert!(review.contains(question));
+        assert!(review.contains("PROFILE 3"));
+        assert!(review.contains("Corrected codewords: 2"));
+        assert!(review.contains("9007199254740993"));
+        assert!(review.contains("all completed decoding work"));
+        assert!(review.contains("observed payload window"));
+        assert!(!review.contains(KEY));
+        let mock = Mock::new(envelope(advisory()));
+        session
+            .approve_analysis(preview["digest"].as_str().unwrap(), "run-1")
+            .unwrap()
+            .execute(&mock, &AtomicBool::new(false))
+            .unwrap();
+        assert_eq!(
+            mock.sent.lock().unwrap()[0],
+            preview["body"].as_str().unwrap()
+        );
+    }
+}

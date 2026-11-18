@@ -13,6 +13,7 @@ Dialog {
     required property var service
     required property var ofdmService
     signal setupRequested()
+    readonly property var prompts: JSON.parse(service.state_json).analysis_prompts || []
     readonly property var preview: JSON.parse(service.preview_json)
     readonly property var response: JSON.parse(service.report_json)
     readonly property var turns: JSON.parse(service.conversation_json)
@@ -28,7 +29,13 @@ Dialog {
     header: Label { text: dialog.title; color: dialog.theme.text; padding: 16; font.bold: true }
     function previewRequest() {
         service.prepare_analysis(ofdmService.evidence_json, question.text)
+        tabs.currentIndex = 0
     }
+    function usePreparedQuestion(index) {
+        dialog.service.invalidate()
+        question.text = dialog.prompts[index].question
+    }
+    onOpened: tabs.currentIndex = 0
     onClosed: service.invalidate()
     FileDialog {
         id: exportDialog
@@ -56,16 +63,41 @@ Dialog {
             enabled: !dialog.service.busy && !dialog.service.demo_locked
             onClicked: dialog.service.choose_demo_mode(checked)
         }
+        RowLayout {
+            Layout.fillWidth: true
+            Label { text: "Prepared question"; color: dialog.theme.text }
+            ThemeComboBox {
+                id: promptChoice
+                objectName: "aiPreparedPrompt"
+                theme: dialog.theme
+                Layout.fillWidth: true
+                enabled: !dialog.service.busy
+                model: dialog.prompts
+                textRole: "label"
+                onActivated: dialog.usePreparedQuestion(currentIndex)
+            }
+            ThemeButton {
+                objectName: "aiResetPrompt"
+                theme: dialog.theme; text: "Use prepared question"
+                enabled: !dialog.service.busy && dialog.prompts.length > 0
+                onClicked: dialog.usePreparedQuestion(promptChoice.currentIndex)
+            }
+        }
         Label { text: dialog.service.demo_mode ? "Question · recorded for the demonstration; not interpreted by a language model" : "Question · each request uses this run only; no prior turns are sent"; color: dialog.theme.text }
         ScrollView {
+            id: questionScroll
             Layout.fillWidth: true; Layout.preferredHeight: 70
+            contentWidth: availableWidth
+            clip: true
+            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             ThemeTextArea {
                 id: question
+                width: questionScroll.availableWidth
                 objectName: "aiQuestion"
                 theme: dialog.theme
                 wrapMode: TextEdit.Wrap
                 enabled: !dialog.service.busy
-                text: "Review the selected OFDM profiles. Explain observed FEC, BER and LDPC outcomes, keeping scopes and limitations explicit."
+                text: dialog.prompts.length > 0 ? dialog.prompts[0].question : ""
                 onTextChanged: dialog.service.invalidate()
             }
         }
@@ -97,36 +129,32 @@ Dialog {
         TabBar {
             id: tabs
             Layout.fillWidth: true
-            TabButton { text: "Request preview" }
+            TabButton { text: "Request review" }
             TabButton { text: "Local findings" }
             TabButton { text: "AI report" }
             TabButton { text: "Chat log (" + dialog.turns.length + ")" }
+            TabButton { text: "Technical details" }
         }
         StackLayout {
             Layout.fillWidth: true; Layout.fillHeight: true
             currentIndex: tabs.currentIndex
-            ColumnLayout {
-                Label {
-                    text: dialog.preview.destination ? dialog.preview.destination + "\nModel: " + dialog.preview.model + "\nSHA-256: " + dialog.preview.digest : "Create a preview to review the destination and complete request body."
-                    color: dialog.theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true
-                }
-                ScrollView {
-                    Layout.fillWidth: true; Layout.fillHeight: true
-                    ThemeTextArea { theme: dialog.theme; readOnly: true; wrapMode: TextEdit.Wrap; text: dialog.preview.body || ""; objectName: "aiExactRequest" }
-                }
+            AiTextPane {
+                objectName: "aiReviewScroll"
+                theme: dialog.theme; textObjectName: "aiRequestReview"
+                text: dialog.preview.review_text || "Choose or edit a prepared question, then select Preview request to review the information before sending."
             }
-            ScrollView {
-                ThemeTextArea { theme: dialog.theme; readOnly: true; wrapMode: TextEdit.Wrap; text: {
+            AiTextPane {
+                theme: dialog.theme; textObjectName: "aiLocalFindings"
+                text: {
                     const evidence=JSON.parse(dialog.ofdmService.evidence_json)
                     return (evidence.findings || []).map(function(finding) {
                         return "Profile " + finding.profile_id + ": " + finding.text
                     }).join("\n\n") || "Local findings are unavailable for this run."
-                } }
+                }
             }
-            ScrollView {
-                ThemeTextArea {
-                    objectName: "aiReportText"; theme: dialog.theme; readOnly: true; wrapMode: TextEdit.Wrap
-                    text: {
+            AiTextPane {
+                theme: dialog.theme; textObjectName: "aiReportText"
+                text: {
                         const report=dialog.response.report
                         if (!report) return "No accepted AI report yet."
                         const usage=dialog.response.usage || ({})
@@ -136,16 +164,17 @@ Dialog {
                             }).join("\n")
                         }).join("\n\n") + "\n\nLimitations\n" + report.limitations.join("\n") + "\n\nSuggested checks\n" + report.suggested_checks.join("\n")
                         + (dialog.response.demo ? "\n\nLocal demo · no provider or token usage." : "\n\nModel: " + dialog.response.returned_model + "\nProvider-reported tokens · input: " + (usage.input_tokens || "unavailable") + " · output: " + (usage.output_tokens || "unavailable") + " · total: " + (usage.total_tokens || "unavailable"))
-                    }
                 }
             }
-            ScrollView {
-                ThemeTextArea {
-                    objectName: "aiChatLog"; theme: dialog.theme; readOnly: true; wrapMode: TextEdit.Wrap
-                    text: dialog.turns.map(function(turn,index) {
+            AiTextPane {
+                theme: dialog.theme; textObjectName: "aiChatLog"
+                text: dialog.turns.map(function(turn,index) {
                         return (turn.demo ? "DEMO · " : "") + "Exchange " + (index+1) + " · " + turn.provider + " / " + turn.returned_model + "\nQuestion: " + turn.question + "\n" + turn.report.summary + "\nRequest SHA-256: " + turn.request_digest
                     }).join("\n\n") || "Accepted exchanges for this run appear here. Export before closing RAVEN to keep a copy."
-                }
+            }
+            AiTextPane {
+                theme: dialog.theme; textObjectName: "aiExactRequest"
+                text: dialog.preview.destination ? "Destination: " + dialog.preview.destination + "\nModel: " + dialog.preview.model + "\nSHA-256: " + dialog.preview.digest + "\n\nExact outbound request\n" + dialog.preview.body : "Create a preview to inspect the exact outbound request."
             }
         }
     }

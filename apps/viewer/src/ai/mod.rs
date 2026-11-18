@@ -6,6 +6,7 @@
 pub mod chatgpt;
 pub mod demo;
 pub mod evidence;
+mod presentation;
 pub mod protocol;
 pub mod transport;
 use crate::Diagnostic;
@@ -271,7 +272,7 @@ impl Session {
                     "configured":configuration.is_some(), "verified":false})
         })
         .collect();
-        json!({"providers":providers,"selected":self.selected.map(Provider::id),
+        json!({"analysis_prompts":presentation::prepared_questions(),"providers":providers,"selected":self.selected.map(Provider::id),
             "enabled":self.enabled,"verified":false,"analysis_available":self.enabled && matches!(self.selected,Some(Provider::OpenAi|Provider::ChatGpt)),"chatgpt":self.chatgpt.as_ref().map(chatgpt::Connection::catalog),"storage":"session"})
     }
 }

@@ -48,7 +48,7 @@ impl Session {
             ));
         }
         let hash = digest(body.as_bytes());
-        let preview = json!({"demo":true,"destination":"Local Rust demo · no network","model":"deterministic-demo-v1","body":body,"digest":hash,"source":source,"findings":evidence.findings_text()});
+        let preview = json!({"demo":true,"destination":"Local Rust demo · no network","model":"deterministic-demo-v1","body":body,"digest":hash,"source":source,"review_text":super::presentation::request_review(&evidence,question),"findings":evidence.findings_text()});
         self.pending = Some(Pending {
             body,
             digest: hash,

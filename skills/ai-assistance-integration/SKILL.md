@@ -47,6 +47,13 @@ storage policy requires a concrete product decision. Preserve fixed destinations
 TLS verification and redirect policy. Never log tokens, authorization codes,
 callback URLs, headers, questions or provider response bodies.
 
+Present a plain-language review generated from the same frozen evidence, with
+unchanged values, units and scopes. Keep the exact outbound payload available in
+an explicit technical view; a readable summary must not silently replace approval
+of the real bytes. Test long text, vertical scrolling, bounded width and both themes.
+Each enabled analysis needs a versioned prepared question and reviewed evidence
+allowlist; edits or template selection invalidate approval without auto-sending.
+
 Freeze the exact outbound payload, destination and model before approval. Bind
 single-use approval and asynchronous results to the current configuration and
 source generation. Context, question, account/model changes and cancellation must

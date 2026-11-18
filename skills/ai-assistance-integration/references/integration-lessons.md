@@ -131,3 +131,14 @@ Inspect the target project's own owners and licenses before copying implementati
 - [Subscription models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference)
 - [Models API](https://developers.openai.com/api/reference/python/resources/models/methods/list)
 - [Streaming responses](https://developers.openai.com/api/docs/guides/streaming-responses)
+
+## Approval must also be understandable
+
+A raw escaped request body was difficult to read and the Qt report views lacked
+reliable bounded-width scrolling. Keep a human-readable review derived from the
+same frozen evidence, with unchanged values, units and scopes; retain exact bytes
+in an explicit technical view. Test real scroll position and long wrapped text
+in both themes. Each enabled analysis needs a versioned prepared question and a
+reviewed evidence allowlist. Editing/selecting a question invalidates approval;
+it never sends automatically. Document future analysis prompts without implying
+their adapters or upload paths exist.

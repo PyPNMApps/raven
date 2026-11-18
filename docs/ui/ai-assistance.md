@@ -166,7 +166,7 @@ and token pricing/session totals remain planned.
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/ai/ofdm-ai-dark.png">
   <source media="(prefers-color-scheme: light)" srcset="images/ai/ofdm-ai-light.png">
-  <img src="images/ai/ofdm-ai-dark.png" alt="Exact OFDM AI request preview from a native fixture-backed run; no provider call">
+  <img src="images/ai/ofdm-ai-dark.png" alt="Readable OFDM AI request review with prepared questions; native fixture-backed run with no provider call">
 </picture>
 
 ### When an analysis is rejected
@@ -187,3 +187,17 @@ RUST_LOG=warn,viewer::ai=info ./scripts/qt-desktop.sh --skip-build 2>&1 | tee lo
 
 AI diagnostics exclude response bodies, questions and credentials. Other app
 components may log paths; review the file before sharing it.
+
+### Prepared questions and readable review
+
+In OFDM Profile Performance → AI Analysis, choose **Profile performance overview**,
+**FEC and decoder effort**, or **Findings and recommended checks**. Edit the question
+if needed; **Use prepared question** restores the selected text. Choosing or
+editing a question clears the previous approval without sending anything.
+
+Select **Preview request** to read the question, per-profile settings/results,
+findings and limitations in **Request review**. All panels wrap and scroll
+vertically, including long reports and chat logs. **Technical details** holds the
+exact outbound JSON, destination, model and SHA-256 when you want to inspect them.
+**Analyze approved request** sends the frozen request once. Other PNM analyses'
+prepared prompts are planned; they are not enabled AI upload paths yet.

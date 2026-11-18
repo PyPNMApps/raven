@@ -119,7 +119,7 @@ impl Session {
             ));
         }
         let hash = digest(body.as_bytes());
-        let result = json!({"destination":provider.endpoint(),"model":configuration.model,"body":body,"digest":hash,"source":source,"findings":evidence.findings_text()});
+        let result = json!({"destination":provider.endpoint(),"model":configuration.model,"body":body,"digest":hash,"source":source,"review_text":super::presentation::request_review(&evidence,question),"findings":evidence.findings_text()});
         self.pending = Some(Pending {
             body,
             digest: hash,
