@@ -25,6 +25,14 @@ fn response_bytes(
     result: Result<ureq::Response, ureq::Error>,
     cancel: &AtomicBool,
 ) -> Result<Vec<u8>, Diagnostic> {
+    response_body(result, cancel, false, "")
+}
+fn response_body(
+    result: Result<ureq::Response, ureq::Error>,
+    cancel: &AtomicBool,
+    streaming: bool,
+    key: &str,
+) -> Result<Vec<u8>, Diagnostic> {
     check_cancel(cancel)?;
     let response=match result {
         Ok(response) if response.status()==200=>response,
@@ -32,6 +40,9 @@ fn response_bytes(
         Err(ureq::Error::Status(status,_))=>return Err(status_error(status)),
         Err(_)=>return Err(Diagnostic::new("AiNetwork","Could not reach the AI service or the request timed out. Check your network and try explicitly again.")),
     };
+    if streaming {
+        return super::chatgpt::responses::read_stream(response.into_reader(), key, cancel);
+    }
     let mut reader = response.into_reader();
     let mut bytes = Vec::new();
     let mut chunk = [0u8; 4096];
@@ -46,10 +57,10 @@ fn response_bytes(
         if count == 0 {
             break;
         }
-        if bytes.len() + count > 131072 {
+        if bytes.len() + count > 262144 {
             return Err(Diagnostic::new(
                 "AiLimit",
-                "The AI response exceeded the 128 KiB limit.",
+                "The AI response exceeded the 256 KiB limit.",
             ));
         }
         bytes.extend_from_slice(&chunk[..count]);
@@ -80,7 +91,7 @@ impl Transport for HttpsTransport {
     /// * `endpoint`, `key`, `body` - Fixed destination, authorization and exact bytes.
     /// * `cancel` - Cooperative cancellation flag checked before and after I/O.
     /// # Returns
-    /// Provider response bytes within the 128 KiB read budget.
+    /// Nonstreaming bytes within 256 KiB, or a bounded completed SSE event.
     /// # Errors
     /// Sanitized cancellation, endpoint, HTTP, timeout or read-limit failure.
     fn post(
@@ -90,18 +101,20 @@ impl Transport for HttpsTransport {
         body: &str,
         cancel: &AtomicBool,
     ) -> Result<Vec<u8>, Diagnostic> {
-        if endpoint != Provider::OpenAi.endpoint() {
+        if endpoint != Provider::OpenAi.endpoint() && endpoint != Provider::ChatGpt.endpoint() {
             return Err(invalid());
         }
         check_cancel(cancel)?;
         let authorization = zeroize::Zeroizing::new(format!("Bearer {key}"));
-        response_bytes(
+        response_body(
             agent()
                 .post(endpoint)
                 .set("Authorization", &authorization)
                 .set("Content-Type", "application/json")
                 .send_bytes(body.as_bytes()),
             cancel,
+            endpoint == Provider::ChatGpt.endpoint(),
+            key,
         )
     }
 }

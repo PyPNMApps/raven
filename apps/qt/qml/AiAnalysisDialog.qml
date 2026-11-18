@@ -42,7 +42,7 @@ Dialog {
         spacing: 10
         RowLayout {
             Layout.fillWidth: true
-            Label { text: dialog.service.demo_mode ? "DEMO · Local simulated response. No API key, provider connection or AI charge." : "Review the exact request before sending. API usage may incur charges."; color: dialog.theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
+            Label { text: dialog.service.demo_mode ? "DEMO · Local simulated response. No API key, provider connection or AI charge." : "Review the exact request before sending. ChatGPT uses plan allowance; API-key requests may incur charges."; color: dialog.theme.muted; wrapMode: Text.Wrap; Layout.fillWidth: true }
             ThemeButton {
                 theme: dialog.theme; text: "AI settings…"; enabled: !dialog.service.busy
                 onClicked: { dialog.close(); dialog.setupRequested() }

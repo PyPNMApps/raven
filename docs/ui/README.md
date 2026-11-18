@@ -76,7 +76,7 @@ groups collapsed. Select a group heading to expand its tools.
 ## AI Assistance setup
 
 Use the clickable **AI Assistance** chip on the top bar, or
-**Settings → System… → AI…**, to configure session-only provider credentials.
+**Settings → System… → AI…**, to sign in with ChatGPT or configure session-only API credentials.
 Off is gray; Configured means settings are present. OpenAI supports an explicit
 model-access test and **OFDM Profile Performance → AI Analysis…**, with an exact
 request preview before approval. For credential-free UI testing, launch with

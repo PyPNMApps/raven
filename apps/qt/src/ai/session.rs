@@ -408,6 +408,112 @@ impl AiBackendState {
             && !self.control.load(Ordering::Relaxed)
     }
 }
+
+impl bridge::AiBackend {
+    /// Starts an isolated PKCE callback worker; the UI opens only the returned HTTPS URL.
+    /// # Returns
+    /// Authorization URL with no tokens, or empty on failure, demo lock or busy state.
+    pub fn sign_in_chatgpt(mut self: Pin<&mut Self>) -> QString {
+        if self.rust().busy || self.rust().is_demo() {
+            return QString::default();
+        }
+        self.as_mut().invalidate();
+        let result = (|| {
+            let base = if cfg!(target_os = "windows") {
+                std::env::var_os("APPDATA")
+            } else {
+                std::env::var_os("HOME")
+            }
+            .ok_or_else(|| {
+                viewer::Diagnostic::new(
+                    "AiRegistration",
+                    "Could not locate the user configuration directory.",
+                )
+            })?;
+            let base = std::path::PathBuf::from(base);
+            let directory = if cfg!(target_os = "windows") {
+                base.join("RAVEN")
+            } else if cfg!(target_os = "macos") {
+                base.join("Library/Application Support/RAVEN")
+            } else {
+                base.join(".config/raven")
+            };
+            viewer::ai::chatgpt::SignIn::begin(&directory.join("chatgpt-registration.json"))
+        })();
+        let attempt = match result {
+            Ok(attempt) => attempt,
+            Err(error) => {
+                self.set_error_message(QString::from(error.message));
+                return QString::default();
+            }
+        };
+        let url = attempt.authorization_url();
+        let generation = self.rust().generation.wrapping_add(1);
+        let control = Arc::new(AtomicBool::new(false));
+        self.as_mut().rust_mut().generation = generation;
+        self.as_mut().rust_mut().control = control.clone();
+        self.as_mut().set_busy(true);
+        self.as_mut().set_error_message(QString::default());
+        self.as_mut()
+            .set_operation_status(QString::from("Complete ChatGPT sign-in in your browser…"));
+        let thread = self.qt_thread();
+        if std::thread::Builder::new().name("chatgpt-sign-in".into()).spawn(move||{
+            let result=attempt.complete(&control);
+            let _=thread.queue(move|mut state|{
+                if state.rust().generation!=generation{return;}
+                state.as_mut().set_busy(false);
+                if state.rust().control.load(Ordering::Relaxed) || state.rust().is_demo(){state.set_operation_status(QString::from("ChatGPT sign-in cancelled."));return;}
+                match result {
+                    Ok(connection)=>{
+                        let catalog=state.as_mut().rust_mut().session.connect_chatgpt(connection);
+                        state.as_mut().set_state_json(QString::from(catalog.to_string()));
+                        state.set_operation_status(QString::from("Signed in to ChatGPT · choose a model. Inference has not been tested."));
+                    },
+                    Err(error)=>{state.as_mut().set_operation_status(QString::from("ChatGPT sign-in failed."));state.set_error_message(QString::from(error.message));},
+                }
+            });
+        }).is_err(){self.as_mut().set_busy(false);self.set_error_message(QString::from("Could not start ChatGPT sign-in."));return QString::default();}
+        QString::from(url)
+    }
+    /// Selects one authenticated model without network access or inference.
+    /// # Arguments
+    /// * `model` - Exact catalog slug supplied by the ChatGPT model picker.
+    /// # Returns
+    /// True on selection; false on unknown/expired/busy/demo state.
+    pub fn select_chatgpt_model(mut self: Pin<&mut Self>, model: &QString) -> bool {
+        if self.rust().busy || self.rust().is_demo() {
+            return false;
+        }
+        self.as_mut().invalidate();
+        let result = self
+            .as_mut()
+            .rust_mut()
+            .session
+            .select_chatgpt_model(&model.to_string());
+        self.publish(result)
+    }
+    /// Clears local tokens immediately; remote revocation runs on the owned worker.
+    pub fn sign_out_chatgpt(mut self: Pin<&mut Self>) {
+        if self.rust().busy {
+            return;
+        }
+        self.as_mut().invalidate();
+        let connection = self.as_mut().rust_mut().session.disconnect_chatgpt();
+        let catalog = self.rust().session.catalog();
+        self.as_mut()
+            .set_state_json(QString::from(catalog.to_string()));
+        if let Some(connection) = connection {
+            if self.rust().is_demo() {
+                return;
+            }
+            self.start("Signing out of ChatGPT…",move|cancel|{
+                let message=if connection.revoke(cancel).is_ok(){"Signed out of ChatGPT."}else{"Signed out locally. Remote revocation was not confirmed; disconnect RAVEN in ChatGPT Settings if needed."};
+                Ok(serde_json::json!({"connection":message}))
+            });
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -55,7 +55,8 @@ and profile references; **FEC Performance** runs each checked profile and shows
 separate FEC, BER and LDPC results. All simulation runs locally in Rust using
 MERLIN. See the [demo walkthrough](docs/ui/examples.md#ofdm-profile-performance).
 
-Optionally configure OpenAI through **AI Assistance** for further analysis of
+Optionally sign in with ChatGPT or configure an OpenAI API key through
+**AI Assistance** for further analysis of
 OFDM Profile Performance results. Preview and approve the exact data before
 sending; Rust and MERLIN remain authoritative for calculations. A local Demo AI
 mode lets you try the workflow without an API key. See the

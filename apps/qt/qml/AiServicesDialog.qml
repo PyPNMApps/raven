@@ -13,6 +13,9 @@ Dialog {
     required property var service
     readonly property var configuration: JSON.parse(service.state_json)
     readonly property var providers: configuration.providers || []
+    readonly property var chatgpt: configuration.chatgpt || ({})
+    readonly property var chatgptModels: chatgpt.models || []
+    readonly property bool subscriptionSelected: selectedProvider.id === "chatgpt"
     readonly property var selectedProvider: providers[providerChoice.currentIndex] || ({})
     property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     objectName: "aiServicesDialog"
@@ -33,6 +36,15 @@ Dialog {
         const index = providers.findIndex(function(provider) { return provider.id === configuration.selected })
         providerChoice.currentIndex = Math.max(0, index)
         selectProvider()
+    }
+    Connections {
+        target: dialog.service
+        function onState_jsonChanged() {
+            if (dialog.visible && dialog.configuration.selected === "chatgpt") {
+                providerChoice.currentIndex = dialog.providers.findIndex(function(provider) { return provider.id === "chatgpt" })
+                dialog.selectProvider()
+            }
+        }
     }
     onClosed: {
         if (service.busy) service.cancel()
@@ -59,17 +71,45 @@ Dialog {
         spacing: 12
         Label {
             visible: !dialog.service.demo_mode
-            text: "Choose your provider, then enter its exact model ID and an API key from its developer console."
+            text: "Connect with your ChatGPT subscription, or choose a provider and API key."
             color: dialog.theme.text
             wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
         Label {
             visible: !dialog.service.demo_mode
-            text: "Paste the key or open a .txt/.key file containing only the key on one line. A chat subscription may not include API access."
+            text: "ChatGPT sign-in uses your browser and plan allowance. Other providers use separately billed API keys."
             color: dialog.theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
+        }
+        RowLayout {
+            visible: !dialog.service.demo_mode
+            ThemeButton {
+                objectName: "aiChatGptSignIn"
+                theme: dialog.theme
+                text: "Continue with ChatGPT"
+                enabled: !dialog.service.busy
+                onClicked: {
+                    apiKey.clear()
+                    const address = dialog.service.sign_in_chatgpt()
+                    if (address.length > 0 && !Qt.openUrlExternally(address)) dialog.service.cancel()
+                }
+            }
+            ThemeButton {
+                objectName: "aiChatGptSignOut"
+                theme: dialog.theme
+                text: "Sign out"
+                visible: !!dialog.chatgpt.signed_in
+                enabled: !dialog.service.busy
+                onClicked: dialog.service.sign_out_chatgpt()
+            }
+            ThemeButton {
+                theme: dialog.theme
+                text: "Cancel sign-in"
+                visible: !!dialog.service.busy
+                onClicked: dialog.service.cancel()
+            }
         }
         GridLayout {
             visible: !dialog.service.demo_mode
@@ -83,23 +123,39 @@ Dialog {
                 id: providerChoice
                 objectName: "aiProvider"
                 theme: dialog.theme
+                enabled: !dialog.service.busy
                 model: dialog.providers
                 textRole: "label"
                 Layout.fillWidth: true
                 onActivated: dialog.selectProvider()
             }
             Label { text: "Model"; color: dialog.theme.text }
+            ThemeComboBox {
+                objectName: "aiChatGptModel"
+                visible: dialog.subscriptionSelected
+                theme: dialog.theme
+                model: dialog.chatgptModels
+                textRole: "label"
+                enabled: !dialog.service.busy && !!dialog.chatgpt.signed_in
+                Layout.fillWidth: true
+                currentIndex: Math.max(0, dialog.chatgptModels.findIndex(function(model) { return model.id === dialog.chatgpt.model }))
+                onActivated: dialog.service.select_chatgpt_model(dialog.chatgptModels[currentIndex].id)
+            }
             ThemeTextField {
                 id: modelName
                 objectName: "aiModel"
+                visible: !dialog.subscriptionSelected
+                enabled: !dialog.service.busy
                 theme: dialog.theme
                 placeholderText: "Enter a model ID from your provider"
                 maximumLength: 128
                 Layout.fillWidth: true
                 Accessible.name: "AI model identifier"
             }
-            Label { text: "API key"; color: dialog.theme.text }
+            Label { text: "API key"; color: dialog.theme.text; visible: !dialog.subscriptionSelected }
             RowLayout {
+                visible: !dialog.subscriptionSelected
+                enabled: !dialog.service.busy
                 Layout.fillWidth: true
                 ThemeTextField {
                     id: apiKey
@@ -122,11 +178,11 @@ Dialog {
         }
         Label {
             objectName: "aiConfigurationStatus"
-            text: dialog.service.demo_mode ? "Demo active · no provider connection" : dialog.selectedProvider.configured ? "Configured · not verified" : "Not configured"
+            text: dialog.service.demo_mode ? "Demo active · no provider connection" : dialog.subscriptionSelected && dialog.chatgpt.signed_in ? "ChatGPT signed in · tokens kept for this session" : dialog.selectedProvider.configured ? "Configured · not verified" : "Not configured"
             color: dialog.selectedProvider.configured ? dialog.theme.accent : dialog.theme.muted
         }
         Label {
-            text: dialog.service.demo_mode ? "Demo AI is active. No credentials or provider connection are needed. Open OFDM Profile Performance → AI Analysis to try it." : "Save stores settings until RAVEN closes. OpenAI supports connection testing and OFDM analysis; other providers are setup-only. Test connection checks model metadata without capture data or inference."
+            text: dialog.service.demo_mode ? "Demo AI is active. No credentials or provider connection are needed. Open OFDM Profile Performance → AI Analysis to try it." : "Tokens and API keys stay in memory until RAVEN closes. ChatGPT sign-in expires after about one hour; sign in again when requested. OpenAI API keys also support OFDM analysis; other providers are setup-only."
             color: dialog.theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
@@ -148,7 +204,7 @@ Dialog {
             visible: text.length > 0
         }
         RowLayout {
-            visible: !dialog.service.demo_mode
+            visible: !dialog.service.demo_mode && !dialog.subscriptionSelected
             ThemeButton {
                 objectName: "aiTestConnection"
                 theme: dialog.theme
@@ -170,6 +226,7 @@ Dialog {
                 objectName: "aiForgetProvider"
                 theme: dialog.theme
                 text: "Forget provider"
+                visible: !dialog.subscriptionSelected
                 enabled: !!dialog.selectedProvider.configured && !dialog.service.busy
                 onClicked: {
                     apiKey.clear()
@@ -189,7 +246,7 @@ Dialog {
     footer: DialogButtonBox {
         ThemeButton {
             objectName: "aiSaveSession"
-            visible: !dialog.service.demo_mode
+            visible: !dialog.service.demo_mode && !dialog.subscriptionSelected
             theme: dialog.theme
             text: "Save for this session"
             enabled: !dialog.service.demo_mode && !dialog.service.busy && modelName.text.trim().length > 0 && (apiKey.text.length > 0 || !!dialog.selectedProvider.configured)

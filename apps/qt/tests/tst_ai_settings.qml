@@ -21,6 +21,10 @@ RenderTestCase {
         property bool demo_locked: false
         property bool busy: false
         property string operation_status: ""
+        property int signIns: 0
+        function sign_in_chatgpt(){signIns++;return ""}
+        function sign_out_chatgpt(){}
+        function select_chatgpt_model(model){return true}
         property int submissions: 0
         property string receivedProvider: ""
         property string receivedModel: ""
@@ -43,7 +47,7 @@ RenderTestCase {
         onClicked: dialog.open()
     }
     function init() {
-        service.demo_mode=false;service.demo_locked=false;
+        service.signIns=0;service.demo_mode=false;service.demo_locked=false;
         appearance.preference=1
         service.state_json=JSON.stringify({selected:null,enabled:false,providers:[
             {id:"openai",label:"OpenAI",model:"",configured:false},
@@ -53,6 +57,26 @@ RenderTestCase {
         service.error_message="";service.submissions=0;service.receivedKey=false
     }
     function cleanup(){dialog.close()}
+    function test_chatgpt_sign_in_is_explicit_and_hidden_in_demo() {
+        dialog.open()
+        compare(service.signIns,0)
+        const signIn=findChild(dialog,"aiChatGptSignIn")
+        verify(waitForFrame(signIn))
+        mouseClick(signIn)
+        compare(service.signIns,1)
+        service.demo_mode=true
+        verify(!signIn.visible)
+        compare(service.submissions,0)
+    }
+    function test_chatgpt_selection_uses_catalog_without_api_key() {
+        service.state_json=JSON.stringify({selected:"chatgpt",enabled:true,chatgpt:{signed_in:true,model:"account-model",models:[{id:"account-model",label:"Account model"}]},providers:[{id:"chatgpt",label:"ChatGPT (subscription)",model:"account-model",configured:true}]})
+        dialog.open()
+        verify(findChild(dialog,"aiChatGptModel").visible)
+        verify(!findChild(dialog,"aiApiKey").visible)
+        verify(!findChild(dialog,"aiSaveSession").visible)
+        verify(findChild(dialog,"aiChatGptSignOut").visible)
+        compare(service.signIns,0)
+    }
     function test_demo_setup_has_no_credential_or_connection_controls() {
         service.demo_mode=true
         dialog.open()

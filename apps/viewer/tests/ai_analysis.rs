@@ -369,3 +369,96 @@ fn demo_and_live_approvals_cannot_cross_modes_or_survive_invalidation() {
         .execute(&AtomicBool::new(true))
         .is_err());
 }
+
+#[test]
+fn report_diagnostics_name_local_rules_without_remote_content_or_retries() {
+    let mut schema = advisory();
+    schema["private-remote-field-never-log"] = json!("remote-content-never-log");
+    let mut long = advisory();
+    long["summary"] = json!("x".repeat(2049));
+    let mut missing = advisory();
+    missing["claims"][0]["references"][0]["metric_id"] = json!("remote-content-never-log");
+    let mut changed = advisory();
+    changed["claims"][0]["references"][0]["scope"] = json!("remote-content-never-log");
+    let cases = [
+        (schema.to_string(), "AiReportSchema"),
+        (long.to_string(), "AiReportLimit"),
+        (missing.to_string(), "AiReference"),
+        (changed.to_string(), "AiReference"),
+        ("remote-content-never-log".into(), "AiReportJson"),
+        ("x".repeat(32769), "AiReportLimit"),
+    ];
+    for (content, code) in cases {
+        let bytes = json!({"model":"returned-model","choices":[{"finish_reason":"stop","message":{"content":content}}]}).to_string().into_bytes();
+        let mock = Mock::new(bytes);
+        let mut session = setup();
+        let preview = prepare(&mut session);
+        let error = session
+            .approve_analysis(preview["digest"].as_str().unwrap(), "run-1")
+            .unwrap()
+            .execute(&mock, &AtomicBool::new(false))
+            .unwrap_err();
+        assert_eq!(error.code, code);
+        assert!(!error.message.contains("remote-content-never-log"));
+        assert!(!error.message.contains("private-remote-field-never-log"));
+        assert!(!error.message.contains(KEY));
+        assert_eq!(mock.sent.lock().unwrap().len(), 1);
+    }
+}
+
+#[test]
+fn multi_profile_reports_require_separate_claims_and_explain_rejection() {
+    let base = evidence();
+    let mut settings = base.settings[0].clone();
+    settings.profile_id = 4;
+    let entries: Vec<_> = [3, 4].into_iter().map(|profile_id| json!({
+        "profile_id":profile_id,"status":"Complete",
+        "fec":{"scope":"ObservationWindow","counters":{"total_cw":10,"clean_cw":8,"ccw":2,"ufec":0}},
+        "profile":{"scope":"ObservationWindow","compared_bits":1000,"bit_errors":0,"post_fec_ber":0.0},
+        "ldpc":{"scope":"All completed","mean_iterations":2.5,"iteration_sum":25,"failures":0,"bch_failures":0,"ncp_iterations":0,"plc_iterations":1}
+    })).collect();
+    let evidence = Evidence::from_run(
+        &json!({"status":"Complete","entries":entries}),
+        vec![base.settings[0].clone(), settings],
+        &base.merlin_revision,
+        base.source_hashes,
+    )
+    .unwrap();
+    let mut report = advisory();
+    let mut other = report["claims"][0].clone();
+    other["references"][0]["metric_id"] = json!("profile-4/bit_errors");
+    report["claims"].as_array_mut().unwrap().push(other.clone());
+    for mixed in [false, true] {
+        let mut candidate = report.clone();
+        if mixed {
+            candidate["claims"][0]["references"]
+                .as_array_mut()
+                .unwrap()
+                .push(other["references"][0].clone());
+        }
+        let mut session = setup();
+        let preview = session
+            .prepare_analysis(
+                &serde_json::to_string(&evidence).unwrap(),
+                "Review",
+                "run-1",
+            )
+            .unwrap();
+        let mock = Mock::new(envelope(candidate));
+        let result = session
+            .approve_analysis(preview["digest"].as_str().unwrap(), "run-1")
+            .unwrap()
+            .execute(&mock, &AtomicBool::new(false));
+        if mixed {
+            let error = result.unwrap_err();
+            assert_eq!(error.code, "AiReferenceProfile");
+            assert!(error.message.contains("separate claims"));
+        } else {
+            assert_eq!(result.unwrap()["prompt_version"], 2);
+        }
+        assert_eq!(mock.sent.lock().unwrap().len(), 1);
+        let sent = mock.sent.lock().unwrap();
+        assert!(sent[0].contains("one profile only"));
+        assert!(sent[0].contains("32768 UTF-8 bytes"));
+    }
+}

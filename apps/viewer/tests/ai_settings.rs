@@ -6,21 +6,28 @@
 use viewer::ai::{Provider, Session};
 
 #[test]
-fn default_is_off_and_all_four_providers_are_unverified() {
+fn default_is_off_and_all_providers_are_unverified() {
     let session = Session::default();
     let catalog = session.catalog();
     assert_eq!(catalog["enabled"], false);
     assert!(catalog["selected"].is_null());
     assert_eq!(catalog["analysis_available"], false);
     let providers = catalog["providers"].as_array().unwrap();
-    assert_eq!(providers.len(), 4);
-    for (entry, expected) in providers.iter().zip(["openai", "gemini", "claude", "grok"]) {
+    assert_eq!(providers.len(), 5);
+    for (entry, expected) in providers
+        .iter()
+        .zip(["openai", "chatgpt", "gemini", "claude", "grok"])
+    {
         assert_eq!(entry["id"], expected);
         assert_eq!(entry["configured"], false);
         assert_eq!(entry["verified"], false);
         let provider = Provider::from_id(expected).unwrap();
         assert!(provider.endpoint().starts_with("https://"));
-        assert!(provider.endpoint().ends_with("/chat/completions"));
+        assert!(provider.endpoint().ends_with(if expected == "chatgpt" {
+            "/responses"
+        } else {
+            "/chat/completions"
+        }));
     }
     assert!(Provider::from_id("kiro").is_none());
     assert!(Provider::from_id("https://untrusted.invalid").is_none());
@@ -45,7 +52,7 @@ fn keys_are_independent_never_serialized_and_forget_does_not_switch_providers() 
         .as_array()
         .unwrap()
         .iter()
-        .all(|entry| entry["configured"] == true));
+        .all(|entry| entry["configured"] == (entry["id"] != "chatgpt")));
     session.forget("openai").unwrap();
     assert_eq!(session.catalog()["selected"], "grok");
     assert_eq!(session.catalog()["enabled"], true);
@@ -53,7 +60,15 @@ fn keys_are_independent_never_serialized_and_forget_does_not_switch_providers() 
     assert!(session.catalog()["selected"].is_null());
     assert_eq!(session.catalog()["enabled"], false);
     assert!(session.set_enabled(true).is_err());
-    assert_eq!(session.catalog()["providers"][1]["configured"], true);
+    assert_eq!(
+        session.catalog()["providers"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|entry| entry["id"] == "gemini")
+            .unwrap()["configured"],
+        true
+    );
 }
 
 #[test]

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Optional read-only OFDM AI assistance. Credentials remain session-only.
+pub mod chatgpt;
 pub mod demo;
 pub mod evidence;
 pub mod protocol;
@@ -68,6 +69,7 @@ pub fn read_key_file(path: &Path) -> Result<Zeroizing<String>, Diagnostic> {
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub enum Provider {
     OpenAi,
+    ChatGpt,
     Gemini,
     Claude,
     Grok,
@@ -80,6 +82,7 @@ impl Provider {
     /// Known provider, or None for unsupported identifiers (including Kiro).
     pub fn from_id(identifier: &str) -> Option<Self> {
         match identifier {
+            "chatgpt" => Some(Self::ChatGpt),
             "openai" => Some(Self::OpenAi),
             "gemini" => Some(Self::Gemini),
             "claude" => Some(Self::Claude),
@@ -92,6 +95,7 @@ impl Provider {
     /// A fixed lowercase provider ID.
     pub fn id(self) -> &'static str {
         match self {
+            Self::ChatGpt => "chatgpt",
             Self::OpenAi => "openai",
             Self::Gemini => "gemini",
             Self::Claude => "claude",
@@ -103,6 +107,7 @@ impl Provider {
     /// A fixed product label, without model/version guesses.
     pub fn label(self) -> &'static str {
         match self {
+            Self::ChatGpt => "ChatGPT (subscription)",
             Self::OpenAi => "OpenAI",
             Self::Gemini => "Gemini",
             Self::Claude => "Claude",
@@ -114,6 +119,7 @@ impl Provider {
     /// Documented HTTPS endpoint; provider capabilities remain separately tested.
     pub fn endpoint(self) -> &'static str {
         match self {
+            Self::ChatGpt => chatgpt::RESPONSES_URL,
             Self::OpenAi => "https://api.openai.com/v1/chat/completions",
             Self::Gemini => {
                 "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
@@ -137,6 +143,7 @@ pub struct Session {
     selected: Option<Provider>,
     enabled: bool,
     pending: Option<protocol::Pending>,
+    chatgpt: Option<chatgpt::Connection>,
 }
 impl Session {
     /// Validates and stores a provider's model/key without contacting that service.
@@ -159,6 +166,12 @@ impl Session {
         let api_key = Zeroizing::new(api_key);
         let provider = Provider::from_id(provider_id)
             .ok_or_else(|| Diagnostic::new("AiProvider", "Select a supported AI provider."))?;
+        if provider == Provider::ChatGpt {
+            return Err(Diagnostic::new(
+                "AiSignIn",
+                "Use Continue with ChatGPT instead of an API key.",
+            ));
+        }
         let model = model.trim();
         if model.is_empty()
             || model.len() > MAX_MODEL_BYTES
@@ -229,6 +242,9 @@ impl Session {
         let provider = Provider::from_id(provider_id)
             .ok_or_else(|| Diagnostic::new("AiProvider", "Select a supported AI provider."))?;
         self.configurations.remove(&provider);
+        if provider == Provider::ChatGpt {
+            self.chatgpt = None;
+        }
         if self.selected == Some(provider) {
             self.selected = None;
             self.enabled = false;
@@ -242,6 +258,7 @@ impl Session {
     pub fn catalog(&self) -> Value {
         let providers: Vec<_> = [
             Provider::OpenAi,
+            Provider::ChatGpt,
             Provider::Gemini,
             Provider::Claude,
             Provider::Grok,
@@ -255,6 +272,59 @@ impl Session {
         })
         .collect();
         json!({"providers":providers,"selected":self.selected.map(Provider::id),
-            "enabled":self.enabled,"verified":false,"analysis_available":self.enabled && self.selected == Some(Provider::OpenAi),"storage":"session"})
+            "enabled":self.enabled,"verified":false,"analysis_available":self.enabled && matches!(self.selected,Some(Provider::OpenAi|Provider::ChatGpt)),"chatgpt":self.chatgpt.as_ref().map(chatgpt::Connection::catalog),"storage":"session"})
+    }
+}
+
+impl Session {
+    /// Activates verified browser credentials without exposing them to the UI.
+    /// # Arguments
+    /// * `connection` - Verified OAuth result with account-specific models.
+    /// # Returns
+    /// Updated nonsecret provider catalog, invalidating old approvals.
+    pub fn connect_chatgpt(&mut self, connection: chatgpt::Connection) -> Value {
+        self.pending = None;
+        self.configurations.insert(
+            Provider::ChatGpt,
+            Configuration {
+                model: connection.model.clone(),
+                _api_key: connection.access.clone(),
+            },
+        );
+        self.chatgpt = Some(connection);
+        self.selected = Some(Provider::ChatGpt);
+        self.enabled = true;
+        self.catalog()
+    }
+    /// Changes the signed-in ChatGPT model using the authenticated model catalog.
+    /// # Arguments
+    /// * `model` - Exact visible model slug.
+    /// # Returns
+    /// Updated nonsecret catalog.
+    /// # Errors
+    /// Rejects unknown models or missing/expired sign-in.
+    pub fn select_chatgpt_model(&mut self, model: &str) -> Result<Value, Diagnostic> {
+        self.pending = None;
+        let connection = self.chatgpt.as_mut().ok_or_else(protocol::invalid)?;
+        connection.select_model(model)?;
+        self.configurations
+            .get_mut(&Provider::ChatGpt)
+            .ok_or_else(protocol::invalid)?
+            .model = model.into();
+        self.selected = Some(Provider::ChatGpt);
+        self.enabled = true;
+        Ok(self.catalog())
+    }
+    /// Clears local tokens immediately, returning an opaque revocation job.
+    /// # Returns
+    /// Credential owner for explicit remote sign-out, or None if disconnected.
+    pub fn disconnect_chatgpt(&mut self) -> Option<chatgpt::Connection> {
+        self.pending = None;
+        self.configurations.remove(&Provider::ChatGpt);
+        if self.selected == Some(Provider::ChatGpt) {
+            self.selected = None;
+            self.enabled = false;
+        }
+        self.chatgpt.take()
     }
 }

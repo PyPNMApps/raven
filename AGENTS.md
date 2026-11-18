@@ -4,7 +4,7 @@ Build RAVEN with a Rust backend and native Qt Quick/QML desktop
 under apps/qt/. Qt is the sole desktop UI; do not reintroduce a web frontend.
 
 - Work only in this viewer repository. PyPNM is read-only reference material. Do not change its files, configuration, dependencies or services, or run capture/startup code.
-- No SNMP, TFTP, modem controls, capture initiation, Python sidecars, Node production runtime or automatic remote analysis. AI Assistance is an optional OFDM-only extension: setup remains session-only; explicit OpenAI OFDM analysis requires the strict evidence, exact outbound-payload approval and read-only contracts in development/features/ai-analysis/. Never send data on startup or configuration. Optional PyPNM HTTP retrieval runs in Rust and retrieves existing files only.
+- No SNMP, TFTP, modem controls, capture initiation, Python sidecars, Node production runtime or automatic remote analysis. AI Assistance is an optional OFDM-only extension: credentials remain session-only; explicit OpenAI/ChatGPT OFDM analysis requires the strict evidence, exact outbound-payload approval and read-only contracts in development/features/ai-analysis/. Never send capture data on startup, setup or sign-in. Explicit ChatGPT browser sign-in may contact fixed authentication and model-catalog endpoints; persist only nonsecret host/client registration metadata, never tokens. Optional PyPNM HTTP retrieval runs in Rust and retrieves existing files only.
 - QML renders charts, navigation and transient interaction state. Rust owns filesystem access, parsing, scientific interpretation, analysis, aggregation, persistence, downloads, exports and decimation.
 - Domain/parser libraries must not depend on Qt, HTTP or app crates. Separate decoding from analysis, aggregation, storage and transport. Keep Cargo dependencies acyclic.
 - Reusable libraries are Apache-2.0. Desktop shell and UI are GPL-3.0-only. Set package licenses explicitly; preserve third-party licenses, copyrights and applicable NOTICE content.
@@ -85,6 +85,12 @@ for the preserved original guidance before creating new working plans.
 - Use the `raven-release` skill for version bumps and release work.
 - Keep VERSION in MAJOR.MINOR.PATCH format; use tools/bump-version.sh.
 - See docs/release/versioning.md. Version bumps do not authorize commits, tags, or pushes.
+
+## AI integration guidance
+
+Apply `skills/ai-assistance-integration/SKILL.md` when changing AI connections,
+streaming, approval or diagnostics. Maintain its reusable lessons from confirmed
+failures; keep provider assumptions and RAVEN-specific limits clearly labeled.
 
 ## Viewer source organization
 

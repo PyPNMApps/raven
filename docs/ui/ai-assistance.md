@@ -43,6 +43,56 @@ update checks are independent of AI and may still contact GitHub.
   <img src="images/ai/ofdm-ai-demo-dark.png" alt="Local Demo AI report from real OFDM evidence, with no model or provider usage">
 </picture>
 
+## Sign in with your ChatGPT subscription
+
+1. Start RAVEN normally (without `--ai-demo`).
+2. Open **AI Assistance** or **Settings → System → AI**.
+3. Select **Continue with ChatGPT**. Your system browser opens the OpenAI sign-in
+   and consent page. Allow ChatGPT plan usage if your account is eligible.
+4. Return to RAVEN. Select a model from the account's returned catalog.
+5. Run **OFDM Profile Performance → FEC Performance**, then open **AI Analysis**.
+6. Enter a question, select **Preview request**, inspect the exact data, and select
+   **Analyze approved request**. Only this last action sends your OFDM evidence.
+
+RAVEN uses HTTPS directly from Rust. The temporary browser callback listens only
+on `127.0.0.1` inside the machine running RAVEN. On a VM, use the browser **inside
+that VM**; a browser on your host computer has a different loopback address.
+If sign-in cannot open the browser, cancel and retry from the VM desktop.
+
+Subscription access is separate from an OpenAI API key. Eligibility and plan
+and any credit limits you authorize in ChatGPT apply; there is no automatic
+fallback to API-key billing. Your existing
+ChatGPT conversations and this Codex chat are not imported. View app access and
+usage in [ChatGPT Settings](https://chatgpt.com/settings/usage).
+
+Access and refresh tokens remain in Rust memory and are cleared on exit. For this
+first implementation, sign in again when the roughly one-hour access session
+expires. **Sign out** clears local tokens immediately and attempts remote session
+revocation; if that cannot be confirmed, disconnect RAVEN in ChatGPT Settings.
+Only the nonsecret stable host ID and issued client/account registration mapping
+are saved under the user's RAVEN configuration directory. No token is written.
+Demo mode disables browser sign-in and continues to make no provider requests.
+
+The subscription route is currently ChatGPT-only. Gemini, Claude and Grok retain
+API-key setup; their subscription-login integrations are not implemented.
+
+### Streamed analysis
+
+RAVEN reads ChatGPT events incrementally and displays a report only after completion
+and evidence validation. Large event traffic is handled separately from the final
+report limit. If a stream fails or is cancelled, create a new preview before
+explicitly trying again; RAVEN does not automatically repeat the request.
+
+### If browser sign-in fails
+
+The model list has its own 8 MiB metadata budget, separate from small token
+responses. RAVEN identifies the failing stage, such as identity verification or model
+catalog retrieval, and displays HTTP status when available. A model-catalog
+failure is separate from OFDM evidence validation. Retry **Continue with ChatGPT**
+using the same account; do not delete the registration file or paste tokens into
+the application. The [developer guide](../development/ai-assistance.md#sign-in-model-catalogs-and-diagnostics)
+explains how to capture safe stage diagnostics on the VM.
+
 ## Configure and test OpenAI
 
 1. Select **AI Assistance · Off** on the top bar, or **Settings → System… → AI…**.
@@ -118,3 +168,22 @@ and token pricing/session totals remain planned.
   <source media="(prefers-color-scheme: light)" srcset="images/ai/ofdm-ai-light.png">
   <img src="images/ai/ofdm-ai-dark.png" alt="Exact OFDM AI request preview from a native fixture-backed run; no provider call">
 </picture>
+
+### When an analysis is rejected
+
+RAVEN shows the validation rule that failed: stream format, completed output,
+report JSON/schema/size or evidence references. Each claim must reference one
+profile only; summaries can discuss the run, but counters are never pooled across
+profiles. Rejected text is not shown as a valid report and requests are not retried
+automatically. Create a fresh preview after updating the app, then explicitly
+approve the new request.
+
+To capture safe phase/rule diagnostics while launching from a checkout:
+
+```bash
+cd /home/dev01/Projects/raven &&
+RUST_LOG=warn,viewer::ai=info ./scripts/qt-desktop.sh --skip-build 2>&1 | tee local/raven-ai.log
+```
+
+AI diagnostics exclude response bodies, questions and credentials. Other app
+components may log paths; review the file before sharing it.

@@ -41,7 +41,7 @@ Timer {
         if (stage===0) {
             if (Qt.application.arguments.length!==argumentIndex+2) { fail("Expected screenshot output prefix"); return }
             const state=JSON.parse(service.state_json)
-            if (state.enabled || state.selected || state.analysis_available || state.providers.length!==4 || !assistanceChip.enabled) {
+            if (state.enabled || state.selected || state.analysis_available || state.providers.length!==5 || !assistanceChip.enabled) {
                 fail("Setup must start offline and unconfigured");return
             }
             theme.preference=1

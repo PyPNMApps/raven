@@ -23,6 +23,9 @@ use viewer::identity::DESKTOP_ID;
 /// # Panics
 /// Terminates if Qt cannot create its application or QML engine.
 fn main() -> ExitCode {
+    if logging::init().is_err() {
+        eprintln!("RAVEN logging could not be initialized; continuing without Rust diagnostics.");
+    }
     if std::env::args_os().nth(1).as_deref() == Some(std::ffi::OsStr::new("--install-update")) {
         let arguments: Vec<_> = std::env::args_os().skip(2).collect();
         let result = if arguments.len() == 1 {

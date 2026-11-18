@@ -67,6 +67,15 @@ mod bridge {
         /// Selects local demo mode; --ai-demo launch sessions cannot enable live AI.
         #[qinvokable]
         fn choose_demo_mode(self: Pin<&mut AiBackend>, enabled: bool);
+        /// Starts explicit ChatGPT browser sign-in and returns its authorization URL.
+        #[qinvokable]
+        fn sign_in_chatgpt(self: Pin<&mut AiBackend>) -> QString;
+        /// Selects a verified ChatGPT account model and invalidates existing approval.
+        #[qinvokable]
+        fn select_chatgpt_model(self: Pin<&mut AiBackend>, model: &QString) -> bool;
+        /// Clears local ChatGPT tokens and attempts remote session revocation.
+        #[qinvokable]
+        fn sign_out_chatgpt(self: Pin<&mut AiBackend>);
         /// Clears a form diagnostic without changing credentials.
         #[qinvokable]
         fn clear_error(self: Pin<&mut AiBackend>);
