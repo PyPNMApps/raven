@@ -927,7 +927,7 @@ checksum = "5d15f86d12da44cd8d4ec3c73984537eb7f4cadcb9776a575a0a8a05ca11005c"
 
 [[package]]
 name = "logging"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "tracing-subscriber",
 ]
@@ -1095,7 +1095,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "pnm"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "delaunator",
  "serde",
@@ -1105,7 +1105,7 @@ dependencies = [
 
 [[package]]
 name = "pnm-fixtures"
-version = "0.3.11"
+version = "0.3.12"
 
 [[package]]
 name = "portable-atomic"
@@ -1213,7 +1213,7 @@ dependencies = [
 
 [[package]]
 name = "raven-desktop"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "cxx",
  "cxx-gen",
@@ -1778,7 +1778,7 @@ dependencies = [
 
 [[package]]
 name = "viewer"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "base64",
  "docsis-ofdm-fec",
