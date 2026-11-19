@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 import QtQuick
+import "ai/report"
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
@@ -29,6 +30,31 @@ ApplicationWindow {
     ProfilePerformanceBackend { id: ofdmBackend }
     UpdateBackend { id: updateBackend }
     AiBackend { id: aiBackend }
+    ReportBackend { id: reportBackend }
+    function openEngineeringReport() {
+        rxmerCollection.pausePlayback()
+        spectrumCollection.pausePlayback()
+        if(ofdmSelected) engineeringReports.present(ofdmBackend.engineering_report())
+        else if(spectrumCollectionSelected) engineeringReports.present(spectrumBackend.engineering_report())
+        else if(comparisonSelected) engineeringReports.present(comparisonBackend.engineering_report("pre-eq"))
+        else if(rxmerCollectionSelected) engineeringReports.present(backend.engineering_report(rxmerPlaybackSelected ? "rxmer-playback" : "rxmer-collection"))
+        else if(backend.loaded) engineeringReports.present(backend.engineering_report("single"))
+        else engineeringReports.gallery()
+    }
+    EngineeringReportDialog {
+        id:engineeringReports;theme:appTheme;service:reportBackend;parent:Overlay.overlay
+        onCurrentRequested:window.openEngineeringReport()
+    }
+    Connections {
+        target:backend
+        function onMetadata_jsonChanged(){engineeringReports.close()}
+        function onViewport_jsonChanged(){engineeringReports.close()}
+        function onRxmer_collection_viewChanged(){engineeringReports.close()}
+    }
+    Connections {target:comparisonBackend;function onPre_eq_jsonChanged(){engineeringReports.close()}}
+    Connections {target:spectrumBackend;function onView_jsonChanged(){engineeringReports.close()}}
+    Connections {target:ofdmBackend;function onResult_jsonChanged(){engineeringReports.close()}}
+
     readonly property url initialCaptureFolder: {
         const demos = backend.examples_folder()
         if (demos.toString().length > 0) {
@@ -64,10 +90,12 @@ ApplicationWindow {
         theme: appTheme
         surface: window.contentItem.parent
     }
+    ReportSmoke {service:reportBackend;dialog:engineeringReports;theme:appTheme;surface:window.contentItem.parent}
     Component.onCompleted: {
+        if(Qt.application.arguments.indexOf("--reports-demo")>=0) Qt.callLater(function(){engineeringReports.gallery()})
         backend.set_dark_icon(appTheme.dark)
         // Packaged smoke checks stay offline; normal launch checks once, asynchronously.
-        if (Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0 && Qt.application.arguments.indexOf("--ai-setup-smoke") < 0) {
+        if (Qt.application.arguments.indexOf("--reports-demo") < 0 && Qt.application.arguments.indexOf("--report-smoke") < 0 && Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0 && Qt.application.arguments.indexOf("--ai-setup-smoke") < 0) {
             Qt.callLater(function() { updateBackend.check_updates() })
         }
     }
@@ -102,6 +130,7 @@ ApplicationWindow {
         function onError_messageChanged() { fileError.showError(ofdmBackend.error_message) }
     }
     function selectWorkspace(name) {
+        engineeringReports.close()
         rxmerCollection.pausePlayback()
         spectrumCollection.pausePlayback()
         rxmerCollectionSelected=name==="rxmer"
@@ -119,7 +148,7 @@ ApplicationWindow {
     readonly property var preEqAttachment: JSON.parse(comparisonBackend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(comparisonBackend.pre_eq_json)
     property bool navigationVisible: true
-    readonly property bool blocked: ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aiServices.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: engineeringReports.visible || ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aiServices.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -243,6 +272,7 @@ ApplicationWindow {
                     MenuItem { text: "Charts…"; onTriggered: chartSettings.open() }
                 }
             }
+            ToolButton {objectName:"openEngineeringReports";text:"Reports";enabled:!window.blocked;onClicked:window.openEngineeringReport()}
             ToolButton { text: "About"; enabled: !window.blocked; onClicked: aboutDialog.open() }
             Item { Layout.fillWidth: true }
             BusyIndicator { running: backend.busy; visible: running; Layout.preferredWidth: 24; Layout.preferredHeight: 24; Accessible.name: "Processing capture" }

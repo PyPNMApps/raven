@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "report_id": "demo-rich",
+  "title": "Offline rich report",
+  "source": {
+    "context_id": "offline-report-demo",
+    "generation": 1
+  },
+  "blocks": [
+    {
+      "id": "summary",
+      "type": "markdown",
+      "content": "# Engineering report\n**Offline demonstration**: measured RxMER and explicitly synthetic profile comparison.\n\n[Technical details](#details)"
+    },
+    {
+      "id": "rxmer",
+      "type": "chart",
+      "chart_type": "rxmer_frequency",
+      "dataset_id": "rxmer.demo",
+      "title": "Measured RxMER \u00b7 bundled sanitized PNM"
+    },
+    {
+      "id": "image",
+      "type": "image",
+      "asset_id": "raven-icon",
+      "caption": "Approved local RAVEN illustration; no network image loading."
+    },
+    {
+      "id": "details",
+      "type": "expandable",
+      "title": "Technical details",
+      "blocks": [
+        {
+          "id": "assumptions",
+          "type": "markdown",
+          "content": "## Provenance\nThe RxMER graph uses a sanitized bundled PNM. Profile comparison rows are **synthetic**, not a MERLIN simulation. Missing values remain unavailable."
+        },
+        {
+          "id": "jpeg",
+          "type": "image",
+          "asset_id": "report-jpeg",
+          "caption": "JPEG format check \u00b7 approved RAVEN artwork."
+        },
+        {
+          "id": "webp",
+          "type": "image",
+          "asset_id": "report-webp",
+          "caption": "WebP format check \u00b7 unavailable if this Qt runtime lacks the plugin."
+        }
+      ]
+    },
+    {
+      "id": "profiles",
+      "type": "table",
+      "dataset_id": "profiles.demo",
+      "title": "Synthetic profile comparison \u00b7 demonstration only"
+    },
+    {
+      "id": "evidence",
+      "type": "evidence",
+      "evidence_ids": [
+        "rxmer.samples"
+      ],
+      "label": "Measured capture evidence",
+      "action": {
+        "type": "open_rxmer",
+        "target_id": "rxmer.demo"
+      }
+    }
+  ]
+}

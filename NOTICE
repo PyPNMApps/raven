@@ -20,3 +20,9 @@ records ldpc-toolbox provenance, AFF3CT-derived BCH algorithm attribution and
 PyPNM QAM resource acknowledgment. The AFF3CT MIT notice is preserved in
 AFF3CT-LICENSE-MIT.txt. MERLIN's separate Qt application is not consumed.
 These upstream terms do not change RAVEN's component licenses.
+
+Native engineering report Markdown validation
+---------------------------------------------
+pulldown-cmark 0.13.6 (MIT), https://github.com/pulldown-cmark/pulldown-cmark,
+validates report Markdown syntax. Its original notice is retained under
+LICENSES/pulldown-cmark/LICENSE and in generated dependency license inventories.

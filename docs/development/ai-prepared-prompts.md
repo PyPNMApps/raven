@@ -56,3 +56,12 @@ pass. Fixture-backed offscreen native preview reports `AI_PREVIEW_OK`; dark and
 light request-review screenshots were visually checked and copied to the user
 guide. This validates local UI/evidence/approval behavior, not a live AI answer.
 No provider call, credential change, installation or release was performed.
+
+## Local engineering-report availability
+
+Every current PNM measurement and left-gutter analysis can now open a local report
+through the shared Reports action. Local report snapshots include prepared question
+text, but do not automatically enable/send provider requests. Existing OFDM AI
+responses use the same renderer after validation. See
+[report coverage](engineering-reports.md#analysis-coverage-and-lifecycles).
+New analyses must apply `skills/pnm-analysis-assistance/SKILL.md`.

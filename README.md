@@ -55,6 +55,10 @@ and profile references; **FEC Performance** runs each checked profile and shows
 separate FEC, BER and LDPC results. All simulation runs locally in Rust using
 MERLIN. See the [demo walkthrough](docs/ui/examples.md#ofdm-profile-performance).
 
+Native **Reports** provide Markdown, charts, tables and source evidence across
+PNM measurements and analyses, including a credential-free offline example gallery.
+See [Engineering reports](docs/ui/engineering-reports.md).
+
 Optionally sign in with ChatGPT or configure an OpenAI API key through
 **AI Assistance** for further analysis of
 OFDM Profile Performance results. Preview and approve the exact data before

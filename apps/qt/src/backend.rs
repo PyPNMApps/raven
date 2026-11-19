@@ -5,6 +5,7 @@
 //! Native Qt adapter for the Rust capture and presentation layer.
 //! Unsafe extern declarations are confined to CXX-Qt's typed interop boundary.
 mod pre_equalization;
+mod reports;
 mod rxmer;
 mod rxmer_collection;
 mod spectrum;
@@ -214,6 +215,9 @@ mod bridge {
         /// Busy calls do nothing; native dialog cancellation never calls this.
         #[qinvokable]
         fn close_capture(self: Pin<&mut ViewerBackend>);
+        /// Builds a local engineering report from the active capture or collection owner.
+        #[qinvokable]
+        fn engineering_report(self: Pin<&mut ViewerBackend>, scope: &QString) -> QString;
         /// Prechecks a last-update attachment against the current baseline.
         #[qinvokable]
         fn attach_pre_eq_update(self: Pin<&mut ViewerBackend>, url: &QUrl);
@@ -264,6 +268,7 @@ pub struct ViewerBackendRust {
     rxmer_analysis_busy: bool,
     status: QString,
     error_message: QString,
+    report_generation: u64,
     capture: Option<Arc<Capture>>,
     view: MeasurementView,
 }
@@ -303,6 +308,7 @@ impl Default for ViewerBackendRust {
             rxmer_analysis_json: QString::from("{}"),
             rxmer_analysis_error: QString::default(),
             rxmer_analysis_busy: false,
+            report_generation: 0,
             capture: None,
             view: MeasurementView::Default,
         }
@@ -449,6 +455,8 @@ impl bridge::ViewerBackend {
                             backend
                                 .as_mut()
                                 .set_pre_eq_current(loaded.capture.supports_pre_eq_comparison());
+                            let revision = backend.rust().report_generation.wrapping_add(1);
+                            backend.as_mut().rust_mut().report_generation = revision;
                             backend.as_mut().rust_mut().capture = Some(loaded.capture);
                             backend.as_mut().rust_mut().view = MeasurementView::Default;
                             backend
@@ -868,6 +876,7 @@ impl bridge::ViewerBackend {
         self.as_mut().rust_mut().spectrum_workspace = spectrum::Workspace::default();
         self.as_mut()
             .set_spectrum_workspace_json(QString::from("{}"));
+        self.as_mut().rust_mut().report_generation = self.rust().report_generation.wrapping_add(1);
         self.as_mut().rust_mut().capture = None;
         self.as_mut().rust_mut().view = MeasurementView::Default;
         self.as_mut().set_loaded(false);

@@ -6,6 +6,7 @@
 mod ai;
 mod backend;
 mod profile_performance;
+mod reports;
 mod spectrum_collection;
 mod update;
 use cxx_qt_lib::{QGuiApplication, QQmlApplicationEngine, QUrl};

@@ -25,6 +25,9 @@ mod bridge {
         #[qproperty(bool, prepared)]
         #[qproperty(bool, running)]
         type ProfilePerformanceBackend = super::State;
+        /// Formats current Rust-owned results without contacting an AI provider.
+        #[qinvokable]
+        fn engineering_report(self: Pin<&mut ProfilePerformanceBackend>) -> QString;
         /// Reads a bounded binary capture into its explicitly chosen input role.
         #[qinvokable]
         fn choose_file(self: Pin<&mut ProfilePerformanceBackend>, role: &QString, url: &QUrl);
@@ -419,5 +422,26 @@ impl bridge::ProfilePerformanceBackend {
                 Err(error) => self.fail(error.message),
             }
         }
+    }
+}
+
+impl bridge::ProfilePerformanceBackend {
+    /// Captures existing local results in a generation-bound engineering report.
+    /// # Returns
+    /// Approved presentation JSON or a safe validation error; no simulation or network work.
+    pub fn engineering_report(self: Pin<&mut Self>) -> QString {
+        let snapshot = serde_json::json!({"result_json":serde_json::from_str::<serde_json::Value>(&self.rust().result_json.to_string()).unwrap_or(serde_json::Value::Null),"chart_json":serde_json::from_str::<serde_json::Value>(&self.rust().chart_json.to_string()).unwrap_or(serde_json::Value::Null)});
+        let result = viewer::reports::adapter::from_snapshot(
+            "OFDM Profile Performance",
+            "ofdm-profile-performance",
+            self.rust().generation,
+            &snapshot,
+            viewer::reports::context::Classification::Simulation,
+        );
+        QString::from(
+            result
+                .unwrap_or_else(|error| serde_json::json!({"error":error.message}))
+                .to_string(),
+        )
     }
 }

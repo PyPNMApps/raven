@@ -332,7 +332,7 @@ struct Reference {
 /// Closed report JSON, with trusted provenance attached separately by the caller.
 /// # Errors
 /// Rejects unsupported versions, malformed claims and unavailable/changed references.
-pub(super) fn validate_report(content: &str, evidence: &Evidence) -> Result<Value, Diagnostic> {
+pub(crate) fn validate_report(content: &str, evidence: &Evidence) -> Result<Value, Diagnostic> {
     if content.len() > 32768 {
         return Err(analysis_error(
             "AiReportLimit",

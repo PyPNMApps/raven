@@ -393,3 +393,10 @@ provider. No scientific calculation or evidence/report schema changes.
 
 See [prepared-question requirements](ai-prepared-prompts.md) for each PNM analysis,
 current/future scope and AI-27/28 acceptance-test mapping.
+
+## Native engineering report renderer
+
+Accepted narrative responses may now be adapted by the shared offline report
+framework after existing strict validation. The exact approval/provider APIs and
+plain-text fallback are preserved. See [engineering reports](engineering-reports.md)
+for schema 1.0, context/evidence resolution, security, analysis coverage and tests.

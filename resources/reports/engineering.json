@@ -1,0 +1,53 @@
+{
+  "schema_version": "1.0",
+  "report_id": "demo-engineering",
+  "title": "Offline engineering report",
+  "source": {
+    "context_id": "offline-report-demo",
+    "generation": 1
+  },
+  "blocks": [
+    {
+      "id": "summary",
+      "type": "markdown",
+      "content": "# Native engineering report\n\n**Offline demonstration**, with *selectable text*.\n\n- Measured PNM chart\n- Rust-owned evidence\n\n1. Review the data\n2. Keep numerical provenance\n\n> Interpretation is separate from measurement.\n\nUse `sample_index` for traceability.\n\n```text\nLocal report \u2192 validated blocks \u2192 native Qt\n```\n\n[Jump to details](#details)"
+    },
+    {
+      "id": "rxmer",
+      "type": "chart",
+      "chart_type": "rxmer_frequency",
+      "dataset_id": "rxmer.demo",
+      "title": "Measured RxMER \u00b7 bundled sanitized PNM"
+    },
+    {
+      "id": "profiles",
+      "type": "table",
+      "dataset_id": "profiles.demo",
+      "title": "Synthetic profile comparison \u00b7 demonstration only"
+    },
+    {
+      "id": "evidence",
+      "type": "evidence",
+      "evidence_ids": [
+        "rxmer.samples"
+      ],
+      "label": "Measured capture evidence",
+      "action": {
+        "type": "open_rxmer",
+        "target_id": "rxmer.demo"
+      }
+    },
+    {
+      "id": "details",
+      "type": "expandable",
+      "title": "Technical details",
+      "blocks": [
+        {
+          "id": "assumptions",
+          "type": "markdown",
+          "content": "## Provenance\nThe RxMER graph uses a sanitized bundled PNM. Profile comparison rows are **synthetic**, not a MERLIN simulation. Missing values remain unavailable."
+        }
+      ]
+    }
+  ]
+}

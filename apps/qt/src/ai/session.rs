@@ -360,10 +360,14 @@ impl bridge::AiBackend {
                         return;
                     }
                     match result {
-                        Ok(report) => {
+                        Ok(mut report) => {
                             if let Some(message) = report["connection"].as_str() {
                                 state.set_operation_status(QString::from(message));
                             } else {
+                                match viewer::reports::adapter::from_ai_result(&report) {
+                                    Ok(model) => report["engineering_report"] = model,
+                                    Err(_) => report["engineering_report_error"] = serde_json::json!("Rich presentation is unavailable; the validated plain-text report remains below."),
+                                }
                                 state
                                     .as_mut()
                                     .set_report_json(QString::from(report.to_string()));

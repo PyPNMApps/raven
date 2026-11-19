@@ -503,3 +503,26 @@ fn readable_review_and_prepared_questions_preserve_exact_approved_request() {
         );
     }
 }
+
+#[test]
+fn accepted_narrative_adapts_to_rich_blocks_without_weakening_reference_checks() {
+    let mut session = setup();
+    let preview = prepare(&mut session);
+    let mut report = advisory();
+    report["summary"] = json!("Literal <img src='file:///private'> is not an image instruction.");
+    let result = session
+        .approve_analysis(preview["digest"].as_str().unwrap(), "run-1")
+        .unwrap()
+        .execute(&Mock::new(envelope(report)), &AtomicBool::new(false))
+        .unwrap();
+    let rich = viewer::reports::adapter::from_ai_result(&result).unwrap();
+    assert_eq!(rich["interpretation"], "ai_interpretation");
+    assert_eq!(rich["classification"], "simulation");
+    assert!(rich["blocks"][0]["content"]
+        .as_str()
+        .unwrap()
+        .contains("&lt;img"));
+    let mut changed = result;
+    changed["report"]["claims"][0]["references"][0]["value"] = json!("1");
+    assert!(viewer::reports::adapter::from_ai_result(&changed).is_err());
+}

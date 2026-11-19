@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 import QtQuick
+import "ai/report"
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Dialogs
@@ -152,7 +153,17 @@ Dialog {
                     }).join("\n\n") || "Local findings are unavailable for this run."
                 }
             }
-            AiTextPane {
+            ColumnLayout {
+                AiReportView {
+                    theme:dialog.theme
+                    report:dialog.response.engineering_report || ({})
+                    visible:!!dialog.response.engineering_report
+                    Layout.fillWidth:true;Layout.fillHeight:true
+                }
+                Label {text:dialog.response.engineering_report_error || "";visible:text.length>0;color:dialog.theme.muted;wrapMode:Text.Wrap;Layout.fillWidth:true}
+                AiTextPane {
+                visible:!dialog.response.engineering_report
+                Layout.fillWidth:true;Layout.fillHeight:true
                 theme: dialog.theme; textObjectName: "aiReportText"
                 text: {
                         const report=dialog.response.report
@@ -165,6 +176,7 @@ Dialog {
                         }).join("\n\n") + "\n\nLimitations\n" + report.limitations.join("\n") + "\n\nSuggested checks\n" + report.suggested_checks.join("\n")
                         + (dialog.response.demo ? "\n\nLocal demo · no provider or token usage." : "\n\nModel: " + dialog.response.returned_model + "\nProvider-reported tokens · input: " + (usage.input_tokens || "unavailable") + " · output: " + (usage.output_tokens || "unavailable") + " · total: " + (usage.total_tokens || "unavailable"))
                 }
+            }
             }
             AiTextPane {
                 theme: dialog.theme; textObjectName: "aiChatLog"

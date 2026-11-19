@@ -218,3 +218,13 @@ packages merely to validate script syntax or argument handling.
 Apply skills/sw-qa-hygiene/SKILL.md for capture examples and demo collections.
 Use the standalone MAC sanitizer and retain distinct modem identities.
 The read-only SW-QA hygiene gate is required before pushes and in CI.
+
+## Engineering reports and new analyses
+
+Apply `skills/pnm-analysis-assistance/SKILL.md` for every new PNM analysis or
+left-gutter test. Reuse `apps/viewer/src/reports` and `qml/ai/report` for local
+reports, prepared AI questions and bounded evidence. Reports are native/offline;
+AI credentials, approved outbound payloads and numerical owners remain separate.
+No report-supplied QML paths, HTML, remote images, executable actions or unapproved
+file/network navigation. Preserve the verified plain-text AI fallback. Extend
+`docs/development/engineering-reports.md` and the analysis/prompt coverage matrix.

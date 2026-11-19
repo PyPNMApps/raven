@@ -19,6 +19,7 @@ Basic.Button {
     bottomPadding: 6
     contentItem: Text {
         text: control.text
+        textFormat: Text.PlainText
         font: control.font
         color: control.foreground
         horizontalAlignment: Text.AlignHCenter

@@ -7,6 +7,7 @@ pub mod ai;
 pub mod capture;
 pub mod identity;
 pub mod measurements;
+pub mod reports;
 pub mod resources;
 #[cfg(feature = "merlin-fec")]
 pub mod simulation;

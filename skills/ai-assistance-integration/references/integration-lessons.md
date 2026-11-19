@@ -142,3 +142,27 @@ in both themes. Each enabled analysis needs a versioned prepared question and a
 reviewed evidence allowlist. Editing/selecting a question invalidates approval;
 it never sends automatically. Document future analysis prompts without implying
 their adapters or upload paths exist.
+
+## Rich reports must not relax the existing AI contract
+
+RAVEN's native engineering report schema is separate from its provider narrative
+and evidence schemas. Adapt only accepted narratives, repeat exact-reference
+validation and retain the verified plain-text fallback. A rich renderer is not
+permission to accept arbitrary provider JSON or enable new upload paths.
+
+Resolve data/evidence IDs against one immutable local owner/generation; source
+classification and numbers come from Rust. Use a finite component registry, not
+model-authored QML paths. Reject HTML/remote images/URLs before Qt Markdown renders
+anything, and make headings, tables and buttons explicitly plain text. Check both
+per-block limits and aggregate GUI work, including nested tables/plots.
+
+Qt-specific lesson: CXX bridge Rust state type names can collide across modules
+when exported without distinct C++ namespaces. Use an unambiguous state name for
+each new bridge. Validate native resources and decoder plugins, not just QML mocks.
+Adding a Markdown parser also requires checking current advisories before pinning.
+
+When using a custom ScrollBar in a native ScrollView, verify its actual geometry,
+orientation, thumb position and drag behavior. A passing contentY test alone can
+leave a tiny nonfunctional indicator. Bind the custom bar to the scroll viewport
+and test dragging against a long document. Native visual review must use the newly
+built binary; --skip-build deliberately reuses the previous executable.

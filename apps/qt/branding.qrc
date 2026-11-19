@@ -5,4 +5,8 @@
     <file alias="icon-dark.png">../../docs/images/raven-icon-dark.png</file>
     <file alias="icon-light.png">../../docs/images/raven-icon-light.png</file>
   </qresource>
+  <qresource prefix="/reports">
+    <file alias="example.jpg">../../resources/reports/example.jpg</file>
+    <file alias="example.webp">../../resources/reports/example.webp</file>
+  </qresource>
 </RCC>

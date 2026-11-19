@@ -220,3 +220,6 @@ and [bundled demo walkthrough](examples.md#ofdm-profile-performance).
 To compare pre-EQ files, select **US Pre-EQ → Compare**, press **Open original…**,
 then **Browse…** for Last Update or drop it on the attachment target. Choose the
 update mode and Compare. This entry is available before any single file is open.
+
+Native [Engineering reports](engineering-reports.md) are available from every
+measurement and left-gutter analysis through **Reports**, including offline examples.

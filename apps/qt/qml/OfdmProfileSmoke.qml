@@ -114,6 +114,7 @@ Timer {
             snapshot("-fec-dark.png",9)
         } else if (stage===50 && !aiService.busy) {
             const demoReport=JSON.parse(aiService.report_json)
+            if(!demoReport.engineering_report || !demoReport.engineering_report.blocks.length){fail("Native rich AI adapter missing");return}
             if (!demoReport.demo || demoReport.provider!=="demo" || demoReport.usage.total_tokens!==null || JSON.parse(aiService.conversation_json).length!==1) {fail("Native demo failed: "+aiService.error_message);return}
             snapshot("-ai-demo-dark.png",51)
         } else if (stage===51) {

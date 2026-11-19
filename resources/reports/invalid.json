@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "report_id": "demo-invalid",
+  "title": "Offline invalid report",
+  "source": {
+    "context_id": "offline-report-demo",
+    "generation": 1
+  },
+  "blocks": [
+    {
+      "id": "bad",
+      "type": "execute_shell",
+      "command": "never-executed"
+    }
+  ]
+}

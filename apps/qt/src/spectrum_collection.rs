@@ -19,6 +19,9 @@ mod bridge {
         #[qproperty(QString, error_message)]
         #[qproperty(bool, busy)]
         type SpectrumCollectionBackend = super::SpectrumState;
+        /// Formats current Rust-owned results without contacting an AI provider.
+        #[qinvokable]
+        fn engineering_report(self: Pin<&mut SpectrumCollectionBackend>) -> QString;
         /// Imports standard PNN9 captures from one local directory/archive asynchronously.
         #[qinvokable]
         fn import_collection(self: Pin<&mut SpectrumCollectionBackend>, url: &QUrl);
@@ -311,5 +314,26 @@ impl Drop for SpectrumState {
     /// Stops archive work when its QObject/session is destroyed.
     fn drop(&mut self) {
         self.cancel.store(true, Ordering::Relaxed);
+    }
+}
+
+impl bridge::SpectrumCollectionBackend {
+    /// Captures existing local results in a generation-bound engineering report.
+    /// # Returns
+    /// Approved presentation JSON or a safe validation error; no simulation or network work.
+    pub fn engineering_report(self: Pin<&mut Self>) -> QString {
+        let snapshot = serde_json::json!({"view_json":serde_json::from_str::<serde_json::Value>(&self.rust().view_json.to_string()).unwrap_or(serde_json::Value::Null)});
+        let result = viewer::reports::adapter::from_snapshot(
+            "Spectrum collection",
+            "spectrum-collection",
+            self.rust().generation,
+            &snapshot,
+            viewer::reports::context::Classification::Derived,
+        );
+        QString::from(
+            result
+                .unwrap_or_else(|error| serde_json::json!({"error":error.message}))
+                .to_string(),
+        )
     }
 }

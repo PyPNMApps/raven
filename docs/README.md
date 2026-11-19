@@ -62,3 +62,6 @@ Detailed working plans and private specification evidence remain in the separate
 ignored repository-root `development/`. They are not part of downloaded checkouts.
 This structure follows PyPNM's topic-oriented docs and Oscar's separation of
 usage, reference, and historical material; it does not copy their runtime design.
+
+- [Engineering reports user guide](ui/engineering-reports.md)
+- [Engineering report architecture and schema](development/engineering-reports.md)

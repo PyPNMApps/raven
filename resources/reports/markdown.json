@@ -1,0 +1,28 @@
+{
+  "schema_version": "1.0",
+  "report_id": "demo-markdown",
+  "title": "Offline markdown report",
+  "source": {
+    "context_id": "offline-report-demo",
+    "generation": 1
+  },
+  "blocks": [
+    {
+      "id": "summary",
+      "type": "markdown",
+      "content": "# Native engineering report\n\n**Offline demonstration**, with *selectable text*.\n\n- Measured PNM chart\n- Rust-owned evidence\n\n1. Review the data\n2. Keep numerical provenance\n\n> Interpretation is separate from measurement.\n\nUse `sample_index` for traceability.\n\n```text\nLocal report \u2192 validated blocks \u2192 native Qt\n```\n\n[Jump to details](#details)"
+    },
+    {
+      "id": "details",
+      "type": "expandable",
+      "title": "Technical details",
+      "blocks": [
+        {
+          "id": "assumptions",
+          "type": "markdown",
+          "content": "## Provenance\nThe RxMER graph uses a sanitized bundled PNM. Profile comparison rows are **synthetic**, not a MERLIN simulation. Missing values remain unavailable."
+        }
+      ]
+    }
+  ]
+}
