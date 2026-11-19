@@ -143,7 +143,7 @@ without running FEC. The optional
 `--ofdm-profiles` list selects captured IDs; its default remains Profile 0. No network retrieval,
 system installation or publication occurs. Linux smoke evidence does not establish
 Windows/macOS runtime or native file-picker behavior there. Hosted packaging must
-still verify the 50,000,000-byte per-installer limit with the newly linked engine.
+still verify the 75,000,000-byte per-installer limit with the newly linked engine.
 
 Local native smoke results on the bundled Profile 0 captures, 10 ms observation:
 

@@ -161,7 +161,8 @@ approved asset ID, finite resource mapping, notices/provenance and decoder tests
 
 Native Windows/macOS runtime behavior and package bytes require their respective
 native release validation. No workflows, signing, installation or publication are
-changed by this implementation. The 50,000,000-byte installer gate remains active.
+changed by this implementation. The installer gate remains active; see [packaging](../release/packaging.md)
+for the current budget.
 
 Dependency review pins the patched Markdown parser; wikilink extensions remain
 disabled. See [RUSTSEC-2026-0433](https://rustsec.org/advisories/RUSTSEC-2026-0433.html).

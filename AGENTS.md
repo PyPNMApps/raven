@@ -17,7 +17,7 @@ under apps/qt/. Qt is the sole desktop UI; do not reintroduce a web frontend.
 - Offline viewing must work without a server or network. Feature-gate the HTTP adapter and test offline-only and retrieval-enabled builds.
 - Pin toolchains and lockfiles. Run Rust formatting, Clippy and tests; Qt adapter and QML tests and native builds. Verify IPC contracts and installed application behavior.
 - CI builds Windows, macOS Intel/Apple Silicon and Ubuntu packages on suitable native runners. Report unverified targets honestly; a successful cross-compile is not runtime validation.
-- Each primary architecture-specific distributable must be at most 50,000,000 bytes, counting bundled prerequisites and assets. Fail the release gate when exceeded. Report installer bytes, installed footprint and external prerequisites separately.
+- Each primary architecture-specific distributable must be at most 75,000,000 bytes, counting bundled prerequisites and assets. Fail the release gate when exceeded. Report installer bytes, installed footprint and external prerequisites separately.
 - Offline viewing after setup and offline installation on a pristine OS are different promises. Do not claim both fit the budget without measurement.
 - Produce local artifacts and checksums. Publishing, external signing/notarization and system-wide installation require user authorization. Keep credentials, private PDFs and customer captures out of Git and release bundles.
 

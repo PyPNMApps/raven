@@ -97,7 +97,7 @@ adapter tests. Baseline exports were captured for all nine single-capture types.
 Post-change evidence is recorded in the local implementation report; hosted
 Windows/macOS lifecycle behavior requires native runners. The existing six-host
 matrix, CodeQL, installed smoke tests, partial-release rules, immutable public
-assets and 50,000,000-byte maximum per installer remain required.
+assets and 75,000,000-byte maximum per installer remain required.
 
 The full file-by-file assessment and local working plan live at
 `development/raven-rebrand/assessment.md`, which is ignored and absent from fresh

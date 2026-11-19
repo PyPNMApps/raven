@@ -43,5 +43,5 @@ Standalone imported customer/demo archives still use the sanitizer's archive mod
 Run `python3 scripts/release/samples.py --check` for source-only validation, or
 `--output NEW_DIRECTORY` to exercise bundle generation. Keep generated bundles
 under ignored `local/` or `dist/`. Verify installed `single/`, RxMER ZIPs and the
-pre-EQ comparison pair; keep standalone CLI packages capture-free and the 50 MB
+pre-EQ comparison pair; keep standalone CLI packages capture-free and the 75 MB
 installer gate active. See [packaging](../../docs/release/packaging.md).

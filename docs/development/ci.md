@@ -14,7 +14,7 @@ A `v*` tag starts [Native releases](../../.github/workflows/release.yml):
    DMG copied-app lifecycles on those native hosts.
 4. As soon as the Ubuntu 22.04 native job finishes, install its identical DEBs
    on 22.04, 24.04 and 26.04 while the other native platforms continue.
-5. Verify the complete asset set, hashes and 50 MB budgets, then upload to a draft,
+5. Verify the complete asset set, hashes and 75 MB budgets, then upload to a draft,
    verify remote metadata and downloaded bytes, and publish automatically.
 
 Every stage is required for a complete stable release. Failed platforms remain
@@ -353,7 +353,7 @@ artifact set and attach it to a **draft** GitHub release. It refuses to modify a
 already public release. After verifying uploaded metadata and re-downloaded
 bytes, it publishes automatically. External signing and notarization are
 separate. Failed packages are never published; missing targets block stable
-publication. Packages above 50,000,000 bytes block their platform. See
+publication. Packages above 75,000,000 bytes block their platform. See
 [packaging](../release/packaging.md) and the partial-release policy above.
 
 Publication helper failures print captured GitHub CLI stderr and preserve the

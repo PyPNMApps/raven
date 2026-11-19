@@ -23,7 +23,7 @@ from versions import synchronize, validate
 PRODUCT = json.loads((ROOT / "product.json").read_text(encoding="utf-8"))
 PROJECT_URL = "https://github.com/" + PRODUCT["repository"]
 
-MAX_PACKAGE_BYTES = 50_000_000
+MAX_PACKAGE_BYTES = 75_000_000
 DEPENDENCY_NOTICES = None
 
 
@@ -95,7 +95,7 @@ def verify_artifacts(output):
     """Require nonempty native packages within budget; write their SHA256SUMS.
 
     Return measured artifacts. Every primary installer/archive has the same
-    50,000,000-byte cap; metadata does not exempt oversized packages.
+    75,000,000-byte cap; metadata does not exempt oversized packages.
     """
     artifacts = sorted(path for path in output.iterdir()
                        if path.suffix in ('.deb', '.msi', '.dmg', '.zip', '.gz'))

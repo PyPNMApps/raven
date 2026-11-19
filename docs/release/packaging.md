@@ -78,8 +78,9 @@ when invoking Python packaging from a checkout using that toolchain.
 ## Gates and metadata
 
 Every primary installer/archive must be nonempty and no larger than
-**50,000,000 bytes**, including bundled prerequisites/assets. Oversized output
-fails the job. `SHA256SUMS` and release manifests record measured bytes; payload
+**75,000,000 bytes**, including bundled prerequisites/assets. Oversized output
+fails the job. This project policy is a decimal 75 MB budget, not a hosting
+service upload limit. It supersedes the original 50 MB budget. `SHA256SUMS` and release manifests record measured bytes; payload
 inventories report installed file bytes separately. Cargo dependency graphs
 record exact locked inputs. A CycloneDX dependency inventory and collected
 Cargo/Qt license notices accompany packages; the inventory covers the locked

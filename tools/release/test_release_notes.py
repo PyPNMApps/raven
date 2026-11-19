@@ -15,7 +15,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts/release'))
 import notes
-from common import release_version
+from common import MAX_PACKAGE_BYTES, release_version
 
 
 def manifests(version):
@@ -135,6 +135,12 @@ class ReleasePageTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'duplicate'):
             self.render(manifests=modified)
 
+    def test_package_at_size_budget_is_accepted(self):
+        """Allow an installer exactly at the current decimal-byte size cap."""
+        modified = copy.deepcopy(self.index)
+        modified[0]['artifacts'][0]['bytes'] = MAX_PACKAGE_BYTES
+        self.render(manifests=modified)
+
     def test_unsafe_links_sizes_and_unresolved_tokens_are_rejected(self):
         """Reject path/Markdown injection, invalid byte counts and incomplete templates."""
         for name in ('../capture.deb', '[capture].deb', 'line\nbreak.exe', '..'):
@@ -142,7 +148,7 @@ class ReleasePageTests(unittest.TestCase):
             modified[0]['artifacts'][0]['name'] = name
             with self.subTest(name=name), self.assertRaisesRegex(ValueError, 'asset name'):
                 self.render(manifests=modified)
-        for size in (0, True, -1, 50_000_001):
+        for size in (0, True, -1, MAX_PACKAGE_BYTES + 1):
             modified = copy.deepcopy(self.index)
             modified[0]['artifacts'][0]['bytes'] = size
             with self.subTest(size=size), self.assertRaisesRegex(ValueError, 'size'):

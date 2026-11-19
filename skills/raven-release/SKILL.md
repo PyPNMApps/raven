@@ -53,7 +53,7 @@ make a release pass. Missing, skipped and canceled jobs block the aggregate.
 Build locally with `python3 scripts/release/build.py --output dist/release`
 (`python` on Windows) only after native prerequisites are present. Preserve
 existing outputs; the builder refuses reuse. Verify artifact versions, hashes
-and the 50,000,000-byte budget with `scripts/release/verify.py`.
+and the 75,000,000-byte budget with `scripts/release/verify.py`.
 
 Installed lifecycle checks belong on disposable GitHub runners; do not set
 GITHUB_ACTIONS locally to bypass their guard. Report local relocated-binary smoke
@@ -130,7 +130,7 @@ root for every picker, fall back to Home for unpackaged builds,
 and never select an installation directory as the default export destination.
 Require installed smoke checks to use and verify bundled examples, not silently
 substitute checkout fixtures. Keep installed icon/shortcut lifecycle checks and
-the 50 MB artifact gate. Add new build/asset-conversion packages to the explicit
+the 75 MB artifact gate. Add new build/asset-conversion packages to the explicit
 development installer and documentation; do not install them while validating.
 
 ## Catch platform failures before tags
