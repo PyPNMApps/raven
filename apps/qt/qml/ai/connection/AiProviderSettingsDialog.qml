@@ -153,6 +153,17 @@ Dialog {
         }
     }
     footer: DialogButtonBox {
+        id: actionButtons
+
+        // Own the visual host explicitly: a deferred style host can remain null.
+        contentItem: ListView {
+            implicitWidth: contentWidth
+            model: actionButtons.contentModel
+            spacing: actionButtons.spacing
+            orientation: ListView.Horizontal
+            boundsBehavior: Flickable.StopAtBounds
+            snapMode: ListView.SnapToItem
+        }
         ThemeButton {
             objectName: "aiSaveSession"
             DialogButtonBox.buttonRole: DialogButtonBox.ActionRole

@@ -538,3 +538,13 @@ Normal AI dialogs hide the Demo AI checkbox. Demo labels and controls appear onl
 when the Rust service reports demo mode enabled (for example, `--ai-demo`). The
 existing launch lock and provider guards remain authoritative. Presentation tests
 cover hidden controls in normal mode and visible labels in enabled demo mode.
+
+### Provider footer rendering regression
+
+A full QML run found both custom action buttons in the DialogButtonBox model
+while its style-supplied contentItem was null, leaving Save without a visual
+parent/window. Explicit button roles alone did not prevent this state. The
+provider dialog now owns an explicit horizontal ListView bound to the existing
+button model; native role ordering and validation-controlled Save remain intact.
+The settings tests check the visual host as well as actual button rendering and
+clicks. No timeout increase, skipped test or provider behavior change is involved.

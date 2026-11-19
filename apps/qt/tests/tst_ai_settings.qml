@@ -87,6 +87,8 @@ RenderTestCase {
         choose(id)
         dialog.configureProvider()
         tryCompare(dialog.providerSettingsDialog,"visible",true)
+        verify(dialog.providerSettingsDialog.footer.contentItem !== null,
+               "Provider footer has no visual host")
     }
     function click(control) {
         // Popup controls join the overlay window asynchronously after open().
