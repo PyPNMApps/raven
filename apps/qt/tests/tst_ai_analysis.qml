@@ -51,6 +51,7 @@ RenderTestCase {
     function test_no_automatic_submission_preview_then_explicit_approval() {
         dialog.open()
         compare(service.submissions,0)
+        verify(!findChild(dialog,"aiDemoMode").visible)
         verify(!findChild(dialog,"aiAnalyzeApproved").enabled)
         const preview=findChild(dialog,"aiCreatePreview")
         verify(waitForFrame(preview));mouseClick(preview)
@@ -63,7 +64,9 @@ RenderTestCase {
     function test_demo_mode_clearly_labels_and_invalidates_live_preview() {
         dialog.open();service.prepare_analysis("","")
         const toggle=findChild(dialog,"aiDemoMode")
-        verify(waitForFrame(toggle));mouseClick(toggle)
+        verify(!toggle.visible)
+        service.choose_demo_mode(true)
+        verify(toggle.visible)
         verify(service.demo_mode);verify(!service.request_ready)
         compare(dialog.title,"OFDM Profile Performance · Demo AI")
         compare(findChild(dialog,"aiAnalyzeApproved").text,"Run approved demo")

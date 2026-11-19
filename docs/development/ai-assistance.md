@@ -531,3 +531,10 @@ using synthetic secrets. No user key or personal vault was used. Windows/macOS
 runtime access and OS-specific capacity limits still need native verification;
 backend refusal must remain an error, never a fallback file. This slice introduces
 no new scientific calculations, provider inference or automatic refresh.
+
+### Demo UI visibility
+
+Normal AI dialogs hide the Demo AI checkbox. Demo labels and controls appear only
+when the Rust service reports demo mode enabled (for example, `--ai-demo`). The
+existing launch lock and provider guards remain authoritative. Presentation tests
+cover hidden controls in normal mode and visible labels in enabled demo mode.

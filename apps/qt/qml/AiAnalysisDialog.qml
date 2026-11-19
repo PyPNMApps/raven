@@ -58,6 +58,7 @@ Dialog {
         }
         ThemeCheckBox {
             objectName: "aiDemoMode"
+            visible: !!dialog.service.demo_mode
             theme: dialog.theme
             text: "Demo AI · local responses, no credentials"
             checked: !!dialog.service.demo_mode

@@ -32,10 +32,10 @@ or a genuine AI assessment. To ask this chat for an actual interpretation, expor
 the conversation and share the JSON here yourself.
 
 `--ai-demo` locks the session to local demo responses. Restart without it for
-live AI. Normal sessions also offer a **Demo AI** checkbox in the analysis popup;
-switching modes invalidates approval and never sends a request automatically.
-Existing session credentials are not erased by that checkbox. Normal release
-update checks are independent of AI and may still contact GitHub.
+live AI. Demo controls and wording appear only while AI demo mode is enabled.
+Normal sessions do not show an option to turn it on. Demo mode never sends an AI
+request. Normal release update checks are independent of AI and may still contact
+GitHub.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/ai/ofdm-ai-demo-dark.png">
