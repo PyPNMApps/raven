@@ -69,7 +69,7 @@ export CARGO_HOME="${PROJECT_DIR}/local/cargo"
 export RUSTUP_HOME="${PROJECT_DIR}/local/rustup"
 export PATH="${CARGO_HOME}/bin:${PATH}"
 PACKAGES=(
-  ca-certificates curl git build-essential pkg-config libssl-dev lld ccache patchelf
+  ca-certificates curl git build-essential pkg-config libdbus-1-dev libssl-dev lld ccache patchelf
   cmake libgl1-mesa-dev libegl1 libopengl0 libxkbcommon-x11-0
   libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1
   libxcb-render-util0 libxcb-shape0 libxcb-randr0 libxcb-xfixes0

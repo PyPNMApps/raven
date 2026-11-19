@@ -27,21 +27,45 @@ pub struct AiBackendState {
     pub(super) conversation_json: QString,
     pub(super) demo_mode: bool,
     pub(super) demo_locked: bool,
-    forced_demo: bool,
+    pub(super) forced_demo: bool,
     pub(super) busy: bool,
     pub(super) request_ready: bool,
     source: String,
     generation: u64,
-    control: Arc<AtomicBool>,
+    pub(super) control: Arc<AtomicBool>,
     turns: Vec<serde_json::Value>,
-    session: Session,
+    pub(super) session: Session,
+    pub(super) saved_json: QString,
+    pub(super) credential_status: QString,
+    pub(super) reauth_provider: QString,
+    pub(super) remember_signin: bool,
+    pub(super) vault_generation: u64,
 }
 impl Default for AiBackendState {
-    /// Creates an unconfigured service without network, disk or environment access.
+    /// Creates an unconfigured service; reads nonsecret hints without unlocking the vault.
     fn default() -> Self {
         let session = Session::default();
         let forced_demo = std::env::args_os().any(|argument| argument == "--ai-demo");
+        let index_result = if forced_demo {
+            Ok(viewer::ai::credentials::Index::default())
+        } else {
+            super::credentials::index_path()
+                .and_then(|path| viewer::ai::credentials::Index::read(&path))
+        };
+        let credential_status = index_result
+            .as_ref()
+            .err()
+            .map(|error| QString::from(error.message.as_str()))
+            .unwrap_or_default();
+        let index = index_result.unwrap_or_default();
         Self {
+            saved_json: QString::from(
+                serde_json::to_string(&index).unwrap_or_else(|_| "{}".into()),
+            ),
+            credential_status,
+            reauth_provider: QString::default(),
+            remember_signin: false,
+            vault_generation: 0,
             state_json: QString::from(session.catalog().to_string()),
             error_message: QString::default(),
             preview_json: QString::from("{}"),
@@ -137,6 +161,7 @@ impl bridge::AiBackend {
     ) -> bool {
         match result {
             Ok(catalog) => {
+                self.as_mut().set_reauth_provider(QString::default());
                 self.as_mut()
                     .set_state_json(QString::from(catalog.to_string()));
                 self.set_error_message(QString::default());
@@ -213,6 +238,9 @@ impl bridge::AiBackend {
                 self.set_request_ready(true);
             }
             Err(error) => {
+                if error.code == "AiSignInExpired" {
+                    self.as_mut().check_credential_status();
+                }
                 self.as_mut().set_preview_json(QString::from("{}"));
                 self.set_error_message(QString::from(error.message));
             }
@@ -362,6 +390,7 @@ impl bridge::AiBackend {
                     match result {
                         Ok(mut report) => {
                             if let Some(message) = report["connection"].as_str() {
+                                state.as_mut().set_credential_status(QString::default());
                                 state.set_operation_status(QString::from(message));
                             } else {
                                 match viewer::reports::adapter::from_ai_result(&report) {
@@ -387,6 +416,13 @@ impl bridge::AiBackend {
                             }
                         }
                         Err(error) => {
+                            if error.code == "AiAuthentication" || error.code == "AiSignInExpired" {
+                                let catalog = state.as_mut().rust_mut().session.authentication_rejected();
+                                let provider = catalog["selected"].as_str().unwrap_or("");
+                                state.as_mut().set_reauth_provider(QString::from(provider));
+                                state.as_mut().set_state_json(QString::from(catalog.to_string()));
+                                state.as_mut().set_credential_status(QString::from("Authentication rejected. Reconnect or replace the API key; it may be expired, revoked, or invalid."));
+                            }
                             state
                                 .as_mut()
                                 .set_operation_status(QString::from("AI operation failed."));
@@ -471,7 +507,10 @@ impl bridge::AiBackend {
                     Ok(connection)=>{
                         let catalog=state.as_mut().rust_mut().session.connect_chatgpt(connection);
                         state.as_mut().set_state_json(QString::from(catalog.to_string()));
-                        state.set_operation_status(QString::from("Signed in to ChatGPT · choose a model. Inference has not been tested."));
+                        state.as_mut().set_reauth_provider(QString::default());
+                        state.as_mut().set_operation_status(QString::from("Signed in to ChatGPT · choose a model. Inference has not been tested."));
+                        let remember = state.rust().remember_signin;
+                        state.remember_connection(&QString::from("chatgpt"), remember);
                     },
                     Err(error)=>{state.as_mut().set_operation_status(QString::from("ChatGPT sign-in failed."));state.set_error_message(QString::from(error.message));},
                 }
@@ -497,24 +536,8 @@ impl bridge::AiBackend {
         self.publish(result)
     }
     /// Clears local tokens immediately; remote revocation runs on the owned worker.
-    pub fn sign_out_chatgpt(mut self: Pin<&mut Self>) {
-        if self.rust().busy {
-            return;
-        }
-        self.as_mut().invalidate();
-        let connection = self.as_mut().rust_mut().session.disconnect_chatgpt();
-        let catalog = self.rust().session.catalog();
-        self.as_mut()
-            .set_state_json(QString::from(catalog.to_string()));
-        if let Some(connection) = connection {
-            if self.rust().is_demo() {
-                return;
-            }
-            self.start("Signing out of ChatGPT…",move|cancel|{
-                let message=if connection.revoke(cancel).is_ok(){"Signed out of ChatGPT."}else{"Signed out locally. Remote revocation was not confirmed; disconnect RAVEN in ChatGPT Settings if needed."};
-                Ok(serde_json::json!({"connection":message}))
-            });
-        }
+    pub fn sign_out_chatgpt(self: Pin<&mut Self>) {
+        self.forget_connection(&QString::from("chatgpt"));
     }
 }
 

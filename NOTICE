@@ -26,3 +26,9 @@ Native engineering report Markdown validation
 pulldown-cmark 0.13.6 (MIT), https://github.com/pulldown-cmark/pulldown-cmark,
 validates report Markdown syntax. Its original notice is retained under
 LICENSES/pulldown-cmark/LICENSE and in generated dependency license inventories.
+
+Native AI credential storage
+----------------------------
+keyring 3.6.3 (MIT OR Apache-2.0), https://github.com/hwchen/keyring-rs,
+provides native OS credential storage. Preserve the original license notices in
+LICENSES/keyring and the generated dependency license inventory.

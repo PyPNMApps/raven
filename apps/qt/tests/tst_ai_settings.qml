@@ -16,6 +16,17 @@ RenderTestCase {
     QtObject {
         id: service
         property string state_json: "{}"
+        property string saved_json: "{}"
+        property string credential_status: ""
+        property string reauth_provider: ""
+        property int rememberCalls: 0
+        property bool remembered: false
+        property int restores: 0
+        function remember_connection(provider, remember) { rememberCalls++; remembered=remember }
+        function restore_connection(provider) { restores++ }
+        function forget_connection(provider) { if(provider==="chatgpt")sign_out_chatgpt(); else forget(provider) }
+        function remember_next_signin(remember) { remembered=remember }
+        function check_credential_status() {}
         property string error_message: ""
         property bool demo_mode: false
         property bool demo_locked: false
@@ -52,6 +63,7 @@ RenderTestCase {
         onClicked: dialog.open()
     }
     function init() {
+        service.rememberCalls=0; service.remembered=false; service.restores=0; service.saved_json="{}"; service.reauth_provider=""; service.credential_status="";
         service.signIns=0; service.signOuts=0; service.tests=0; service.cancellations=0
         service.demo_mode=false; service.demo_locked=false; service.busy=false
         appearance.preference=1
@@ -77,6 +89,9 @@ RenderTestCase {
         tryCompare(dialog.providerSettingsDialog,"visible",true)
     }
     function click(control) {
+        // Popup controls join the overlay window asynchronously after open().
+        tryVerify(function() { return control.Window.window !== null }, 2000,
+                  "Popup control did not attach to its window")
         verify(waitForFrame(control))
         mouseClick(control)
     }
@@ -208,6 +223,29 @@ RenderTestCase {
         verify(!findChild(dialog,"aiConfigureProvider").enabled)
         verify(!findChild(dialog,"aiProvider").enabled)
         dialog.close(); compare(service.cancellations,1)
+    }
+    function test_remember_key_is_explicit_and_default_off() {
+        dialog.open(); configure("openai")
+        const remember=settingsControl("aiRememberKey")
+        verify(!remember.checked)
+        remember.checked=true
+        settingsControl("aiModel").text="model"; settingsControl("aiApiKey").text="synthetic-sentinel"
+        click(settingsControl("aiSaveSession"))
+        compare(service.rememberCalls,1); verify(service.remembered)
+        compare(service.tests,0)
+    }
+    function test_connect_restores_saved_credentials_without_signing_in() {
+        service.saved_json=JSON.stringify({providers:{chatgpt:"account-model"},preferred:"chatgpt"})
+        dialog.open()
+        click(findChild(dialog,"aiConnect"))
+        compare(service.restores,1); compare(service.signIns,0)
+        service.reauth_provider="chatgpt"
+        click(findChild(dialog,"aiConnect"))
+        compare(service.signIns,1)
+    }
+    function test_rejected_authentication_chip_requests_reconnect() {
+        service.state_json=JSON.stringify({enabled:false,selected:"openai",authentication_required:true})
+        compare(chip.text,"AI Assistance · Reconnect")
     }
     function test_configured_chip_does_not_claim_verified() {
         service.state_json=JSON.stringify({selected:"openai",enabled:true,providers:[]})

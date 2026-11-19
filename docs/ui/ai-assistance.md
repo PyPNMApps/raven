@@ -50,7 +50,7 @@ update checks are independent of AI and may still contact GitHub.
 3. Choose **ChatGPT (subscription)** and select **Connect**. Your system browser
    opens the OpenAI sign-in and consent page. Allow ChatGPT plan usage if your account is eligible.
 4. Return to RAVEN. Open **Key & model…**, choose a model from your account's
-   returned catalog, and select **Save for this session**.
+   returned catalog, and select **Save**.
 5. Run **OFDM Profile Performance → FEC Performance**, then open **AI Analysis**.
 6. Enter a question, select **Preview request**, inspect the exact data, and select
    **Analyze approved request**. Only this last action sends your OFDM evidence.
@@ -66,12 +66,14 @@ fallback to API-key billing. Your existing
 ChatGPT conversations and this Codex chat are not imported. View app access and
 usage in [ChatGPT Settings](https://chatgpt.com/settings/usage).
 
-Access and refresh tokens remain in Rust memory and are cleared on exit. For this
-first implementation, sign in again when the roughly one-hour access session
-expires. **Disconnect** clears local tokens immediately and attempts remote session
-revocation; if that cannot be confirmed, disconnect RAVEN in ChatGPT Settings.
-Only the nonsecret stable host ID and issued client/account registration mapping
-are saved under the user's RAVEN configuration directory. No token is written.
+Access and refresh tokens stay private in Rust. By default they clear on exit.
+Enable **Remember this connection in the OS credential vault** before Connect to save a snapshot in
+your OS credential vault. Next launch, select **Connect** to restore it while it
+is still valid. Expired access requires browser sign-in again; automatic token
+renewal is not implemented. **Forget connection** removes the saved entry and
+local tokens and attempts remote revocation. Unconfirmed revocation is reported;
+check ChatGPT Settings if needed. Nonsecret host/client registration metadata is
+stored separately from tokens.
 Demo mode disables browser sign-in and continues to make no provider requests.
 
 The subscription route is currently ChatGPT-only. Gemini, Claude and Grok retain
@@ -103,26 +105,48 @@ explains how to capture safe stage diagnostics on the VM.
    analysis contract; a ChatGPT subscription does not specify API model access.
 3. Paste the key into the masked field, or use **Open file…** to choose a
    `.txt`/`.key` file containing just the key on one line, up to 4096 bytes.
-4. Select **Save for this session**. The configuration popup closes; the main
+4. Select **Save**. The configuration popup closes; the main
    connection popup stays open. Saving does not contact the provider.
 5. Select **Connect** to check access to the saved OpenAI model. This retrieves
    model metadata without a capture or inference prompt. Success confirms
    key/model visibility, not inference compatibility or remaining quota.
 
-The main popup uses the same **Connect**, **Key & model…**, and **Disconnect**
+The main popup uses the same **Connect**, **Key & model…**, and **Forget connection**
 controls for each provider. ChatGPT connects through your browser and needs no API
 key; its model picker uses the account's returned catalog. API-key providers use
 manual exact model IDs. Gemini, Claude and Grok remain **setup-only**: their
 Connect button is disabled until their analysis adapters are implemented. Kiro
 remains deferred. No new subscription sign-in methods are introduced.
 
-Credentials stay independent per provider in Rust-owned session memory. A blank
-key retains that provider's existing session key when changing its model. Temporary
+Credentials stay independent per provider in private Rust memory. A blank key
+retains that provider's existing session key when changing its model. Temporary
 key input clears on submit, provider change, popup close or demo-mode activation.
-**Disable AI** retains settings. **Disconnect** removes the selected API provider's
-session configuration, without revoking its key or deleting a key file. For
-ChatGPT, Disconnect clears local tokens and attempts session revocation. Closing
-RAVEN discards all credentials. Opening either popup never connects automatically.
+In **Key & model…**, enable **Remember this connection in the OS credential vault** and Save to
+store the key in your OS vault. This is unchecked by default. Open the popup next
+launch and select **Connect** to restore it; setup-only providers offer **Restore
+saved connection** in Key & model. **Save** without Remember keeps the active key
+in memory and removes its previous saved entry, if any.
+
+**Disable AI** retains connections. **Forget connection** clears the active key
+and deletes its saved vault entry; it does not revoke an API key at the provider
+or delete a source key file. Failure to delete is shown so you can unlock the
+vault and retry. Opening either popup never unlocks the vault or connects
+automatically. Remembering credentials never approves an analysis request.
+
+On Ubuntu, an unlocked Secret Service keyring (usually GNOME Keyring) is needed.
+Windows uses Credential Manager; macOS uses Keychain and may ask for access.
+If storage is unavailable or locked, RAVEN shows an error and uses no plaintext
+fallback. You can retry or leave Remember unchecked for session-only use.
+The file selected through **Open key file…** is still a plaintext file owned by
+you; storing its contents does not encrypt or delete that original file.
+
+API-key expiry dates are usually unavailable. **Test connection** can detect a
+rejected key without sending capture data. During a request, authentication
+rejection shows **AI Assistance · Reconnect**; replace the key or sign in again.
+An authentication error may mean expired, revoked or invalid credentials. Quota,
+permissions and network failures are shown separately. ChatGPT's known expiry is
+checked locally on restore, in the open connection popup and before requests.
+No analysis is silently retried or sent merely to check an expiration date.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="images/ai/ai-services-dark.png">
@@ -172,7 +196,7 @@ the run clears this session log. Rejected/raw responses are not retained.
 Use **Export conversation…** to write a new JSON file explicitly; existing files
 are never replaced. This export contains the evidence and accepted commentary,
 not API keys. Review it before sharing. Automatic saving, a saved-history browser,
-failed/cancelled-turn records, previous-turn context selection, OS-vault credentials
+failed/cancelled-turn records, previous-turn context selection, automatic OAuth renewal
 and token pricing/session totals remain planned.
 
 ## Screens

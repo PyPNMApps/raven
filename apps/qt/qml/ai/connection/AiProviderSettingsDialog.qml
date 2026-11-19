@@ -15,6 +15,9 @@ Dialog {
     required property var provider
     readonly property bool subscription: provider.id === "chatgpt"
     readonly property var account: JSON.parse(service.state_json).chatgpt || ({})
+    readonly property var saved: JSON.parse(service.saved_json || "{}")
+    readonly property bool remembered: !!(saved.providers || {})[provider.id]
+    property string formProvider: ""
     readonly property var models: account.models || []
     property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     objectName: "aiProviderSettings"
@@ -28,17 +31,27 @@ Dialog {
 
     onOpened: {
         apiKey.clear()
-        modelName.text = provider.model || ""
+        formProvider = provider.id || ""
+        rememberKey.checked = remembered
+        modelName.text = provider.model || (saved.providers || {})[provider.id] || ""
         service.clear_error()
     }
     onProviderChanged: {
-        if (visible) {
+        if (visible && provider.id !== formProvider) {
             close()
         }
     }
     onClosed: {
         keyPicker.close()
         apiKey.clear()
+    }
+    Connections {
+        target: dialog.service
+        function onState_jsonChanged() {
+            if (dialog.visible && !modelName.text.length && dialog.provider.configured) {
+                modelName.text = dialog.provider.model || ""
+            }
+        }
     }
     FileDialog {
         id: keyPicker
@@ -60,7 +73,7 @@ Dialog {
         Label {
             text: dialog.subscription
                 ? "Connect from AI Assistance first. Choose a model returned by your ChatGPT account; no API key is needed."
-                : "Enter your provider's API key and exact model ID. Saving keeps them for this RAVEN session only and does not contact the provider."
+                : "Enter your provider's API key and exact model ID. Use Remember to store them in the OS credential vault. Saving never contacts the AI provider."
             color: dialog.theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
@@ -112,6 +125,22 @@ Dialog {
                 onClicked: keyPicker.open()
             }
         }
+        CheckBox {
+            id: rememberKey
+            objectName: "aiRememberKey"
+            visible: !dialog.subscription
+            enabled: !dialog.service.busy && !dialog.service.demo_mode
+            text: "Remember this connection in the OS credential vault"
+            palette: dialog.palette
+        }
+        ThemeButton {
+            objectName: "aiRestoreSavedKey"
+            theme: dialog.theme
+            text: "Restore saved connection"
+            visible: dialog.remembered && !dialog.provider.configured
+            enabled: !dialog.service.busy
+            onClicked: dialog.service.restore_connection(dialog.provider.id)
+        }
         Label {
             objectName: "aiProviderSettingsError"
             text: dialog.service.error_message
@@ -126,21 +155,30 @@ Dialog {
     footer: DialogButtonBox {
         ThemeButton {
             objectName: "aiSaveSession"
+            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
             theme: dialog.theme
-            text: "Save for this session"
+            text: "Save"
             enabled: !dialog.service.demo_mode && !dialog.service.busy && (dialog.subscription
                 ? !!dialog.account.signed_in && dialog.models.length > 0
                 : modelName.text.trim().length > 0 && (apiKey.text.length > 0 || !!dialog.provider.configured))
             onClicked: {
+                const providerId = dialog.provider.id
+                const remember = dialog.subscription ? dialog.remembered : rememberKey.checked
                 const accepted = dialog.subscription
                     ? dialog.service.select_chatgpt_model(dialog.models[accountModel.currentIndex].id)
                     : dialog.service.configure(dialog.provider.id, modelName.text, apiKey.text)
                 apiKey.clear()
                 if (accepted) {
+                    dialog.service.remember_connection(providerId, remember)
                     dialog.close()
                 }
             }
         }
-        ThemeButton { theme: dialog.theme; text: "Cancel"; onClicked: dialog.close() }
+        ThemeButton {
+            theme: dialog.theme
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            text: "Cancel"
+            onClicked: dialog.close()
+        }
     }
 }

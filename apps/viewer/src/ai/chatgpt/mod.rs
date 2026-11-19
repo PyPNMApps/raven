@@ -22,22 +22,23 @@ const MAX_REPLY_BYTES: usize = 262_144;
 /// Application budget for the explicitly requested catalog, not a protocol limit.
 const MAX_MODEL_CATALOG_BYTES: usize = 8 * 1024 * 1024;
 
-/// In-memory credential set. Never serializable or printable; copies zeroize on drop.
+/// Private credential set. No public serialization or Debug; secret copies zeroize.
 #[derive(Clone)]
 pub struct Connection {
     pub(super) access: Zeroizing<String>,
-    refresh: Zeroizing<String>,
-    client: String,
-    expires: u64,
+    pub(super) refresh: Zeroizing<String>,
+    pub(super) client: String,
+    pub(super) expires: u64,
     pub(super) model: String,
-    models: Vec<(String, String)>,
+    pub(super) models: Vec<(String, String)>,
 }
 impl Connection {
     /// Returns safe account-specific model choices without credentials or identity claims.
     /// # Returns
     /// Catalog values suitable for the model picker.
     pub fn catalog(&self) -> Value {
-        json!({"signed_in":true,"model":self.model,"models":self.models.iter().map(|(id,label)|json!({"id":id,"label":label})).collect::<Vec<_>>(),"expires_epoch":self.expires.to_string()})
+        let signed_in = self.valid().is_ok();
+        json!({"signed_in":signed_in,"expired":!signed_in,"model":self.model,"models":self.models.iter().map(|(id,label)|json!({"id":id,"label":label})).collect::<Vec<_>>(),"expires_epoch":self.expires.to_string()})
     }
     /// Selects an exact model from the authenticated visible catalog.
     /// # Arguments

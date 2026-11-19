@@ -15,6 +15,9 @@ mod bridge {
         #[qobject]
         #[qml_element]
         #[qproperty(QString, state_json)]
+        #[qproperty(QString, saved_json)]
+        #[qproperty(QString, credential_status)]
+        #[qproperty(QString, reauth_provider)]
         #[qproperty(QString, error_message)]
         #[qproperty(QString, preview_json)]
         #[qproperty(QString, report_json)]
@@ -76,6 +79,21 @@ mod bridge {
         /// Clears local ChatGPT tokens and attempts remote session revocation.
         #[qinvokable]
         fn sign_out_chatgpt(self: Pin<&mut AiBackend>);
+        /// Saves or removes the active credential through an explicit OS-vault operation.
+        #[qinvokable]
+        fn remember_connection(self: Pin<&mut AiBackend>, provider: &QString, remember: bool);
+        /// Restores one remembered connection without sending analysis evidence.
+        #[qinvokable]
+        fn restore_connection(self: Pin<&mut AiBackend>, provider: &QString);
+        /// Forgets a saved provider and clears its active in-memory configuration.
+        #[qinvokable]
+        fn forget_connection(self: Pin<&mut AiBackend>, provider: &QString);
+        /// Records explicit consent to remember the next successful ChatGPT sign-in.
+        #[qinvokable]
+        fn remember_next_signin(self: Pin<&mut AiBackend>, remember: bool);
+        /// Updates known sign-in expiry locally without a provider request.
+        #[qinvokable]
+        fn check_credential_status(self: Pin<&mut AiBackend>);
         /// Clears a form diagnostic without changing credentials.
         #[qinvokable]
         fn clear_error(self: Pin<&mut AiBackend>);
@@ -83,6 +101,8 @@ mod bridge {
     impl cxx_qt::Threading for AiBackend {}
 }
 
+#[path = "ai/credentials.rs"]
+mod credentials;
 #[path = "ai/session.rs"]
 mod session;
 use session::AiBackendState;

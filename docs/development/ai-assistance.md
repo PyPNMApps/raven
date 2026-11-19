@@ -3,7 +3,7 @@
 [Developer index](README.md) · [User guide](../ui/ai-assistance.md)
 
 Optional, read-only OpenAI review of native OFDM Profile Performance runs.
-Core parsers and MERLIN are unchanged. Credentials are session-only and private
+Core parsers and MERLIN are unchanged. Credentials are session-only by default and private
 in Rust, with best-effort `zeroize` cleanup; Qt/FFI temporary copies mean complete
 memory erasure and protection from process dumps cannot be promised.
 The native setup popup supports masked manual entry and explicit bounded `.txt`/
@@ -18,7 +18,8 @@ implementation in `apps/qt/src/ai/session.rs`.
 
 The current extension
 supports OpenAI API-key review and a separate ChatGPT subscription route; other
-providers remain setup-only. No SDK or new host package is required. Existing
+providers remain setup-only. No provider SDK is required. Native credential storage adds the OS-vault
+prerequisites described below. Existing
 ureq/TLS and sha2 owners supply transport and digests; pinned ring and base64
 are explicit dependencies for RS256 verification, secure randomness and PKCE.
 MERLIN remains untouched.
@@ -74,7 +75,7 @@ available evidence. Narrative reasoning remains advisory even with valid referen
 - Session log: last 20 accepted exchanges, reset on source replacement; exports are
   explicit JSON with `create_new`. No automatic persistence or saved-history browser.
 
-The first functional slice does not close all seven delivery stages. OS vaults,
+The first functional slice does not close all seven delivery stages. At that stage OS vaults,
 non-OpenAI dispatch, history browsing/import/delete, failed/cancelled-turn records,
 context-selected follow-ups, dated token pricing and native installed/live-provider
 validation remain open. No live credential or provider request is used in tests.
@@ -442,3 +443,91 @@ smoke returns `AI_SETUP_OK`, covering both entry points, the separate configurat
 form, nonsecret catalog and disable/forget cleanup. Dark/light main and key/model
 screenshots were visually reviewed and refreshed in the guide. No live provider
 request, real credential, system install, release or Windows/macOS runtime test.
+
+## Native credential persistence (2026-11-19)
+
+This authorized slice supersedes earlier memory-only implementation notes; it
+preserves numerical ownership, evidence approval and the seven delivery stages.
+
+```mermaid
+flowchart LR
+    UI["Connect / Remember / Forget"] --> JOB["Rust asynchronous credential owner"]
+    JOB --> SESSION["Private Rust session"]
+    JOB --> VAULT["Native OS vault: versioned secret record"]
+    JOB --> INDEX["Atomic nonsecret provider/model hints"]
+    SESSION --> APPROVAL["Fresh exact-payload approval required"]
+```
+
+`apps/viewer/src/ai/credentials/` owns strict credential records and the injectable
+store boundary. `keyring` 3.6.3 uses Secret Service on Linux, native Windows
+Credential Manager, and traditional macOS Keychain. There is no mock or plaintext
+fallback in production. Records are provider-bound, versioned and capped at
+256 KiB; secret buffers use zeroizing ownership and are never public catalog JSON.
+This reduces exposure but does not promise immunity from process dumps or a
+compromised logged-in user. API-key source files remain the user's plaintext files.
+
+`apps/qt/src/ai/credentials.rs` owns worker-thread lifecycle and preference paths.
+Startup reads only an 8 KiB nonsecret index. Connect explicitly unlocks/reads the
+vault; no automatic startup login or analysis occurs. Provider/model hints live
+in `~/.config/raven/ai-connections.json`, or `%APPDATA%/RAVEN/ai-connections.json` on Windows; macOS uses
+`~/Library/Application Support/RAVEN/ai-connections.json`.
+Secrets use vault namespace `org.pypnmapps.raven.ai.v1` and fixed provider accounts.
+Preference writes are atomic. Save writes hints before the vault entry and rolls
+hints back on vault failure. Forget removes the active session immediately and
+reports any unconfirmed vault removal. Disabling AI retains the saved entry.
+Cancellation cannot undo an already completed vault write; completion refreshes
+saved-state hints truthfully, while a cancelled/stale restore cannot activate keys.
+No secret, vault error body or provider response body is logged or returned to QML.
+
+API keys generally provide no locally knowable expiry date. A provider 401 marks
+authentication required and invalidates approval; wording covers expired, revoked
+or invalid keys. 403 permissions, 429 quota/rate limits, server and network errors
+remain distinct. ChatGPT expiry is known: validate on restore, when the connection
+popup opens, and every minute while that popup is open. Request-time checks also
+prevent using an expired token. Reconnect is visible in the top AI chip after
+authentication rejection. No periodic provider polling is introduced. Stored
+ChatGPT access/refresh tokens are a snapshot; automatic token renewal is TODO,
+not implemented. Browser sign-in is required after known access-token expiry.
+
+Linux needs an unlocked Secret Service implementation (commonly GNOME Keyring),
+libdbus runtime and `libdbus-1-dev` for development builds. A headless/no-vault
+session must report an actionable error and leave credentials in memory only.
+The Linux and Windows stores do not require application signing. macOS traditional
+Keychain access/approval follows application identity and OS policy; native tests
+must cover an unsigned development build and changed signing identities. This
+change does not add signing, entitlements or a macOS data-protection Keychain.
+See [Secret Service](https://specifications.freedesktop.org/secret-service/latest-single/),
+[Windows credentials](https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-credwritew),
+and [Apple Keychain distinctions](https://developer.apple.com/documentation/technotes/tn3137-on-mac-keychains).
+
+Validation: `apps/viewer/tests/ai_credentials.rs` uses synthetic credentials and an
+injectable failing vault. QML connection tests validate consent and restore paths.
+The ignored `isolated_secret_service_roundtrip` test must run explicitly under a
+private DBus/keyring with `RAVEN_VAULT_TEST_ISOLATED=1` and a marked private
+XDG_DATA_HOME; its test namespace differs from production. Never run native vault
+tests against a personal credential store. Windows/macOS runtime behavior remains
+unverified here, and live-provider tests are not performed by this slice.
+
+### AI-29 requirement and regression mapping
+
+Session-only is the default. Explicit Remember enables native-vault storage;
+Connect restores, and Forget removes active and saved credentials. Reject
+unsupported/malformed/wrong-provider/oversized records and nonregular preference
+files. Show known expiry and authentication rejection without automatic retry or
+analysis upload. A locked/unavailable vault must never cause plaintext fallback.
+
+| Requirement | Verification |
+| --- | --- |
+| Cross-session reuse with no secret readback | `ai_credentials::remembered_keys_roundtrip_across_sessions_without_catalog_secret_readback`; `saved_chatgpt_roundtrip_and_wrong_owner_are_checked` |
+| Closed bounded provider-owned records | `closed_records_reject_wrong_owners_duplicates_versions_and_oversize`; duplicate-model and owner tests |
+| Storage failure and safe deletion | `unavailable_vault_has_no_plaintext_fallback_and_preserves_existing_entries`; isolated native roundtrip |
+| Nonsecret startup hints only | `nonsecret_index_is_bounded_and_does_not_unlock_or_contain_a_key`; `preferences_reject_directories_symlinks_and_invalid_writes` |
+| Correct expiry/authentication distinction | `known_oauth_expiry_is_rejected_before_activation_without_api_key_fallback`; `authentication_rejection_requires_reconnect_without_deleting_the_saved_key` |
+| Explicit consent and reconnect UI | `tst_ai_settings.qml` Remember default-off, saved Connect, rejected-auth chip tests |
+
+Local evidence: eight dedicated Rust credential tests, full workspace regression
+checks, Qt/QML checks and an isolated real Ubuntu Secret Service write/read/delete
+using synthetic secrets. No user key or personal vault was used. Windows/macOS
+runtime access and OS-specific capacity limits still need native verification;
+backend refusal must remain an error, never a fallback file. This slice introduces
+no new scientific calculations, provider inference or automatic refresh.

@@ -13,6 +13,8 @@ Dialog {
     required property var service
     readonly property var configuration: JSON.parse(service.state_json)
     readonly property var providers: configuration.providers || []
+    readonly property var saved: JSON.parse(service.saved_json || "{}")
+    readonly property bool remembered: !!(saved.providers || {})[selectedProvider.id]
     readonly property var chatgpt: configuration.chatgpt || ({})
     readonly property var selectedProvider: providers[providerChoice.currentIndex] || ({})
     readonly property bool subscriptionSelected: selectedProvider.id === "chatgpt"
@@ -31,6 +33,7 @@ Dialog {
     function selectProvider() {
         providerSettings.close()
         service.clear_error()
+        rememberSignIn.checked = remembered
     }
     function configureProvider() {
         if (!service.demo_mode && !service.busy) {
@@ -42,7 +45,10 @@ Dialog {
             return
         }
         service.clear_error()
-        if (subscriptionSelected) {
+        if (remembered && !selectedProvider.configured && service.reauth_provider !== selectedProvider.id) {
+            service.restore_connection(selectedProvider.id)
+        } else if (subscriptionSelected) {
+            service.remember_next_signin(rememberSignIn.checked)
             const address = service.sign_in_chatgpt()
             if (address.length > 0 && !Qt.openUrlExternally(address)) {
                 service.cancel()
@@ -54,12 +60,19 @@ Dialog {
         }
     }
     onOpened: {
-        let index = providers.findIndex(function(provider) { return provider.id === configuration.selected })
+        let index = providers.findIndex(function(provider) { return provider.id === (configuration.selected || saved.preferred) })
         if (index < 0) {
             index = providers.findIndex(function(provider) { return provider.id === "chatgpt" })
         }
         providerChoice.currentIndex = Math.max(0, index)
         selectProvider()
+        service.check_credential_status()
+    }
+    Timer {
+        interval: 60000
+        repeat: true
+        running: dialog.visible && !dialog.service.demo_mode && !dialog.service.busy && dialog.configuration.selected === "chatgpt" && !!dialog.chatgpt.signed_in
+        onTriggered: dialog.service.check_credential_status()
     }
     Connections {
         target: dialog.service
@@ -137,6 +150,22 @@ Dialog {
             wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
+        CheckBox {
+            id: rememberSignIn
+            objectName: "aiRememberSignIn"
+            visible: !dialog.service.demo_mode && dialog.subscriptionSelected
+            enabled: !dialog.service.busy
+            text: "Remember this connection in the OS credential vault"
+            palette: dialog.palette
+        }
+        Label {
+            objectName: "aiSavedStatus"
+            visible: !dialog.service.demo_mode && dialog.remembered
+            text: "Saved connection available · Connect restores it without re-entering credentials."
+            color: dialog.theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
         RowLayout {
             visible: !dialog.service.demo_mode
             ThemeButton {
@@ -156,14 +185,10 @@ Dialog {
             ThemeButton {
                 objectName: "aiDisconnect"
                 theme: dialog.theme
-                text: "Disconnect"
-                enabled: !dialog.service.busy && !!dialog.selectedProvider.configured
+                text: "Forget connection"
+                enabled: !dialog.service.busy && (!!dialog.selectedProvider.configured || dialog.remembered)
                 onClicked: {
-                    if (dialog.subscriptionSelected) {
-                        dialog.service.sign_out_chatgpt()
-                    } else {
-                        dialog.service.forget(dialog.selectedProvider.id)
-                    }
+                    dialog.service.forget_connection(dialog.selectedProvider.id)
                 }
             }
             ThemeButton {
@@ -173,6 +198,14 @@ Dialog {
                 visible: dialog.service.busy
                 onClicked: dialog.service.cancel()
             }
+        }
+        Label {
+            objectName: "aiCredentialStatus"
+            text: dialog.service.credential_status || ""
+            visible: text.length > 0 && !dialog.service.demo_mode
+            color: dialog.theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
         }
         Label {
             objectName: "aiSetupError"
@@ -194,7 +227,7 @@ Dialog {
         }
         Label {
             text: dialog.service.demo_mode ? "Open OFDM Profile Performance → AI Analysis to try the local demo."
-                : "Credentials stay in memory until RAVEN closes. Connecting does not send capture data."
+                : "Remembered credentials use the OS vault; others last until RAVEN closes. Connecting does not send capture data."
             color: dialog.theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true

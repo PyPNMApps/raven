@@ -174,3 +174,29 @@ setup-only. Saving configuration must not silently connect, test inference or
 claim verification. Clear draft secrets and native-picker state when either the
 child form or its owning popup closes, provider changes or demo mode activates;
 ignore late picker callbacks. Keep stored keys in the existing credential owner.
+
+## Remembered credentials and expiration
+
+Keep persistence opt-in, separate from enabled/verified state and evidence
+approval. Prefer native OS stores; never fall back to plaintext secrets. Keep
+only bounded provider/model hints outside the vault. Unlock/read only after an
+explicit action, off the GUI thread. Version and validate secret records against
+the selected provider; exclude secret payloads/backend error bodies from logs,
+QML catalogs and tests. Test save/restore/delete and denied/locked storage, not
+only a successful mock. Use isolated OS-store namespaces and private keyrings for
+native tests. Never test with personal production vault entries.
+
+Treat API-key expiration as unknown unless the provider supplies trusted metadata.
+401 can mean expired, revoked or invalid; 403/429/network failures must not be
+relabeled expiry. Known OAuth access expiry needs a local guard and reconnect UX.
+Do not claim refresh works merely because a refresh token is present: verify the
+actual integration contract and test rotation before implementing renewal.
+Cancellation cannot undo a completed vault write; report persisted state honestly
+and prevent cancelled/stale restores from activating credentials. Forget must
+report unconfirmed deletion without claiming the entry is gone. Signing and
+native OS access prompts require platform evidence, not Linux mock results.
+
+In native Qt connection dialogs, assign explicit roles to custom DialogButtonBox
+buttons. Keep Save as ActionRole when validation owns whether the popup closes;
+test reopen after busy/disabled state as well as a fresh dialog. A control found
+by object name is not proof that it remains attached to the rendered window.

@@ -51,7 +51,9 @@ For the existing 0.1.6 installation, launch with
 
 ## Linux development
 
-Prepare the existing toolchain with `./install.sh --development`. A C++17
+Prepare the existing toolchain with `./install.sh --development`. The native AI
+credential store also needs `libdbus-1-dev` at build time (included by that
+installer); runtime persistence requires an unlocked Secret Service keyring. A C++17
 compiler, CMake and Python venv support are also required. Then:
 
 ```bash

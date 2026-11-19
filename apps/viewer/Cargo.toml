@@ -7,6 +7,7 @@ license = "GPL-3.0-only"
 
 [features]
 default = []
+credential-store = ["dep:keyring"]
 merlin-fec = ["dep:merlin"]
 
 [dependencies]
@@ -30,6 +31,15 @@ tar = "=0.4.44"
 flate2 = "=1.1.5"
 zip = { version = "=2.4.2", default-features = false, features = ["deflate-flate2", "flate2"] }
 zstd = { version = "=0.13.3", default-features = false }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "=3.6.3", optional = true, default-features = false, features = ["sync-secret-service", "crypto-rust"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "=3.6.3", optional = true, default-features = false, features = ["windows-native"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "=3.6.3", optional = true, default-features = false, features = ["apple-native"] }
 
 [dev-dependencies]
 pnm-fixtures = { path = "../../tests/fixtures" }

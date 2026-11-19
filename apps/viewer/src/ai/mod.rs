@@ -2,8 +2,9 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
-//! Optional read-only OFDM AI assistance. Credentials remain session-only.
+//! Optional read-only OFDM AI assistance. Active credentials remain private; optional persistence uses the OS vault.
 pub mod chatgpt;
+pub mod credentials;
 pub mod demo;
 pub mod evidence;
 mod presentation;
@@ -11,7 +12,7 @@ pub mod protocol;
 pub mod transport;
 use crate::Diagnostic;
 use serde_json::{json, Value};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Read;
 use std::path::Path;
 use zeroize::Zeroizing;
@@ -141,6 +142,7 @@ struct Configuration {
 #[derive(Default)]
 pub struct Session {
     configurations: BTreeMap<Provider, Configuration>,
+    authentication_required: BTreeSet<Provider>,
     selected: Option<Provider>,
     enabled: bool,
     pending: Option<protocol::Pending>,
@@ -207,6 +209,7 @@ impl Session {
                 },
             );
         }
+        self.authentication_required.remove(&provider);
         self.selected = Some(provider);
         self.enabled = true;
         Ok(self.catalog())
@@ -243,6 +246,7 @@ impl Session {
         let provider = Provider::from_id(provider_id)
             .ok_or_else(|| Diagnostic::new("AiProvider", "Select a supported AI provider."))?;
         self.configurations.remove(&provider);
+        self.authentication_required.remove(&provider);
         if provider == Provider::ChatGpt {
             self.chatgpt = None;
         }
@@ -273,7 +277,7 @@ impl Session {
         })
         .collect();
         json!({"analysis_prompts":presentation::prepared_questions(),"providers":providers,"selected":self.selected.map(Provider::id),
-            "enabled":self.enabled,"verified":false,"analysis_available":self.enabled && matches!(self.selected,Some(Provider::OpenAi|Provider::ChatGpt)),"chatgpt":self.chatgpt.as_ref().map(chatgpt::Connection::catalog),"storage":"session"})
+            "authentication_required":self.selected.is_some_and(|p|self.authentication_required.contains(&p)),"enabled":self.enabled,"verified":false,"analysis_available":self.enabled && matches!(self.selected,Some(Provider::OpenAi|Provider::ChatGpt)),"chatgpt":self.chatgpt.as_ref().map(chatgpt::Connection::catalog),"storage":"session"})
     }
 }
 
@@ -292,6 +296,7 @@ impl Session {
                 _api_key: connection.access.clone(),
             },
         );
+        self.authentication_required.remove(&Provider::ChatGpt);
         self.chatgpt = Some(connection);
         self.selected = Some(Provider::ChatGpt);
         self.enabled = true;
@@ -327,5 +332,22 @@ impl Session {
             self.enabled = false;
         }
         self.chatgpt.take()
+    }
+}
+
+impl Session {
+    /// Marks only a rejected active credential as requiring explicit reconnection.
+    ///
+    /// Disables further analysis and invalidates approval without deleting a saved
+    /// secret. Call for authentication rejection, not network/quota/access errors.
+    /// # Returns
+    /// Updated nonsecret catalog with a reconnect indicator.
+    pub fn authentication_rejected(&mut self) -> Value {
+        self.pending = None;
+        if let Some(provider) = self.selected {
+            self.authentication_required.insert(provider);
+        }
+        self.enabled = false;
+        self.catalog()
     }
 }

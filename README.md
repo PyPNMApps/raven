@@ -63,7 +63,8 @@ Optionally sign in with ChatGPT or configure an OpenAI API key through
 **AI Assistance** for further analysis of
 OFDM Profile Performance results. Preview and approve the exact data before
 sending; Rust and MERLIN remain authoritative for calculations. A local Demo AI
-mode lets you try the workflow without an API key. See the
+mode lets you try the workflow without an API key. Optional Remember stores
+credentials in your OS vault; expired or rejected access prompts you to reconnect. See the
 [AI Assistance guide](docs/ui/ai-assistance.md).
 
 <picture>

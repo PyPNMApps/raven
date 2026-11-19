@@ -37,6 +37,7 @@ fn response_body(
     let response=match result {
         Ok(response) if response.status()==200=>response,
         Ok(_)=>return Err(Diagnostic::new("AiRedirect","Unexpected HTTP status or redirect; request was not retried.")),
+        Err(ureq::Error::Status(401,_)) if streaming=>return Err(Diagnostic::new("AiAuthentication","ChatGPT rejected this sign-in. It may have expired or been revoked. Connect again; no request was retried.")),
         Err(ureq::Error::Status(status,_))=>return Err(status_error(status)),
         Err(_)=>return Err(Diagnostic::new("AiNetwork","Could not reach the AI service or the request timed out. Check your network and try explicitly again.")),
     };
@@ -75,7 +76,7 @@ fn response_body(
 /// Stable, nonsecret error category and user-actionable message.
 pub fn status_error(status: u16) -> Diagnostic {
     let (code,message)=match status {
-        401=>("AiAuthentication","The API key was rejected. Check or replace it in AI settings."),
+        401=>("AiAuthentication","The API key was rejected: it may be expired, revoked, or invalid. Open Key & model to replace it. No request was retried."),
         403=>("AiAccess","The key does not have access to this model or project."),
         404=>("AiModel","The selected model was not found or is not accessible."),
         429=>("AiQuota","The provider reported a rate or quota limit. Check API usage and billing."),

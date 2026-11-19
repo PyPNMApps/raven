@@ -11,7 +11,7 @@ ThemeButton {
     objectName: "aiAssistanceChip"
     property bool demoMode: false
     readonly property bool configured: !!configuration.enabled && !!configuration.selected
-    text: "AI Assistance · " + (demoMode ? "Demo" : configured ? "Configured" : "Off")
+    text: "AI Assistance · " + (demoMode ? "Demo" : configuration.authentication_required ? "Reconnect" : configured ? "Configured" : "Off")
     implicitHeight: 26
     topPadding: 3
     bottomPadding: 3

@@ -42,7 +42,7 @@ download failures stop setup and propagate a nonzero exit status.
 
 ## Dependencies and ownership
 
-- Native build tools: build-essential, CMake, pkg-config, libssl-dev and `lld`.
+- Native build tools: build-essential, CMake, pkg-config, libssl-dev, libdbus-1-dev (native AI credential storage) and `lld`.
 - Packaging/cache tools: `patchelf` and `ccache`; Xvfb/Xauth for headless checks.
 - Artwork conversion: `python3-pil` (Pillow), used only by the
   [native asset generator](../../packaging/README.md). Released assets are committed;

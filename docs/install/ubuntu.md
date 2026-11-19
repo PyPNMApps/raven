@@ -112,3 +112,10 @@ The first RAVEN installation replaces the former `pnm-viewer-toolkit` package
 through APT package metadata; `pnm-decode` remains separately owned. Use manual
 installation for this first transition because the older updater expects the
 previous names. Later RAVEN releases retain verified paired-DEB updates.
+
+## Optional saved AI connections
+
+Remembering AI credentials requires an unlocked Secret Service keyring, normally
+GNOME Keyring on Ubuntu Desktop. A headless installation without that service can
+still use session-only credentials. RAVEN never falls back to a plaintext key
+file. See [AI Assistance](../ui/ai-assistance.md) for Remember, Connect and Forget.
