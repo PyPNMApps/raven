@@ -68,6 +68,7 @@ fn main() {
                 "qml/Main.qml",
                 "qml/AiAssistanceChip.qml",
                 "qml/AiServicesDialog.qml",
+                "qml/ai/connection/AiProviderSettingsDialog.qml",
                 "qml/AiAnalysisDialog.qml",
                 "qml/AiTextPane.qml",
                 "qml/ai/report/AiReportView.qml",

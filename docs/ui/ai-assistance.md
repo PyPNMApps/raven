@@ -47,9 +47,10 @@ update checks are independent of AI and may still contact GitHub.
 
 1. Start RAVEN normally (without `--ai-demo`).
 2. Open **AI Assistance** or **Settings → System → AI**.
-3. Select **Continue with ChatGPT**. Your system browser opens the OpenAI sign-in
-   and consent page. Allow ChatGPT plan usage if your account is eligible.
-4. Return to RAVEN. Select a model from the account's returned catalog.
+3. Choose **ChatGPT (subscription)** and select **Connect**. Your system browser
+   opens the OpenAI sign-in and consent page. Allow ChatGPT plan usage if your account is eligible.
+4. Return to RAVEN. Open **Key & model…**, choose a model from your account's
+   returned catalog, and select **Save for this session**.
 5. Run **OFDM Profile Performance → FEC Performance**, then open **AI Analysis**.
 6. Enter a question, select **Preview request**, inspect the exact data, and select
    **Analyze approved request**. Only this last action sends your OFDM evidence.
@@ -67,7 +68,7 @@ usage in [ChatGPT Settings](https://chatgpt.com/settings/usage).
 
 Access and refresh tokens remain in Rust memory and are cleared on exit. For this
 first implementation, sign in again when the roughly one-hour access session
-expires. **Sign out** clears local tokens immediately and attempts remote session
+expires. **Disconnect** clears local tokens immediately and attempts remote session
 revocation; if that cannot be confirmed, disconnect RAVEN in ChatGPT Settings.
 Only the nonsecret stable host ID and issued client/account registration mapping
 are saved under the user's RAVEN configuration directory. No token is written.
@@ -88,30 +89,49 @@ explicitly trying again; RAVEN does not automatically repeat the request.
 The model list has its own 8 MiB metadata budget, separate from small token
 responses. RAVEN identifies the failing stage, such as identity verification or model
 catalog retrieval, and displays HTTP status when available. A model-catalog
-failure is separate from OFDM evidence validation. Retry **Continue with ChatGPT**
+failure is separate from OFDM evidence validation. Select ChatGPT and retry **Connect**
 using the same account; do not delete the registration file or paste tokens into
 the application. The [developer guide](../development/ai-assistance.md#sign-in-model-catalogs-and-diagnostics)
 explains how to capture safe stage diagnostics on the VM.
 
-## Configure and test OpenAI
+## Connect with an API key
 
-1. Select **AI Assistance · Off** on the top bar, or **Settings → System… → AI…**.
-2. Choose **OpenAI**. Enter an exact model ID supporting Chat Completions and
-   structured JSON output, plus your [OpenAI API key](https://platform.openai.com/api-keys).
-   A ChatGPT subscription does not itself specify your API model access.
-3. Paste the key into the masked field, or use **Open key file…** to select a
-   `.txt`/`.key` file containing only the key on one line, up to 4096 bytes.
-4. Select **Save for this session**, then reopen the popup and select
-   **Test connection**. This retrieves metadata for the saved model, with no PNM
-   data or inference prompt. Success confirms key/model visibility, not inference
-   compatibility, remaining quota or correctness of future answers.
+1. Open **AI Assistance** or **Settings → System → AI** and choose **OpenAI**.
+2. Select **Key & model…**. Enter your exact model ID and
+   [OpenAI API key](https://platform.openai.com/api-keys). This is an API secret,
+   not an SSH private-key file. Models must support the existing strict JSON
+   analysis contract; a ChatGPT subscription does not specify API model access.
+3. Paste the key into the masked field, or use **Open file…** to choose a
+   `.txt`/`.key` file containing just the key on one line, up to 4096 bytes.
+4. Select **Save for this session**. The configuration popup closes; the main
+   connection popup stays open. Saving does not contact the provider.
+5. Select **Connect** to check access to the saved OpenAI model. This retrieves
+   model metadata without a capture or inference prompt. Success confirms
+   key/model visibility, not inference compatibility or remaining quota.
 
-Credentials remain independent per provider, in Rust-owned session memory.
-Fields clear on submit, provider change and close. To change a configured model,
-leave the key blank to retain its session key. **Disable AI Assistance** retains
-settings; **Forget provider** removes that provider's settings without revoking
-its key or deleting a selected key file. Closing RAVEN discards credentials.
-Gemini, Claude and Grok currently support setup only; Kiro is deferred.
+The main popup uses the same **Connect**, **Key & model…**, and **Disconnect**
+controls for each provider. ChatGPT connects through your browser and needs no API
+key; its model picker uses the account's returned catalog. API-key providers use
+manual exact model IDs. Gemini, Claude and Grok remain **setup-only**: their
+Connect button is disabled until their analysis adapters are implemented. Kiro
+remains deferred. No new subscription sign-in methods are introduced.
+
+Credentials stay independent per provider in Rust-owned session memory. A blank
+key retains that provider's existing session key when changing its model. Temporary
+key input clears on submit, provider change, popup close or demo-mode activation.
+**Disable AI** retains settings. **Disconnect** removes the selected API provider's
+session configuration, without revoking its key or deleting a key file. For
+ChatGPT, Disconnect clears local tokens and attempts session revocation. Closing
+RAVEN discards all credentials. Opening either popup never connects automatically.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="images/ai/ai-services-dark.png">
+  <source media="(prefers-color-scheme: light)" srcset="images/ai/ai-services-light.png">
+  <img src="images/ai/ai-services-dark.png" alt="Compact provider connection controls">
+</picture>
+
+[API key and model settings — dark](images/ai/ai-key-model-dark.png) ·
+[light](images/ai/ai-key-model-light.png)
 
 ## Ask about an OFDM run
 

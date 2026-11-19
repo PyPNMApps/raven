@@ -55,7 +55,26 @@ Timer {
         } else if (stage===3) {
             snapshot("-light.png",4)
         } else if (stage===4) {
+            if (!service.configure("openai","offline-test-model","synthetic-ai-setup-sentinel")) {
+                fail("Local settings rejected");return
+            }
             settingsDialog.close()
+            theme.preference=1
+            settingsDialog.open()
+            settingsDialog.configureProvider()
+            stage=40
+        } else if (stage===40 && settingsDialog.providerSettingsDialog.visible) {
+            snapshot("-key-model-dark.png",41)
+        } else if (stage===41) {
+            theme.preference=2
+            stage=42
+        } else if (stage===42) {
+            snapshot("-key-model-light.png",43)
+        } else if (stage===43) {
+            settingsDialog.close()
+            if (settingsDialog.providerSettingsDialog.visible) {
+                fail("Parent close retained provider settings");return
+            }
             systemDialog.open()
             stage=5
         } else if (stage===5 && systemDialog.visible) {

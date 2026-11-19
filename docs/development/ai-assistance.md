@@ -144,7 +144,7 @@ Local validation passed: 212 workspace Rust tests, 174 QML tests and six Qt adap
 ## ChatGPT browser sign-in architecture
 
 Rust owns the full authentication state. QML receives only the authorization URL,
-nonsecret model catalog and sanitized status. `Continue with ChatGPT` opens the
+nonsecret model catalog and sanitized status. `Connect` with ChatGPT selected opens the
 system browser; no password form, embedded browser, Codex token import or arbitrary
 provider URL is accepted. Other providers are unchanged.
 
@@ -156,7 +156,7 @@ sequenceDiagram
     participant Browser as System browser on VM
     participant Auth as OpenAI authorization
     participant API as OpenAI Responses
-    User->>Qt: Continue with ChatGPT
+    User->>Qt: Connect (ChatGPT)
     Qt->>Rust: Begin sign-in
     Rust->>Rust: Loopback listener, state, nonce, PKCE
     Rust-->>Qt: HTTPS authorization URL
@@ -270,7 +270,7 @@ cd /home/dev01/Projects/raven &&
 RUST_LOG=warn,viewer::ai=info ./scripts/qt-desktop.sh --skip-build 2>&1 | tee local/raven-ai.log
 ```
 
-Run only one RAVEN instance during that test. Capture **Continue with ChatGPT**
+Run only one RAVEN instance during that test. Capture **Connect** with ChatGPT selected
 again; inspect `local/raven-ai.log` for the last stage. Never enable HTTP trace
 logging or copy credentials into diagnostics. Logs are not uploaded automatically.
 Other application components can log their own diagnostics; review logs before sharing.
@@ -400,3 +400,45 @@ Accepted narrative responses may now be adapted by the shared offline report
 framework after existing strict validation. The exact approval/provider APIs and
 plain-text fallback are preserved. See [engineering reports](engineering-reports.md)
 for schema 1.0, context/evidence resolution, security, analysis coverage and tests.
+
+## Uniform connection UI — 2026-11-19
+
+`AiServicesDialog.qml` is the compact provider selector and connection orchestrator.
+The separate `ai/connection/AiProviderSettingsDialog.qml` owns masked temporary key
+input, native key-file selection and draft model choices. Both use shared themed
+controls and palettes. Model selection is committed only on explicit Save.
+
+- **Connect / ChatGPT:** existing Rust browser authentication. No API key or new
+  OAuth/client implementation; account models are configured separately.
+- **Connect / OpenAI:** if unconfigured, open settings without a request. Otherwise
+  select the retained Rust configuration and explicitly call the existing model
+  metadata probe. No PNM evidence, inference or automatic retry is sent.
+- **Key & model:** save using existing Rust configure/select-model operations;
+  this invalidates old approval without connecting. Other providers retain manual
+  model IDs and setup-only status; their Connect action is disabled.
+- **Disconnect:** existing ChatGPT sign-out/revocation or API-provider Forget.
+  Disable retains configuration. Parent/child close, provider change and demo
+  activation clear draft key text and close the native file picker; late picker
+  callbacks cannot repopulate a closed form. Stored Rust keys are never read back.
+
+Status distinguishes configured data from actual provider access. Provider-specific
+operation status is hidden when another provider is selected. No provider API,
+credential persistence, scientific owner, evidence or outbound-approval contract
+changes. The same popup remains accessible from the top chip and System settings.
+
+| Requirement | Validation |
+| --- | --- |
+| Explicit common Connect, separate local-only configuration | `test_main_popup_is_compact_and_sign_in_is_explicit`, `test_unconfigured_connect_opens_settings_without_network`, `test_save_keeps_main_popup_open_and_never_connects` |
+| Provider-specific capabilities and account models | `test_chatgpt_model_catalog_is_separate_and_has_no_key`, `test_setup_only_providers_have_disabled_connect` |
+| Retained-key metadata probe, no secret readback | `test_openai_connect_uses_retained_key_for_explicit_metadata_check` |
+| Key/picker lifetime and cancellation | `test_file_picker_is_masked_local_only_and_ignores_late_result`, `test_provider_change_parent_close_and_demo_clear_temporary_key`, `test_busy_disables_actions_and_close_cancels` |
+| Local-only demo and accurate configured status | `test_demo_has_no_connection_or_configuration_controls`, `test_configured_chip_does_not_claim_verified` |
+| Themes and native resource registration | QML both-theme setup test; `--ai-setup-smoke` captures main and key/model dialogs in both themes and checks the Rust adapter offline |
+
+Validation: 238 all-feature workspace Rust tests, 195 QML tests and six Qt adapter
+tests pass, along with workspace/Qt Clippy with warnings denied, formatting,
+SW-QA hygiene and skill discovery validation. The rebuilt native offscreen setup
+smoke returns `AI_SETUP_OK`, covering both entry points, the separate configuration
+form, nonsecret catalog and disable/forget cleanup. Dark/light main and key/model
+screenshots were visually reviewed and refreshed in the guide. No live provider
+request, real credential, system install, release or Windows/macOS runtime test.

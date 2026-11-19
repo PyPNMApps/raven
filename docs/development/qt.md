@@ -90,7 +90,7 @@ built binary. Both flags work after explicit `run` too; neither applies to `buil
 or `check`. Normal VM display/session discovery and Qt setup are retained.
 
 This flag is forwarded to the native process. Rust keeps a private launch lock
-independent of QML state; Test connection cannot perform a provider lookup, and
+independent of QML state; Connect cannot perform a provider lookup, and
 Analyze cannot construct a live request while locked. It does not disable the
 separate GitHub release check. See [AI Assistance](ai-assistance.md).
 

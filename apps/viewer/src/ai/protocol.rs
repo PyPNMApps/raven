@@ -183,7 +183,7 @@ impl Session {
     }
     /// Creates a no-capture model-access probe for the selected OpenAI configuration.
     /// # Returns
-    /// Opaque probe to execute on a worker after the user presses Test connection.
+    /// Opaque probe to execute on a worker after the user presses Connect for OpenAI.
     /// # Errors
     /// Rejects missing setup or providers without an implemented adapter.
     pub fn connection_probe(&self) -> Result<ConnectionProbe, Diagnostic> {

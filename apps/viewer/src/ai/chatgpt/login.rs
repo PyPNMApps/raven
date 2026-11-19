@@ -123,7 +123,7 @@ impl SignIn {
             if start.elapsed() > LOGIN_TIMEOUT {
                 return Err(Diagnostic::new(
                     "AiSignInTimeout",
-                    "ChatGPT sign-in timed out. Press Continue with ChatGPT to try again.",
+                    "ChatGPT sign-in timed out. Select ChatGPT and press Connect to try again.",
                 ));
             }
             match self.listener.accept() {

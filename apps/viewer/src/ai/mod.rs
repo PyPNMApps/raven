@@ -170,7 +170,7 @@ impl Session {
         if provider == Provider::ChatGpt {
             return Err(Diagnostic::new(
                 "AiSignIn",
-                "Use Continue with ChatGPT instead of an API key.",
+                "Select ChatGPT and press Connect instead of entering an API key.",
             ));
         }
         let model = model.trim();

@@ -166,3 +166,11 @@ orientation, thumb position and drag behavior. A passing contentY test alone can
 leave a tiny nonfunctional indicator. Bind the custom bar to the scroll viewport
 and test dragging against a long document. Native visual review must use the newly
 built binary; --skip-build deliberately reuses the previous executable.
+
+
+Keep connection UI separate from key/model editing. A common Connect action can
+route to different supported methods, while unsupported providers stay clearly
+setup-only. Saving configuration must not silently connect, test inference or
+claim verification. Clear draft secrets and native-picker state when either the
+child form or its owning popup closes, provider changes or demo mode activates;
+ignore late picker callbacks. Keep stored keys in the existing credential owner.

@@ -54,7 +54,7 @@ impl Connection {
     }
     pub(super) fn valid(&self) -> Result<(), Diagnostic> {
         if now()? + 30 >= self.expires {
-            return Err(Diagnostic::new("AiSignInExpired", "ChatGPT sign-in expired. Continue with ChatGPT again; no API-key fallback was used."));
+            return Err(Diagnostic::new("AiSignInExpired", "ChatGPT sign-in expired. Select ChatGPT and press Connect again; no API-key fallback was used."));
         }
         Ok(())
     }

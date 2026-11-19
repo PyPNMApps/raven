@@ -5,7 +5,7 @@
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
-import QtQuick.Dialogs
+import "ai/connection"
 
 Dialog {
     id: dialog
@@ -14,109 +14,89 @@ Dialog {
     readonly property var configuration: JSON.parse(service.state_json)
     readonly property var providers: configuration.providers || []
     readonly property var chatgpt: configuration.chatgpt || ({})
-    readonly property var chatgptModels: chatgpt.models || []
-    readonly property bool subscriptionSelected: selectedProvider.id === "chatgpt"
     readonly property var selectedProvider: providers[providerChoice.currentIndex] || ({})
+    readonly property bool subscriptionSelected: selectedProvider.id === "chatgpt"
+    readonly property bool connectionSupported: subscriptionSelected || selectedProvider.id === "openai"
+    property alias providerSettingsDialog: providerSettings
     property ThemePalette themePalette: ThemePalette { targetControl: dialog; theme: dialog.theme }
     objectName: "aiServicesDialog"
     title: "AI Assistance"
     anchors.centerIn: parent
-    width: Math.min(600, parent.width - 32)
+    width: Math.min(620, parent.width - 32)
     modal: true
     closePolicy: Popup.CloseOnEscape
     background: Rectangle { radius: 10; color: dialog.theme.panel; border.color: dialog.theme.line }
     header: Label { text: dialog.title; padding: 16; color: dialog.theme.text; font.bold: true }
 
     function selectProvider() {
-        apiKey.clear()
-        modelName.text = selectedProvider.model || ""
+        providerSettings.close()
         service.clear_error()
     }
+    function configureProvider() {
+        if (!service.demo_mode && !service.busy) {
+            providerSettings.open()
+        }
+    }
+    function connectProvider() {
+        if (service.demo_mode || service.busy || !connectionSupported) {
+            return
+        }
+        service.clear_error()
+        if (subscriptionSelected) {
+            const address = service.sign_in_chatgpt()
+            if (address.length > 0 && !Qt.openUrlExternally(address)) {
+                service.cancel()
+            }
+        } else if (!selectedProvider.configured) {
+            configureProvider()
+        } else if (service.configure(selectedProvider.id, selectedProvider.model, "")) {
+            service.test_connection()
+        }
+    }
     onOpened: {
-        const index = providers.findIndex(function(provider) { return provider.id === configuration.selected })
+        let index = providers.findIndex(function(provider) { return provider.id === configuration.selected })
+        if (index < 0) {
+            index = providers.findIndex(function(provider) { return provider.id === "chatgpt" })
+        }
         providerChoice.currentIndex = Math.max(0, index)
         selectProvider()
     }
     Connections {
         target: dialog.service
         function onState_jsonChanged() {
-            if (dialog.visible && dialog.configuration.selected === "chatgpt") {
+            if (dialog.visible && dialog.configuration.selected === "chatgpt" && !providerSettings.visible) {
                 providerChoice.currentIndex = dialog.providers.findIndex(function(provider) { return provider.id === "chatgpt" })
-                dialog.selectProvider()
+            }
+        }
+        function onDemo_modeChanged() {
+            if (dialog.service.demo_mode) {
+                providerSettings.close()
             }
         }
     }
     onClosed: {
-        if (service.busy) service.cancel()
-        keyPicker.close()
-        apiKey.clear()
-    }
-    FileDialog {
-        id: keyPicker
-        objectName: "aiKeyFilePicker"
-        title: "Open API key file"
-        fileMode: FileDialog.OpenFile
-        nameFilters: ["API key files (*.txt *.key)", "All files (*)"]
-        onAccepted: {
-            apiKey.clear()
-            if (dialog.visible) {
-                apiKey.text = dialog.service.read_key_file(selectedFile)
-            }
-            selectedFile = ""
+        providerSettings.close()
+        if (service.busy) {
+            service.cancel()
         }
-        onRejected: selectedFile = ""
     }
-
+    AiProviderSettingsDialog {
+        id: providerSettings
+        theme: dialog.theme
+        service: dialog.service
+        provider: dialog.selectedProvider
+        parent: dialog.parent
+    }
     contentItem: ColumnLayout {
         spacing: 12
         Label {
-            visible: !dialog.service.demo_mode
-            text: "Connect with your ChatGPT subscription, or choose a provider and API key."
+            text: dialog.service.demo_mode ? "Local Demo AI · no connection needed" : "Choose a provider, then connect."
             color: dialog.theme.text
-            wrapMode: Text.Wrap
-            Layout.fillWidth: true
-        }
-        Label {
-            visible: !dialog.service.demo_mode
-            text: "ChatGPT sign-in uses your browser and plan allowance. Other providers use separately billed API keys."
-            color: dialog.theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
         }
         RowLayout {
             visible: !dialog.service.demo_mode
-            ThemeButton {
-                objectName: "aiChatGptSignIn"
-                theme: dialog.theme
-                text: "Continue with ChatGPT"
-                enabled: !dialog.service.busy
-                onClicked: {
-                    apiKey.clear()
-                    const address = dialog.service.sign_in_chatgpt()
-                    if (address.length > 0 && !Qt.openUrlExternally(address)) dialog.service.cancel()
-                }
-            }
-            ThemeButton {
-                objectName: "aiChatGptSignOut"
-                theme: dialog.theme
-                text: "Sign out"
-                visible: !!dialog.chatgpt.signed_in
-                enabled: !dialog.service.busy
-                onClicked: dialog.service.sign_out_chatgpt()
-            }
-            ThemeButton {
-                theme: dialog.theme
-                text: "Cancel sign-in"
-                visible: !!dialog.service.busy
-                onClicked: dialog.service.cancel()
-            }
-        }
-        GridLayout {
-            visible: !dialog.service.demo_mode
-            enabled: !dialog.service.demo_mode
-            columns: 2
-            columnSpacing: 16
-            rowSpacing: 12
             Layout.fillWidth: true
             Label { text: "Provider"; color: dialog.theme.text }
             ThemeComboBox {
@@ -129,69 +109,77 @@ Dialog {
                 Layout.fillWidth: true
                 onActivated: dialog.selectProvider()
             }
-            Label { text: "Model"; color: dialog.theme.text }
-            ThemeComboBox {
-                objectName: "aiChatGptModel"
-                visible: dialog.subscriptionSelected
-                theme: dialog.theme
-                model: dialog.chatgptModels
-                textRole: "label"
-                enabled: !dialog.service.busy && !!dialog.chatgpt.signed_in
-                Layout.fillWidth: true
-                currentIndex: Math.max(0, dialog.chatgptModels.findIndex(function(model) { return model.id === dialog.chatgpt.model }))
-                onActivated: dialog.service.select_chatgpt_model(dialog.chatgptModels[currentIndex].id)
-            }
-            ThemeTextField {
-                id: modelName
-                objectName: "aiModel"
-                visible: !dialog.subscriptionSelected
-                enabled: !dialog.service.busy
-                theme: dialog.theme
-                placeholderText: "Enter a model ID from your provider"
-                maximumLength: 128
-                Layout.fillWidth: true
-                Accessible.name: "AI model identifier"
-            }
-            Label { text: "API key"; color: dialog.theme.text; visible: !dialog.subscriptionSelected }
-            RowLayout {
-                visible: !dialog.subscriptionSelected
-                enabled: !dialog.service.busy
-                Layout.fillWidth: true
-                ThemeTextField {
-                    id: apiKey
-                    objectName: "aiApiKey"
-                    theme: dialog.theme
-                    echoMode: TextInput.Password
-                    inputMethodHints: Qt.ImhHiddenText | Qt.ImhNoPredictiveText | Qt.ImhSensitiveData
-                    maximumLength: 4096
-                    placeholderText: dialog.selectedProvider.configured ? "Stored for this session; leave blank to keep" : "Paste your API key"
-                    Layout.fillWidth: true
-                    Accessible.name: "AI API key"
-                }
-                ThemeButton {
-                    objectName: "aiOpenKeyFile"
-                    theme: dialog.theme
-                    text: "Open key file…"
-                    onClicked: keyPicker.open()
-                }
-            }
         }
         Label {
             objectName: "aiConfigurationStatus"
-            text: dialog.service.demo_mode ? "Demo active · no provider connection" : dialog.subscriptionSelected && dialog.chatgpt.signed_in ? "ChatGPT signed in · tokens kept for this session" : dialog.selectedProvider.configured ? "Configured · not verified" : "Not configured"
-            color: dialog.selectedProvider.configured ? dialog.theme.accent : dialog.theme.muted
+            text: dialog.service.demo_mode ? "Demo active · no provider connection"
+                : !dialog.connectionSupported ? "Setup only · connection is not available in RAVEN yet"
+                : dialog.subscriptionSelected && dialog.chatgpt.signed_in ? "Signed in to ChatGPT"
+                : dialog.selectedProvider.configured ? "Configured · use Connect to check access" : "Not connected"
+            color: dialog.theme.muted
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
         }
         Label {
-            text: dialog.service.demo_mode ? "Demo AI is active. No credentials or provider connection are needed. Open OFDM Profile Performance → AI Analysis to try it." : "Tokens and API keys stay in memory until RAVEN closes. ChatGPT sign-in expires after about one hour; sign in again when requested. OpenAI API keys also support OFDM analysis; other providers are setup-only."
+            visible: !dialog.service.demo_mode
+            text: dialog.subscriptionSelected ? "Uses browser sign-in and your eligible ChatGPT plan. Choose your model in Key & model."
+                : "Uses an API key and model ID from this provider. API usage has separate billing."
             color: dialog.theme.muted
             wrapMode: Text.Wrap
             Layout.fillWidth: true
+        }
+        Label {
+            visible: !dialog.service.demo_mode && !!dialog.selectedProvider.model
+            text: "Model: " + (dialog.selectedProvider.model || "")
+            textFormat: Text.PlainText
+            color: dialog.theme.text
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+        }
+        RowLayout {
+            visible: !dialog.service.demo_mode
+            ThemeButton {
+                objectName: "aiConnect"
+                theme: dialog.theme
+                text: "Connect"
+                enabled: !dialog.service.busy && dialog.connectionSupported
+                onClicked: dialog.connectProvider()
+            }
+            ThemeButton {
+                objectName: "aiConfigureProvider"
+                theme: dialog.theme
+                text: "Key & model…"
+                enabled: !dialog.service.busy && !!dialog.selectedProvider.id
+                onClicked: dialog.configureProvider()
+            }
+            ThemeButton {
+                objectName: "aiDisconnect"
+                theme: dialog.theme
+                text: "Disconnect"
+                enabled: !dialog.service.busy && !!dialog.selectedProvider.configured
+                onClicked: {
+                    if (dialog.subscriptionSelected) {
+                        dialog.service.sign_out_chatgpt()
+                    } else {
+                        dialog.service.forget(dialog.selectedProvider.id)
+                    }
+                }
+            }
+            ThemeButton {
+                objectName: "aiCancelConnection"
+                theme: dialog.theme
+                text: "Cancel"
+                visible: dialog.service.busy
+                onClicked: dialog.service.cancel()
+            }
         }
         Label {
             objectName: "aiSetupError"
             visible: dialog.service.error_message.length > 0
             text: dialog.service.error_message
             color: dialog.theme.dark ? "#ffb4ab" : "#a92b26"
+            textFormat: Text.PlainText
             wrapMode: Text.Wrap
             Layout.fillWidth: true
             Accessible.role: Accessible.AlertMessage
@@ -199,62 +187,27 @@ Dialog {
         Label {
             text: dialog.service.operation_status || ""
             color: dialog.theme.accent
+            textFormat: Text.PlainText
             wrapMode: Text.Wrap
             Layout.fillWidth: true
-            visible: text.length > 0
+            visible: text.length > 0 && (dialog.service.busy || dialog.configuration.selected === dialog.selectedProvider.id)
         }
-        RowLayout {
-            visible: !dialog.service.demo_mode && !dialog.subscriptionSelected
-            ThemeButton {
-                objectName: "aiTestConnection"
-                theme: dialog.theme
-                text: "Test connection"
-                enabled: !dialog.service.demo_mode && !!dialog.selectedProvider.configured && dialog.selectedProvider.id === "openai" && dialog.configuration.selected === "openai" && !dialog.service.busy && modelName.text === dialog.selectedProvider.model && apiKey.text.length === 0
-                onClicked: dialog.service.test_connection()
-            }
-            ThemeButton {
-                theme: dialog.theme
-                text: "Cancel test"
-                visible: !!dialog.service.busy
-                onClicked: dialog.service.cancel()
-            }
-            Item { Layout.fillWidth: true }
-        }
-        RowLayout {
-            visible: !dialog.service.demo_mode
-            ThemeButton {
-                objectName: "aiForgetProvider"
-                theme: dialog.theme
-                text: "Forget provider"
-                visible: !dialog.subscriptionSelected
-                enabled: !!dialog.selectedProvider.configured && !dialog.service.busy
-                onClicked: {
-                    apiKey.clear()
-                    if (dialog.service.forget(dialog.selectedProvider.id)) modelName.clear()
-                }
-            }
-            ThemeButton {
-                objectName: "aiDisable"
-                theme: dialog.theme
-                text: "Disable AI Assistance"
-                enabled: !!dialog.configuration.enabled && !dialog.service.busy
-                onClicked: dialog.service.set_enabled(false)
-            }
-            Item { Layout.fillWidth: true }
+        Label {
+            text: dialog.service.demo_mode ? "Open OFDM Profile Performance → AI Analysis to try the local demo."
+                : "Credentials stay in memory until RAVEN closes. Connecting does not send capture data."
+            color: dialog.theme.muted
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
         }
     }
     footer: DialogButtonBox {
         ThemeButton {
-            objectName: "aiSaveSession"
-            visible: !dialog.service.demo_mode && !dialog.subscriptionSelected
+            objectName: "aiDisable"
             theme: dialog.theme
-            text: "Save for this session"
-            enabled: !dialog.service.demo_mode && !dialog.service.busy && modelName.text.trim().length > 0 && (apiKey.text.length > 0 || !!dialog.selectedProvider.configured)
-            onClicked: {
-                const accepted = dialog.service.configure(dialog.selectedProvider.id, modelName.text, apiKey.text)
-                apiKey.clear()
-                if (accepted) dialog.close()
-            }
+            text: "Disable AI"
+            visible: !dialog.service.demo_mode
+            enabled: !!dialog.configuration.enabled && !dialog.service.busy
+            onClicked: dialog.service.set_enabled(false)
         }
         ThemeButton {
             objectName: "aiSetupClose"
