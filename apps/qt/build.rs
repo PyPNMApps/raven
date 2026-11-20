@@ -41,14 +41,47 @@ fn windows_icon() {
     assert!(status.success(), "Windows icon resource compilation failed");
     println!("cargo:rustc-link-arg-bin=raven={}", resource.display());
 }
+/// Compiles branding resources while tracking only real source paths.
+///
+/// The pinned qt-build-utils resource-list helper includes its trailing blank
+/// line. Passing that empty path to Cargo watches the entire crate, including
+/// generated outputs, and repeatedly invalidates otherwise unchanged builds.
+/// Keep the same rcc compiler and resource aliases without modifying the SDK.
+///
+/// # Returns
+/// Generated C++ resource source, whose initializer must be linked directly.
+///
+/// # Panics
+/// Stops the build if Qt tools or any resource input cannot be read/compiled.
+fn branding_resources() -> std::path::PathBuf {
+    let mut qt = qt_build_utils::QtBuild::new(vec!["Core".into()])
+        .expect("Could not find Qt for branding resources");
+    println!("cargo::rerun-if-changed=branding.qrc");
+    println!("cargo::rerun-if-changed=src/branding.h");
+    for resource in qt.qrc_list(&"branding.qrc") {
+        if !resource.as_os_str().is_empty() {
+            println!("cargo::rerun-if-changed={}", resource.display());
+        }
+    }
+    qt.qrc(&"branding.qrc")
+}
+
 /// Compiles the Qt bridge and embeds the local QML interface.
 ///
 /// Links the system Qt Quick renderer; no WebView assets are included.
 fn main() {
     windows_icon();
+    let branding = branding_resources();
     CxxQtBuilder::new()
-        .qrc("branding.qrc")
         .cc_builder(|builder| {
+            let mut resource_builder = builder.clone();
+            resource_builder.cpp(true).std("c++17").file(&branding);
+
+            // Link the object directly so its resource initializer runs before
+            // QML loads images, even when no Rust symbol references the object.
+            for object in resource_builder.compile_intermediates() {
+                println!("cargo::rustc-link-arg={}", object.display());
+            }
             builder.include("src");
         })
         .qt_module("Network")

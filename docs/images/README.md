@@ -12,8 +12,12 @@ vector artwork. README and embedded Qt resources choose light/dark automatically
 
 `tools/branding/generate.py --output NEW_DIRECTORY` regenerates theme icons,
 Windows ICO (16/24/32/48/64/128/256), macOS ICNS and WiX BMPs into a new directory.
-It extracts the original browser/spectrum/magnifier region at `(64,280,610,780)`
-from the approved 1536×1024 primary banners. Review icons at small sizes before
+It reads `raven-icon-source.png`, the transparent icon master. Its exterior
+background was removed with the built-in image-editing tool; the monitor screen
+and magnifier artwork remain filled. Both themes use this same silhouette,
+without cropping the opaque primary banners. The generator rejects opaque
+exterior corners and preserves alpha through PNG, ICO and ICNS conversion.
+Review icons against light and dark backgrounds at small sizes before
 copying generated `images/`, `windows/` and `macos/` files into their checked-in
 locations. Packaging uses `packaging/windows/raven.ico` and
 `packaging/macos/raven.icns`; banners and native icons have separate purposes.

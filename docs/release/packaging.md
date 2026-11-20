@@ -230,3 +230,11 @@ Installed lifecycle checks verify `single/`, the three OFDM Profile Performance
 inputs, generated ZIP member bytes and the pre-EQ pair against repository sources. The initial Open folder remains the
 examples root. See the [installed examples guide](../ui/examples.md). CLI-only
 packages remain capture-free; existing per-installer size gates still apply.
+
+### Transient macOS image creation
+
+The DMG builder retries `hdiutil` only when image creation reports **Resource busy**.
+It makes at most three attempts with two- and four-second waits, each with a fresh
+temporary image. It preserves the signed application and refuses existing output.
+A permanent error or exhausted retries fails packaging with the original diagnostic;
+it does not rerun tests, rebuild binaries or alter an already published release.

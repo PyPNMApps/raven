@@ -5,6 +5,7 @@
 #
 """Check native Qt tool selection without downloading SDKs or invoking compilers."""
 import importlib.util
+import json
 import io
 import os
 from pathlib import Path
@@ -365,6 +366,37 @@ class QmlReportTests(unittest.TestCase):
         self.assertNotEqual(first, second)
         self.assertTrue((first / 'qml-tests.txt').exists())
         self.assertTrue((second / 'qml-tests.txt').exists())
+
+
+
+class QtBuildReuseTests(unittest.TestCase):
+    """Require real Cargo artifact evidence for an unchanged warm build."""
+
+    def test_fresh_desktop_is_required_and_probe_stays_offline(self):
+        """Accept only a fresh application artifact, not a quick recompilation."""
+        for fresh in (True, False, None):
+            with self.subTest(fresh=fresh):
+                artifact = {'reason': 'compiler-artifact', 'fresh': fresh,
+                            'target': {'name': 'raven', 'kind': ['bin']}}
+                result = subprocess.CompletedProcess([], 0, stdout=json.dumps(artifact)+'\n', stderr='')
+                with patch.object(QT.subprocess, 'run', return_value=result) as command:
+                    if fresh is True:
+                        QT.verify_build_reuse(['cargo'], ['--manifest-path', 'apps/qt/Cargo.toml'], {})
+                    else:
+                        with self.assertRaisesRegex(ValueError, 'recompiled'):
+                            QT.verify_build_reuse(['cargo'], [], {})
+                    self.assertIn('--locked', command.call_args.args[0])
+                    self.assertIn('--offline', command.call_args.args[0])
+
+    def test_missing_artifact_and_compiler_failure_are_not_success(self):
+        """Keep failed compiler exits and absent structured evidence visible."""
+        for code in (0, 7):
+            with self.subTest(code=code):
+                result = subprocess.CompletedProcess([], code, stdout='', stderr='compiler diagnostics')
+                with patch.object(QT.subprocess, 'run', return_value=result):
+                    expected = subprocess.CalledProcessError if code else ValueError
+                    with self.assertRaises(expected):
+                        QT.verify_build_reuse(['cargo'], [], {})
 
 
 if __name__ == '__main__':

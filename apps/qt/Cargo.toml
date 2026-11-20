@@ -23,6 +23,7 @@ serde_json = "1"
 # Keep generated CXX symbols aligned with the pinned cxx runtime.
 cxx-gen = "=0.7.158"
 cxx-qt-build = "=0.7.3"
+qt-build-utils = "=0.7.3"
 
 [dev-dependencies]
 pnm-fixtures = { path = "../../tests/fixtures" }

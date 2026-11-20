@@ -3,7 +3,7 @@
 # Copyright 2026 PNM Viewer contributors
 # SPDX-License-Identifier: Apache-2.0
 #
-"""Generate RAVEN shell icons and WiX artwork from approved PNG banners."""
+"""Generate RAVEN shell icons and WiX artwork from the transparent icon master."""
 import argparse
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def generate(output):
-    """Create fresh Windows/macOS assets from the approved existing artwork.
+    """Create fresh Linux, Windows and macOS assets from the icon master.
 
     output must not exist; source images and checked-in assets are never changed.
     Use Pillow from the development prerequisites. No network access is required.
@@ -26,16 +26,17 @@ def generate(output):
     sampling = getattr(Image, 'Resampling', Image).LANCZOS
     images = output / 'images'
     images.mkdir()
+    with Image.open(ROOT / 'docs/images/raven-icon-source.png') as source:
+        if source.width != source.height or source.mode != 'RGBA':
+            raise ValueError('Icon master must be square RGBA artwork')
+        if any(source.getpixel(corner)[3] for corner in (
+                (0, 0), (source.width - 1, 0),
+                (0, source.height - 1), (source.width - 1, source.height - 1))):
+            raise ValueError('Icon master must have transparent exterior corners')
+        icon = source.resize((546, 546), sampling)
     for theme in ('dark', 'light'):
-        with Image.open(ROOT / f'docs/images/raven-logo-{theme}.png') as source:
-            if source.size != (1536, 1024):
-                raise ValueError('Approved RAVEN banner must be 1536x1024')
-            # Use the browser/spectrum/magnifier mark, excluding banner lettering.
-            mark = source.convert('RGBA').crop((64, 280, 610, 780))
-            icon = Image.new('RGBA', (546, 546), (0, 0, 0, 0))
-            icon.paste(mark, (0, 23))
-            icon.save(images / f'raven-icon-{theme}.png')
-            icon.save(images / f'raven-favicon-{theme}.ico', sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
+        icon.save(images / f'raven-icon-{theme}.png')
+        icon.save(images / f'raven-favicon-{theme}.ico', sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])
     with Image.open(images / 'raven-icon-dark.png') as source:
         icon = source.convert('RGBA')
     icon.save(windows / 'raven.ico', sizes=[(size, size) for size in (16, 24, 32, 48, 64, 128, 256)])

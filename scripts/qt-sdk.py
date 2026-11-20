@@ -6,6 +6,7 @@
 """Set up or check the pinned native Qt SDK on Linux, Windows and macOS."""
 import argparse
 import hashlib
+import json
 import os
 from pathlib import Path
 import platform
@@ -254,6 +255,33 @@ def qml_check(environment=None):
     return destination
 
 
+def verify_build_reuse(cargo, manifest, environment):
+    """Require the just-built desktop to be fresh on an unchanged offline build.
+
+    Cargo's structured artifact event verifies actual compilation reuse rather
+    than guessing from elapsed time. Preserve compiler output and fail on missing
+    evidence, repeated compilation or command failure. No tests are skipped.
+    """
+    started = time.monotonic()
+    result = subprocess.run([*cargo, 'build', *manifest, '--locked', '--offline',
+                             '--message-format=json'], cwd=ROOT, env=environment,
+                            capture_output=True, text=True, encoding='utf-8',
+                            errors='replace', check=False)
+    if result.stderr:
+        print(result.stderr, end='', flush=True)
+    if result.returncode:
+        print(result.stdout, end='', flush=True)
+        result.check_returncode()
+    artifacts = [event for line in result.stdout.splitlines()
+                 if (event := json.loads(line)).get('reason') == 'compiler-artifact'
+                 and event.get('target', {}).get('name') == 'raven'
+                 and 'bin' in event.get('target', {}).get('kind', [])]
+    if len(artifacts) != 1 or artifacts[0].get('fresh') is not True:
+        print(result.stdout, end='', flush=True)
+        raise ValueError('Unchanged Qt build recompiled the desktop; inspect Cargo resource tracking')
+    print(f'Qt unchanged-build reuse verified in {time.monotonic() - started:.2f}s.', flush=True)
+
+
 def check():
     """Check QML first, then native Qt format, Rust tests/lints and build.
 
@@ -269,6 +297,7 @@ def check():
     run([*cargo, 'test', *manifest, '--locked'], environment)
     run([*cargo, 'clippy', *manifest, '--all-targets', '--locked', '--', '-D', 'warnings'], environment)
     run([*cargo, 'build', *manifest, '--locked'], environment)
+    verify_build_reuse(cargo, manifest, environment)
 
 
 def main():

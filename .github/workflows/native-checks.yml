@@ -106,6 +106,8 @@ jobs:
             . -> target
             apps/qt -> target
           cache-bin: false
+          # Tag caches cannot be restored by later tags; retain ancestor artifacts.
+          save-if: ${{ github.ref_type != 'tag' }}
       - name: Find reusable native outputs from an ancestor release
         if: inputs.package_release && (matrix.os == 'ubuntu-22.04' || runner.os == 'macOS')
         id: native-cache-source
@@ -153,8 +155,9 @@ jobs:
       - name: Identify pinned native Qt SDK
         id: qt-sdk-key
         run: python scripts/qt-sdk.py cache-key
-      - name: Cache pinned native Qt SDK
-        uses: actions/cache@v5
+      - name: Restore pinned native Qt SDK
+        id: qt-sdk-cache
+        uses: actions/cache/restore@v5
         with:
           path: local/qt
           key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ steps.qt-sdk-key.outputs.sdk_key }}
@@ -162,6 +165,13 @@ jobs:
         run: python scripts/qt-sdk.py setup --download-attempts 3
       - name: Check Qt adapter and presentation
         run: python scripts/qt-sdk.py check
+      - name: Save reusable branch Qt SDK cache
+        if: github.ref_type != 'tag' && steps.qt-sdk-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: local/qt
+          key: qt-sdk-${{ matrix.os }}-${{ runner.arch }}-${{ steps.qt-sdk-key.outputs.sdk_key }}
+
       - name: Retain QML test reports
         if: always()
         uses: actions/upload-artifact@v6

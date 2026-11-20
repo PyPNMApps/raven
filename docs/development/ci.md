@@ -579,3 +579,58 @@ Deleting existing artifacts reduces current stored bytes and future accrual;
 it does not erase storage usage already accrued during the billing cycle.
 GitHub may take 6–12 hours to refresh its storage meter. See
 [GitHub Actions billing](https://docs.github.com/en/billing/concepts/product-billing/github-actions).
+
+## Repeated Qt builds and transient DMG failures — 2026-11-19
+
+The [v0.4.2 run](https://github.com/PyPNMApps/raven/actions/runs/44647046169)
+took **21m56s**. Its Windows Qt check took **6m08s**, optimized packaging
+**6m32s**, and installed lifecycle checks **1m42s**. Intel Mac Qt checks took
+**5m08s** and packaging **5m42s**; Ubuntu baseline Qt checks took **6m09s**
+and packaging **5m57s**. CodeQL took **5m22s** and overlapped native jobs.
+Apple Silicon failed during DMG creation with `hdiutil: create failed - Resource busy`.
+
+A local Cargo fingerprint investigation found an empty `rerun-if-changed`
+directive emitted through the pinned Qt resource helper. Cargo interpreted it
+as the Qt crate directory and repeatedly invalidated the build when generated
+outputs changed. `build.rs` now compiles the same branding resource with the
+same pinned helper, filters empty resource-list entries, tracks the actual
+resource inputs and links its initializer directly before QML startup.
+No source monitoring, QML compilation, test, Clippy or release gate is removed.
+
+An unchanged local build previously took **74s**; the corresponding fixed warm
+build completed in **0.19s**. This measures one avoidable local rebuild, not
+an end-to-end hosted release speedup. `qt-sdk.py check` now requires a second,
+offline Cargo build to report a fresh desktop artifact, using structured Cargo
+output instead of a timing threshold. Native CI runs this check on every OS.
+The existing dependency-artifact fingerprints include this helper and therefore
+change for the first revised run; that run may need cold dependency compilation.
+
+DMG creation retries only the observed transient busy diagnostic, at most three
+times with 2s/4s waits and a fresh temporary image per attempt. Existing output
+and staged/signed application bytes are preserved. Permanent failures, exhausted
+retries and missing/empty output images still fail packaging. The active v0.5.0
+workflow predates these local fixes; hosted savings and macOS retry behavior
+require evidence from a subsequent release.
+
+The subsequent unchanged full local Qt check completed in **14.94s**, retaining
+204 QML tests, six adapter tests, Clippy, the desktop build and the fresh-artifact
+probe. Test/Clippy/build Cargo stages each completed in about 0.2s. This is warm
+local evidence; it does not measure the current hosted tag, which predates the fix.
+
+### Avoid tag-isolated cache uploads
+
+The v0.5.0 Intel Mac completed its installer lifecycle checks before spending
+**3m44s** saving tag-isolated Qt SDK and Rust Actions caches (about **1.98 GB**). Actions caches
+created under one tag cannot be restored by another tag; the existing ancestor
+artifact mechanism is the supported cross-tag native-output reuse path.
+
+Native tag jobs now restore Actions Rust/Qt caches without saving tag-isolated
+copies. Non-tag native runs still save reusable caches, and the default-branch
+Mac preflight continues to seed SDK caches. SDK cache restoration and setup, all
+validation gates, and the validated native dependency artifact exports remain.
+This removes redundant post-job uploads from the release critical path without
+changing tests or public assets. The v0.5.0 run completed successfully in **33m41s**, including publication. It
+predates these changes; measure the next compatible hosted run before claiming
+an end-to-end improvement. All six native jobs and installed lifecycle checks
+passed. Apple Silicon packaging took 14m19s, including a 9m17s optimized GUI
+compile; SDK deployment and DMG creation account for most of the remainder.

@@ -28,6 +28,69 @@ import verify
 class PackageContractTests(unittest.TestCase):
     """Reject corrupt artifacts and unsafe execution without native installers."""
 
+    def test_dmg_retries_busy_with_fresh_images_and_preserves_inputs(self):
+        """Retry transient busy errors without reusing a partial image or app."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            volume = root / 'volume'
+            volume.mkdir()
+            source = volume / 'application'
+            source.write_bytes(b'original signed application')
+            destination = root / 'RAVEN.dmg'
+            attempts = []
+            def create(command, **options):
+                self.assertTrue(options['capture_output'])
+                self.assertTrue(options['text'])
+                image = Path(command[-1])
+                self.assertFalse(image.exists())
+                attempts.append(image)
+                image.write_bytes(b'partial' if len(attempts) < 3 else b'complete DMG')
+                if len(attempts) < 3:
+                    raise subprocess.CalledProcessError(1, command, stderr='hdiutil: create failed - Resource busy\n')
+                return subprocess.CompletedProcess(command, 0, stdout='created\n', stderr='')
+            with patch.object(native, 'run', side_effect=create), patch.object(native.time, 'sleep') as sleep:
+                native.create_dmg(volume, destination)
+            self.assertEqual(sleep.call_args_list, [unittest.mock.call(2), unittest.mock.call(4)])
+            self.assertEqual(len({path.parent for path in attempts}), 3)
+            self.assertTrue(all(not path.parent.exists() for path in attempts))
+            self.assertEqual(destination.read_bytes(), b'complete DMG')
+            self.assertEqual(source.read_bytes(), b'original signed application')
+            with patch.object(native, 'run') as command:
+                with self.assertRaises(FileExistsError):
+                    native.create_dmg(volume, destination)
+                command.assert_not_called()
+
+    def test_dmg_zero_exit_still_requires_nonempty_image(self):
+        """Do not publish missing or empty image output after a zero exit."""
+        for empty in (False, True):
+            with self.subTest(empty=empty), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                def create(command, **_options):
+                    if empty:
+                        Path(command[-1]).touch()
+                    return subprocess.CompletedProcess(command, 0, stdout='', stderr='')
+                with patch.object(native, 'run', side_effect=create), patch.object(native.time, 'sleep') as sleep:
+                    with self.assertRaisesRegex(ValueError, 'nonempty'):
+                        native.create_dmg(root, root / 'invalid.dmg')
+                    sleep.assert_not_called()
+                self.assertEqual(list(root.iterdir()), [])
+
+    def test_dmg_permanent_and_exhausted_busy_errors_remain_failures(self):
+        """Do not hide permanent errors or make an endless retry loop."""
+        for message, calls in [('Permission denied', 1), ('Resource busy', 3)]:
+            with self.subTest(message=message), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                error = subprocess.CalledProcessError(1, ['hdiutil'], stderr=message)
+                with patch.object(native, 'run', side_effect=error) as command, \
+                        patch.object(native.time, 'sleep') as sleep:
+                    with self.assertRaises(subprocess.CalledProcessError) as caught:
+                        native.create_dmg(root, root / 'failed.dmg')
+                self.assertIs(caught.exception, error)
+                self.assertEqual(command.call_count, calls)
+                self.assertEqual(sleep.call_count, calls - 1)
+                self.assertFalse((root / 'failed.dmg').exists())
+                self.assertEqual(list(root.iterdir()), [])
+
     def test_smoke_captures_gui_diagnostics_without_sdk_paths(self):
         """Route Qt GUI messages to stderr without altering the caller's session."""
         original = {'PATH': os.pathsep.join(('/tools', '/checkout/local/qt/bin')),

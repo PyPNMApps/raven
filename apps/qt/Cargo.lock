@@ -1794,6 +1794,7 @@ dependencies = [
  "cxx-qt-lib",
  "logging",
  "pnm-fixtures",
+ "qt-build-utils",
  "serde_json",
  "viewer",
 ]

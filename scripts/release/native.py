@@ -8,9 +8,16 @@ import os
 from pathlib import Path
 import plistlib
 import shutil
+import subprocess
+import sys
+import tempfile
+import time
 
 from common import PRODUCT, ROOT, binary_path, inventory, notices, qt, run
 from samples import DEMO_DIRECTORY, bundle
+
+DMG_CREATE_ATTEMPTS = 3
+DMG_RETRY_INITIAL_DELAY_SECONDS = 2
 
 
 def windows(stage, output, version):
@@ -41,6 +48,43 @@ def windows(stage, output, version):
         shutil.copy2(dll, payload / dll.name)
     inventory(payload, output / 'windows-installed-files.json')
     build(payload, stage, output / f'RAVEN-{version}-windows-x64.msi', version)
+
+
+def create_dmg(volume, destination):
+    """Create a new DMG, retrying only the observed transient resource-busy error.
+
+    Each of three attempts owns a fresh temporary image beside the destination.
+    Preserve the staged app and any existing output; expose only a completed
+    image using a no-overwrite hard link. Propagate other failures immediately,
+    or the final busy failure after two bounded waits of two and four seconds.
+    Native hdiutil errors retain their original stdout/stderr diagnostics.
+    """
+    if destination.exists() or destination.is_symlink():
+        raise FileExistsError(destination)
+    for attempt in range(DMG_CREATE_ATTEMPTS):
+        with tempfile.TemporaryDirectory(prefix='.raven-dmg-', dir=destination.parent) as directory:
+            image = Path(directory) / 'RAVEN.dmg'
+            try:
+                result = run(['hdiutil', 'create', '-volname', 'RAVEN', '-srcfolder', volume,
+                              '-format', 'UDZO', image], capture_output=True, text=True)
+            except subprocess.CalledProcessError as error:
+                for diagnostic in (error.stdout, error.stderr):
+                    if diagnostic:
+                        print(diagnostic, file=sys.stderr, end='')
+                if 'resource busy' not in (error.stderr or '').lower() or attempt + 1 == DMG_CREATE_ATTEMPTS:
+                    raise
+            else:
+                if image.is_symlink() or not image.is_file() or image.stat().st_size == 0:
+                    raise ValueError('hdiutil did not create a nonempty regular DMG')
+                if result.stdout:
+                    print(result.stdout, end='')
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr, end='')
+                os.link(image, destination)
+                return
+        delay_seconds = DMG_RETRY_INITIAL_DELAY_SECONDS * 2 ** attempt
+        print(f'DMG resource busy; retry {attempt + 2}/{DMG_CREATE_ATTEMPTS} in {delay_seconds}s.', flush=True)
+        time.sleep(delay_seconds)
 
 
 def macos(stage, output, version, architecture):
@@ -95,5 +139,4 @@ def macos(stage, output, version, architecture):
     run(['codesign', '--verify', '--deep', '--strict', app])
     inventory(app, output / f'macos-{architecture}-installed-files.json')
     (volume / 'Applications').symlink_to('/Applications')
-    run(['hdiutil', 'create', '-volname', 'RAVEN', '-srcfolder', volume,
-         '-format', 'UDZO', output / f'RAVEN-{version}-macos-{architecture}.dmg'])
+    create_dmg(volume, output / f'RAVEN-{version}-macos-{architecture}.dmg')
