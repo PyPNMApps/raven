@@ -16,18 +16,19 @@ External signing and Apple notarization remain separate actions.
 
 | Native builder | Viewer | Standalone CLI |
 | --- | --- | --- |
-| Ubuntu 22.04 x64 | `raven_VERSION_amd64.deb` plus CLI DEB dependency | DEB and `.tar.gz` |
+| Ubuntu 22.04 x64 | `raven_VERSION_amd64.deb` with bundled CLI/manual | DEB and `.tar.gz` |
 | Windows x64 | `PNM-Viewer-Toolkit-VERSION-windows-x64.msi` | `.zip` |
 | macOS Apple Silicon | `PNM-Viewer-Toolkit-VERSION-macos-arm64.dmg` | `.tar.gz` |
 | macOS Intel | `PNM-Viewer-Toolkit-VERSION-macos-x64.dmg` | `.tar.gz` |
 
-The desktop is Qt Quick. UI packages contain
-or depend on the same-version `pnm-decode` and manual. The UI calls shared Rust
+The desktop is Qt Quick. UI packages contain the same-version `pnm-decode` and manual. The UI calls shared Rust
 libraries directly; it does not launch the CLI to decode files.
 
 Linux uses a private Qt runtime under `/opt/raven`, a desktop entry,
-icon, and `raven` launcher. Its separate `pnm-decode` dependency owns
-`/usr/bin/pnm-decode` and the manual. Removing the UI leaves the CLI installed.
+icon, and `raven` launcher. From 0.4.2 it bundles `/opt/raven/pnm-decode`
+and `/opt/raven/share/pnm-decode.1` without depending on the CLI DEB. The optional
+standalone `pnm-decode` package owns `/usr/bin/pnm-decode` and its global manual.
+The two packages can coexist and be removed independently.
 The same Ubuntu 22.04 artifacts must pass installed tests on 22.04, 24.04 and
 26.04; never rebuild a different DEB to make a newer OS check pass.
 
@@ -37,8 +38,8 @@ to that private application directory; independently installed CLI files and
 PATH entries are untouched. Windows packages are unsigned development builds.
 The GUI executable embeds the project ICO; MSI shell entries and Installed apps
 use it too. Navy/teal WiX artwork follows the existing app branding. A pre-install
-checkbox offers a desktop shortcut, unchecked by default; silent installs use
-`CREATE_DESKTOP_SHORTCUT=1` to opt in. Start-menu integration is always included.
+checkbox offers a desktop shortcut, checked by default. Silent installs also
+create it by default; use `CREATE_DESKTOP_SHORTCUT=0` to opt out. Start-menu integration is always included.
 The standalone CLI ZIP clamps legacy notice timestamps to ZIP's supported date
 range. File contents and staged source timestamps remain unchanged.
 
@@ -133,8 +134,9 @@ The rendered page links source documentation at the exact release tag, so guides
 and screenshots do not drift with master.
 
 A complete public release has exactly six assets: the Windows MSI, Intel and
-Apple Silicon DMGs, Ubuntu viewer and CLI DEBs, and `SHA256SUMS`. Both DEBs
-remain necessary for the Ubuntu installer/updater. Checksums cover only the five
+Apple Silicon DMGs, Ubuntu viewer and CLI DEBs, and `SHA256SUMS`. The desktop DEB is a complete
+installation; the CLI DEB is optional for CLI-only users. Legacy releases through
+0.4.1 require both DEBs, and older updaters can still install that pair. Checksums cover only the five
 published installers. GitHub adds its own source ZIP/tar links separately.
 Dependency inventories, graphs, installed-file lists, original manifests and
 standalone CLI archives remain in the native workflow artifacts. Their integrity

@@ -12,7 +12,7 @@ Download the matching installer and `SHA256SUMS`. These packages use the same ve
 
 Install/update/uninstall instructions:
 
-- [Ubuntu]({{SOURCE_URL}}/docs/install/ubuntu.md) — install both same-version DEBs.
+- [Ubuntu]({{SOURCE_URL}}/docs/install/ubuntu.md) — install the complete desktop DEB; CLI-only DEB is optional.
 - [Windows]({{SOURCE_URL}}/docs/install/windows.md) — close the viewer, run the MSI, relaunch.
 - [macOS]({{SOURCE_URL}}/docs/install/macos.md) — use only an architecture listed above.
 

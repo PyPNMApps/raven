@@ -65,6 +65,33 @@ fn rejects_spoofed_missing_duplicate_or_unbounded_metadata() {
     assert!(InstallPlan::from_assets("0.2.0", &[asset]).is_err());
 }
 #[test]
+fn complete_desktop_updates_do_not_require_or_modify_the_standalone_cli() {
+    let asset = ReleaseAsset {
+        name: "raven_0.4.2_amd64.deb".into(),
+        size: 75_000_000,
+        digest: Some(format!("sha256:{}", "a".repeat(64))),
+        browser_download_url: format!(
+            "{}/download/v0.4.2/raven_0.4.2_amd64.deb",
+            super::super::release::RELEASES_URL
+        ),
+    };
+    let plan = InstallPlan::from_assets("0.4.2", &[asset]).unwrap();
+    assert_eq!(plan.packages.len(), 1);
+    plan.validate().unwrap();
+    let mut invalid = plan.clone();
+    invalid.packages[0].name = "pnm-decode_0.4.2_amd64.deb".into();
+    assert!(invalid.validate().is_err());
+    let mut invalid = plan.clone();
+    invalid.packages.push(plan.packages[0].clone());
+    assert!(invalid.validate().is_err());
+    let mut invalid = plan;
+    invalid.packages[0].size += 1;
+    assert!(invalid.validate().is_err());
+    assert_eq!(InstallPlan::package_names("0.4.1").unwrap(), &PACKAGES);
+    assert_eq!(InstallPlan::package_names("0.5.0").unwrap(), &["raven"]);
+}
+
+#[test]
 fn verified_copy_rejects_truncation_corruption_oversize_and_cancellation() {
     let package = plan().packages.remove(0);
     let canceled = AtomicBool::new(false);

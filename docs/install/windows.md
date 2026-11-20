@@ -13,8 +13,8 @@ on Windows Server 2022, which does not prove interactive Windows 11 approval UI.
 2. Run `Get-FileHash .\<msi-filename> -Algorithm SHA256` in PowerShell and compare
    the matching checksum entry. Use the project release assets, not source ZIPs.
 3. Double-click the MSI and follow Windows Installer's prompts, including UAC.
-   On **Desktop shortcut**, select **Create a desktop shortcut** if wanted.
-   The checkbox starts unchecked; Start-menu integration is always installed.
+   On **Desktop shortcut**, clear **Create a desktop shortcut** if unwanted.
+   The checkbox starts checked; Start-menu integration is always installed.
 4. Launch **RAVEN** from Start or the selected desktop shortcut
    as your normal user. The installer and shortcuts use the navy/teal app icon.
 
@@ -25,8 +25,9 @@ Capture, archive and folder selection starts in the bundled [demo files](../ui/e
 under `files\demo` in the application directory. Navigation is retained for
 the current viewer session; export JSON to your own writable folder.
 
-For an unattended install, `CREATE_DESKTOP_SHORTCUT=1` opts in; omit it or use
-`CREATE_DESKTOP_SHORTCUT=0` to opt out. Choose again during an interactive upgrade.
+Unattended installs create the desktop shortcut by default. Use
+`CREATE_DESKTOP_SHORTCUT=0` to opt out, or `CREATE_DESKTOP_SHORTCUT=1` to
+request it explicitly. Choose again during an interactive upgrade.
 The installer removes its selected shortcut on uninstall.
 
 ## Windows 11 security prompts or an MSI that does not open

@@ -8,35 +8,12 @@ release's assets and workflow results; older releases may cover only 22.04.
 
 ## Download and install
 
-1. Open [GitHub Releases](https://github.com/PyPNMApps/raven/releases).
-2. Download both same-version `pnm-decode_<version>_amd64.deb` and
-   `raven_<version>_amd64.deb`, plus `SHA256SUMS`, into Downloads.
-3. Quit the viewer. Open a terminal in that download folder, verify the checksums,
-   then install the two DEBs using their actual filenames:
+### Download and install the latest release from a terminal
 
-```bash
-# Replace VERSION with the version you downloaded; keep both packages identical.
-sha256sum --ignore-missing --check SHA256SUMS &&
-sudo apt install ./pnm-decode_VERSION_amd64.deb ./raven_VERSION_amd64.deb &&
-pnm-decode --version
-```
-
-Launch **RAVEN** from the application menu, or run `raven`
-from a graphical desktop terminal as your normal user. No repository checkout,
-Rust, Python, or separate Qt SDK is needed to run packaged binaries. APT may
-download system libraries. An `_apt` sandbox permission notice by itself is
-nonfatal; confirm both packages installed successfully.
-
-Capture, archive and folder selection starts in the bundled
-[demo files](../ui/examples.md) at `/opt/raven/files/demo`.
-Export JSON to your own writable folder.
-
-<details>
-<summary>Optional: download and install the latest release entirely from a terminal</summary>
-
-This method needs `curl` and `python3` for release lookup. It downloads into a
-fresh APT-readable temporary directory, verifies hashes, then installs both DEBs.
-Installation starts only after every download and checksum check succeeds.
+Quit RAVEN, then copy and paste the complete block below. It requires `curl` and
+`python3`, downloads the **complete desktop DEB**, verifies its checksum,
+and installs it. Releases through 0.4.1 also download their required CLI DEB.
+APT may download system dependencies and asks for your administrator password. No uninstall is needed for an upgrade.
 
 ```bash
 (
@@ -48,23 +25,61 @@ Installation starts only after every download and checksum check succeeds.
   chmod 755 "$download_dir"
   cd "$download_dir"
   release_url="https://github.com/PyPNMApps/raven/releases/download/v${release_version}"
-  for asset in SHA256SUMS "pnm-decode_${release_version}_amd64.deb" "raven_${release_version}_amd64.deb"; do
+  packages=("raven_${release_version}_amd64.deb")
+  if dpkg --compare-versions "$release_version" lt 0.4.2; then
+    packages=("pnm-decode_${release_version}_amd64.deb" "${packages[@]}")
+  fi
+  for asset in SHA256SUMS "${packages[@]}"; do
     curl -fL --retry 3 "$release_url/$asset" -o "$asset"
   done
   sha256sum --ignore-missing --check SHA256SUMS
-  sudo apt install ./pnm-decode_"${release_version}"_amd64.deb ./raven_"${release_version}"_amd64.deb
-  pnm-decode --version
+  sudo apt install "${packages[@]/#/./}"
+  if [ -x /opt/raven/pnm-decode ]; then
+    /opt/raven/pnm-decode --version
+  else
+    pnm-decode --version
+  fi
   printf 'Downloaded packages: %s\n' "$download_dir"
 )
 ```
 
-The printed directory contains the downloads. If the latest release lacks the
-Ubuntu package pair, the command stops before installation. It changes no
-home-directory permissions.
+The printed temporary directory contains the downloads. If a required package is
+missing or verification fails, installation stops. Launch `raven` afterward from
+a graphical desktop terminal as your normal user.
 
-</details>
+### Manual download
+
+1. Open [GitHub Releases](https://github.com/PyPNMApps/raven/releases).
+2. Download `raven_<version>_amd64.deb` and `SHA256SUMS` into Downloads.
+   From 0.4.2, the desktop DEB includes its own decoder and manual. The separate
+   `pnm-decode` DEB is only needed for a standalone CLI installation.
+   Releases through 0.4.1 require both same-version DEBs.
+3. Quit the viewer. Open a terminal in that download folder, verify the checksums,
+   then install the desktop DEB using its actual filename:
+
+```bash
+# Replace VERSION with the version you downloaded (0.4.2 or newer).
+sha256sum --ignore-missing --check SHA256SUMS &&
+sudo apt install ./raven_VERSION_amd64.deb &&
+/opt/raven/pnm-decode --version
+```
+
+Launch **RAVEN** from the application menu, or run `raven`
+from a graphical desktop terminal as your normal user. No repository checkout,
+Rust, Python, or separate Qt SDK is needed to run packaged binaries. APT may
+download system libraries. An `_apt` sandbox permission notice by itself is
+nonfatal; confirm installation succeeded.
+
+Capture, archive and folder selection starts in the bundled
+[demo files](../ui/examples.md) at `/opt/raven/files/demo`.
+Export JSON to your own writable folder.
 
 ## CLI only
+
+The desktop includes `/opt/raven/pnm-decode` and its manual at
+`/opt/raven/share/pnm-decode.1`. For a global `pnm-decode` command and
+`man pnm-decode`, install the optional standalone CLI DEB below. Both packages
+can coexist and be removed independently.
 
 Download the release's `pnm-decode_<version>_amd64.deb` and `SHA256SUMS`.
 Verify its hash and install that single DEB with `sudo apt install ./<filename>`.
@@ -72,7 +87,7 @@ Run `pnm-decode --help` or `man pnm-decode`. The viewer package is not required.
 
 ## Update
 
-No uninstall is needed: quit the viewer and install both new-version DEBs using the same steps. Installed
+No uninstall is needed: quit the viewer and install the new desktop DEB using the same steps. Installed
 Ubuntu builds with the updater can also use About → Check for updates, then
 Install update and restart. Export work before starting and approve the OS
 authentication dialog. After success, the viewer restarts automatically once any
@@ -111,7 +126,8 @@ has no installed desktop entry unless you install the desktop package.
 The first RAVEN installation replaces the former `pnm-viewer-toolkit` package
 through APT package metadata; `pnm-decode` remains separately owned. Use manual
 installation for this first transition because the older updater expects the
-previous names. Later RAVEN releases retain verified paired-DEB updates.
+previous names. From 0.4.2, RAVEN updates its complete desktop DEB without
+changing any independently installed CLI package.
 
 ## Optional saved AI connections
 

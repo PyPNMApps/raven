@@ -22,7 +22,7 @@ earlier releases contain Ubuntu 22.04 packages only.
 
 | Platform | Desktop viewer | CLI only |
 | --- | --- | --- |
-| Ubuntu 22.04 / 24.04 / 26.04 x64 | Viewer DEB plus same-version CLI DEB; install both with APT | CLI DEB |
+| Ubuntu 22.04 / 24.04 / 26.04 x64 | Complete viewer DEB with bundled CLI; standalone CLI DEB optional | CLI DEB |
 | Windows x64 | Per-machine MSI installer with private Qt, Microsoft runtime DLLs and bundled CLI | Bundled CLI or source build |
 | macOS Apple Silicon | arm64 DMG; drag the app into Applications | Bundled CLI or source build |
 | macOS Intel | x64 DMG; drag the app into Applications | Bundled CLI or source build |
@@ -46,11 +46,11 @@ OS approval instructions. Keep captures outside installation directories.
 
 ## Update and remove
 
-Quit the viewer before updating. On Ubuntu, install both new-version DEBs using
+Quit the viewer before updating. On Ubuntu, install the new desktop DEB using
 APT. On Windows, install the new MSI. On macOS,
 replace the application using the matching architecture's new DMG.
 
-Remove the Ubuntu viewer with `sudo apt remove raven`; the separate
+Remove the Ubuntu viewer with `sudo apt remove raven`; any independently installed
 CLI remains installed until you remove `pnm-decode`. On Windows, uninstall through
 Installed apps (Windows Installer manages removal). On macOS, move
 the application to Trash. Independently extracted CLI archives are separate from

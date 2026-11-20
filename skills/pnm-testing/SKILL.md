@@ -72,7 +72,7 @@ open packaged example bytes, preserve the render marker and CLI/JSON comparison,
 and check the initial Open location. Test missing/corrupt sample failure and
 retain upstream notices/provenance. Source fixtures alone do not prove inclusion.
 
-Windows native lifecycle checks cover shortcut opt-out, opt-in and removal;
+Windows native lifecycle checks cover shortcut opt-out, default creation and removal;
 macOS checks its Info.plist icon reference and packaged ICNS. XML/asset checks
 on Linux supplement native MSI/DMG tests; they do not prove interactive wizard,
 Finder or Windows Explorer appearance.

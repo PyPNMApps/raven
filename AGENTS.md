@@ -141,7 +141,7 @@ for working plans. Update relative links whenever documents move.
 
 Native CI/release ordering: docs/development/ci.md. Keep master and tag validation
 shared; require Ubuntu 22.04/24.04/26.04, Windows x64 and macOS arm64/x64 checks.
-Tag packaging targets Qt and includes the same-version CLI/manual. Native package lifecycle tests run on disposable CI runners;
+Every desktop installer must bundle the same-version CLI/manual and install without a separate CLI package. Keep the standalone CLI independently installable with no desktop dependency or file conflicts. Tag packaging targets Qt and includes the same-version CLI/manual. Native package lifecycle tests run on disposable CI runners;
 local builds do not authorize system installation or publication.
 
 Qt setup and validation: docs/development/qt.md. Run scripts/qt-desktop.sh check
@@ -207,7 +207,7 @@ capture-free. Installed Open starts in the examples folder and exports target
 user-selected writable locations. Test installed sample bytes and default folder.
 
 Use packaging/ native icons and navy/teal WiX artwork derived from the existing
-desktop PNG. Windows must offer an unchecked desktop-shortcut choice before
+desktop PNG. Windows must offer a checked-by-default desktop-shortcut choice before
 installation; macOS uses its bundle icon and standard user-created Finder alias.
 Keep tools/branding/generate.py reproducible and development-only. Add new host
 build/conversion prerequisites to --development and its docs; do not install

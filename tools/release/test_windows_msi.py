@@ -49,7 +49,7 @@ class WindowsMsiTests(unittest.TestCase):
             self.assertTrue(Path(installed.get('Source')).is_file())
         self.assertEqual(len(first.findall('.//w:File', self.names)), 3)
 
-    def test_branded_installer_offers_an_unchecked_desktop_choice(self):
+    def test_branded_installer_offers_a_checked_desktop_choice(self):
         """Use real branding and a conditioned shortcut without launching the app."""
         source = windows_msi.author(self.payload, '0.2.2', self.root / 'branded.wxs')
         product = ET.parse(source).find('w:Product', self.names)
@@ -60,7 +60,7 @@ class WindowsMsiTests(unittest.TestCase):
             artwork = product.find(f'w:WixVariable[@Id="{identifier}"]', self.names)
             self.assertTrue(Path(artwork.get('Value')).is_file())
         choice = product.find('w:Property[@Id="CREATE_DESKTOP_SHORTCUT"]', self.names)
-        self.assertIsNone(choice.get('Value'))
+        self.assertEqual(choice.get('Value'), '1')
         checkbox = product.find('.//w:Control[@Id="DesktopChoice"]', self.names)
         self.assertEqual(checkbox.get('Property'), 'CREATE_DESKTOP_SHORTCUT')
         self.assertEqual(checkbox.get('CheckBoxValue'), '1')

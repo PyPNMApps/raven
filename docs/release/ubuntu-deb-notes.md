@@ -9,7 +9,7 @@ downloaded bytes, then automatically publishes the release for update discovery.
 
 {{ASSET_TABLE}}
 
-`SHA256SUMS` accompanies the paired DEBs. Build reports and CLI archives remain
+`SHA256SUMS` accompanies the desktop and optional CLI DEBs. Build reports and CLI archives remain
 in [workflow artifacts]({{RUNS_URL}}); license notices stay inside the packages.
 Verify downloaded package hashes before installation.
 
@@ -17,7 +17,7 @@ Verify downloaded package hashes before installation.
 
 [Ubuntu installation and uninstall guide]({{SOURCE_URL}}/docs/install/ubuntu.md)
 
-Download both same-version DEBs and `SHA256SUMS` from the table above. Quit the
+Download the complete desktop DEB and `SHA256SUMS` from the table above. Quit the
 viewer and use the APT commands below from your Downloads folder.
 
 <details>
@@ -31,12 +31,12 @@ viewer and use the APT commands below from your Downloads folder.
   chmod 755 "$download_dir"
   cd "$download_dir"
   release_url="https://github.com/PyPNMApps/raven/releases/download/{{TAG}}"
-  for asset in SHA256SUMS pnm-decode_{{VERSION}}_amd64.deb raven_{{VERSION}}_amd64.deb; do
+  for asset in SHA256SUMS raven_{{VERSION}}_amd64.deb; do
     curl -fL --retry 3 "$release_url/$asset" -o "$asset"
   done
   sha256sum --ignore-missing --check SHA256SUMS
-  sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
-  pnm-decode --version
+  sudo apt install ./raven_{{VERSION}}_amd64.deb
+  /opt/raven/pnm-decode --version
 )
 ```
 
@@ -49,12 +49,12 @@ your browser, open a terminal in their directory and run:
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS &&
-sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
-pnm-decode --version
+sudo apt install ./raven_{{VERSION}}_amd64.deb
+/opt/raven/pnm-decode --version
 raven
 ```
 
-The viewer requires the matching CLI package. `apt install` also performs a
+The desktop bundles the same-version CLI and manual; the CLI-only DEB is optional. `apt install` also performs a
 manual upgrade when an older package is installed. Confirm the new version in
 About, open a known capture and export JSON. Do not treat an install/remove smoke
 test as proof of an upgrade between two different package versions.
@@ -91,7 +91,7 @@ claim validation on Ubuntu 24.04/26.04, Windows or macOS.
 
 The application's Update chip checks published stable releases. Drafts are not
 announced. Installed Ubuntu x64 builds with the installer feature download and
-verify both DEBs, request OS administrator approval, then restart automatically
+verify the complete desktop DEB, request OS administrator approval, then restart automatically
 after installation and any active capture/export work finish. Export work before
 starting. Older installed versions may still require clicking Restart viewer.
 Older builds such as 0.1.6/0.1.7 need one manual upgrade to gain this feature. Reusable core

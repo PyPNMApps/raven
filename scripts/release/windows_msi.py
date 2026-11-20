@@ -37,7 +37,7 @@ def _identifier(prefix, relative):
 
 def _desktop_options(product, display_name):
     """Offer a pre-install shortcut choice without executing custom actions."""
-    _element('Property', product, Id='CREATE_DESKTOP_SHORTCUT', Secure='yes')
+    _element('Property', product, Id='CREATE_DESKTOP_SHORTCUT', Value='1', Secure='yes')
     ui = _element('UI', product)
     dialog = _element('Dialog', ui, Id='ShortcutOptionsDlg', Width='370', Height='270',
                       Title=f'{display_name} Setup')

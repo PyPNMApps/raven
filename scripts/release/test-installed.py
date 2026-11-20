@@ -30,7 +30,7 @@ def one(directory, pattern):
 
 
 def linux(packages):
-    """Install both DEBs, exercise GUI/CLI, remove UI, then remove CLI.
+    """Test desktop-only and CLI-only installs, coexistence, upgrades and removal.
 
     Intended only for disposable CI hosts with explicit --ci-disposable-host.
     Require same artifact checksums in the workflow before invoking this script.
@@ -39,6 +39,20 @@ def linux(packages):
     cli = one(packages, 'pnm-decode_*.deb')
     installed_gui = Path('/opt/raven/raven')
     try:
+        if Path('/usr/bin/pnm-decode').exists():
+            raise ValueError('Existing standalone CLI; refusing desktop-only lifecycle test')
+        run(['sudo', 'apt-get', 'install', '-y', gui])
+        if Path('/usr/bin/pnm-decode').exists():
+            raise ValueError('Desktop-only install unexpectedly installed a global CLI')
+        smoke(installed_gui, Path('/opt/raven/pnm-decode'))
+        if not Path('/opt/raven/share/pnm-decode.1').is_file():
+            raise ValueError('Bundled CLI manual missing')
+        linux_upgrade(cli, gui, installed_gui)
+        run(['sudo', 'apt-get', 'remove', '-y', 'raven'])
+        run(['sudo', 'apt-get', 'install', '-y', cli])
+        run(['/usr/bin/pnm-decode', '--version'])
+        if installed_gui.exists():
+            raise ValueError('CLI-only install unexpectedly installed the viewer')
         linux_legacy_migration(cli, gui)
         run(['sudo', 'apt-get', 'install', '-y', cli, gui])
         if Path('/opt/pnm-viewer-toolkit/pnm-viewer-qt').exists() or Path('/usr/bin/pnm-viewer').exists():
@@ -51,15 +65,16 @@ def linux(packages):
                       'StartupWMClass=raven'):
             if launcher.count(field) != 1:
                 raise ValueError(f'Desktop integration missing or duplicated: {field}')
-        smoke(installed_gui, Path('/usr/bin/pnm-decode'))
+        smoke(installed_gui, Path('/opt/raven/pnm-decode'))
         linux_upgrade(cli, gui, installed_gui)
     finally:
         run(['sudo', 'apt-get', 'remove', '-y', 'raven'])
-        if installed_gui.exists() or Path('/usr/bin/raven').exists():
+        if installed_gui.exists() or Path('/usr/bin/raven').exists() or Path('/opt/raven/pnm-decode').exists():
             raise ValueError('Viewer removal left installed executable')
         # Separate CLI ownership must survive removing the viewer.
-        run(['/usr/bin/pnm-decode', '--version'])
-        run(['sudo', 'apt-get', 'remove', '-y', 'pnm-decode'])
+        if Path('/usr/bin/pnm-decode').exists():
+            run(['/usr/bin/pnm-decode', '--version'])
+            run(['sudo', 'apt-get', 'remove', '-y', 'pnm-decode'])
         if Path('/usr/bin/pnm-decode').exists():
             raise ValueError('CLI removal left installed executable')
 
@@ -106,14 +121,15 @@ def linux_upgrade(cli, gui, installed_gui):
 
     Runs only inside the existing disposable-host lifecycle gate. The baseline
     uses this build's payload with an older DEB control version, not a claimed
-    real historical binary. Test both-package upgrade and same-version refusal.
+    real historical binary. Test desktop-only upgrade, standalone CLI preservation and same-version refusal.
     No desktop password prompt is automated; VM Polkit testing is separate.
     """
     version = json.loads((cli.parent / 'release-manifest.json').read_text())['version']
+    standalone_installed = Path('/usr/bin/pnm-decode').exists()
     with tempfile.TemporaryDirectory(prefix='pnm-upgrade-fixture-') as workspace:
         root = Path(workspace)
         older = []
-        for package in (cli, gui):
+        for package in ((cli, gui) if standalone_installed else (gui,)):
             stage = root / package.stem
             run(['dpkg-deb', '-R', package, stage])
             control = stage / 'DEBIAN/control'
@@ -125,7 +141,7 @@ def linux_upgrade(cli, gui, installed_gui):
         with tempfile.TemporaryDirectory(prefix='pnm-viewer-update-') as directory:
             downloads = Path(directory)
             plan = {'version': version, 'packages': []}
-            for package in (cli, gui):
+            for package in (gui,):
                 shutil.copy2(package, downloads / package.name)
                 plan['packages'].append({
                     'name': package.name, 'size': package.stat().st_size,
@@ -135,7 +151,7 @@ def linux_upgrade(cli, gui, installed_gui):
             command = ['sudo', 'env', f'PKEXEC_UID={os.getuid()}', installed_gui,
                        '--install-update', downloads]
             # Reject tampered bytes through the real privileged entry point.
-            first = downloads / cli.name
+            first = downloads / gui.name
             original = first.read_bytes()
             first.write_bytes(original[:-1] + bytes([original[-1] ^ 1]))
             rejected = subprocess.run([str(item) for item in command], capture_output=True, text=True)
@@ -143,15 +159,22 @@ def linux_upgrade(cli, gui, installed_gui):
                 raise ValueError('Updater did not reject a corrupted package by hash')
             first.write_bytes(original)
             run(command)
-            for package in ('pnm-decode', 'raven'):
+            for package in ('raven',):
                 installed = run(['dpkg-query', '-W', '-f=${Version}', package],
                                 capture_output=True, text=True).stdout
                 if installed != version:
-                    raise ValueError('Paired upgrade did not install the expected version')
+                    raise ValueError('Desktop upgrade did not install the expected version')
+            if standalone_installed:
+                standalone_version = run(['dpkg-query', '-W', '-f=${Version}', 'pnm-decode'],
+                                         capture_output=True, text=True).stdout
+                if standalone_version != version + '~upgrade-test':
+                    raise ValueError('Desktop update changed the independent CLI package')
+            elif Path('/usr/bin/pnm-decode').exists():
+                raise ValueError('Desktop update installed an unwanted global CLI')
             rejected = subprocess.run([str(item) for item in command], capture_output=True, text=True)
-            if rejected.returncode == 0 or 'newer than both installed packages' not in rejected.stderr:
+            if rejected.returncode == 0 or 'newer than the installed package' not in rejected.stderr:
                 raise ValueError('Updater did not reject a same-version installation')
-            smoke(installed_gui, Path('/usr/bin/pnm-decode'))
+            smoke(installed_gui, Path('/opt/raven/pnm-decode'))
 
 
 def windows(packages, payload):
@@ -223,13 +246,13 @@ def windows(packages, payload):
                 raise ValueError('Desktop shortcut created despite opt-out')
             if len(registrations()) != 1 or registrations()[0][1] != '0.0.0':
                 raise ValueError('MSI baseline registration missing')
-            execute(['/i', installer, f'INSTALLFOLDER={prefix}', 'CREATE_DESKTOP_SHORTCUT=1'], logs / 'upgrade.log')
+            execute(['/i', installer, f'INSTALLFOLDER={prefix}'], logs / 'upgrade.log')
             if (legacy_prefix / 'pnm-viewer.exe').exists():
                 raise ValueError('Legacy viewer executable survived the upgrade')
             if not start_shortcut.is_file():
                 raise ValueError('Start menu shortcut missing')
             if not desktop_shortcut.is_file():
-                raise ValueError('Selected desktop shortcut missing')
+                raise ValueError('Default desktop shortcut missing')
             if len(registrations()) != 1 or registrations()[0][1] != version:
                 raise ValueError('MSI major upgrade did not replace baseline registration')
             smoke(prefix / 'raven.exe', prefix / 'pnm-decode.exe')

@@ -25,7 +25,7 @@ pub struct ReleaseCheck {
     pub release_url: String,
     /// Published native installer link, independent of automatic installation.
     pub download: Option<super::installers::InstallerDownload>,
-    /// Verified metadata for the paired Ubuntu packages, when offered.
+    /// Verified metadata for Ubuntu installation, when offered.
     pub ubuntu: Option<super::ubuntu::InstallPlan>,
 }
 

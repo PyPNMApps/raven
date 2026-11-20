@@ -12,7 +12,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-/// Downloads and verifies both DEBs without privileges into a private directory.
+/// Downloads and verifies the required DEBs without privileges into a private directory.
 /// # Arguments
 /// * `plan` - Validated newer release package pair.
 /// * `canceled` - User cancellation, checked between reads/requests.

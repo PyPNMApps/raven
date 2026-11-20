@@ -18,6 +18,7 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'scripts/release'))
 import common
+import linux
 import collect
 import native
 import smoke
@@ -86,6 +87,35 @@ class PackageContractTests(unittest.TestCase):
             with self.assertRaises(FileExistsError):
                 builder.cli_archive(source, root, 'Windows')
             self.assertEqual(destination.read_bytes(), original_archive)
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Requires native dpkg-deb")
+    def test_desktop_deb_bundles_cli_without_standalone_dependency(self):
+        """Build real synthetic DEBs and inspect independent file ownership."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            stage, output = root / 'stage', root / 'output'
+            stage.mkdir()
+            output.mkdir()
+            binary = root / 'synthetic-binary'
+            binary.write_bytes(b'synthetic executable')
+            binary.chmod(0o755)
+            with patch.object(linux, 'binary_path', return_value=binary), \
+                    patch.object(linux, 'deploy_qt'), patch.object(linux, 'bundle'):
+                linux.build(stage, output, '0.4.2')
+            viewer = output / 'raven_0.4.2_amd64.deb'
+            dependencies = subprocess.check_output(
+                ['dpkg-deb', '-f', viewer, 'Depends'], text=True)
+            self.assertNotIn('pnm-decode', dependencies)
+            self.assertIn('libc6', dependencies)
+            extracted = root / 'extracted'
+            subprocess.run(['dpkg-deb', '-x', viewer, extracted], check=True)
+            self.assertEqual((extracted / 'opt/raven/pnm-decode').read_bytes(), binary.read_bytes())
+            self.assertTrue((extracted / 'opt/raven/share/pnm-decode.1').is_file())
+            self.assertFalse((extracted / 'usr/bin/pnm-decode').exists())
+            cli = output / 'pnm-decode_0.4.2_amd64.deb'
+            cli_files = subprocess.check_output(['dpkg-deb', '-c', cli], text=True)
+            self.assertIn('./usr/bin/pnm-decode', cli_files)
+            self.assertNotIn('./opt/raven/', cli_files)
 
     def test_size_budget_and_checksum_corruption(self):
         """Reject empty/oversized packages and changed bytes after upload."""

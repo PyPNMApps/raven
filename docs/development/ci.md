@@ -391,8 +391,8 @@ cache a cold build is expected. No measured speedup is claimed until the next
 hosted run. The user-paused native matrix is not re-enabled to warm caches.
 
 Ubuntu lifecycle CI additionally exercises the real elevated Rust installer
-using synthetic older control versions for both DEBs, verifies the resulting
-versions and refuses same-version reinstallation. This is not historical-binary
+using synthetic older control versions, upgrades only the complete desktop DEB,
+preserves an independently installed CLI version and refuses same-version reinstallation. This is not historical-binary
 upgrade evidence or automated proof of the interactive Polkit prompt.
 
 Cache scope reference: [GitHub cache access restrictions](https://docs.github.com/en/actions/reference/workflows-and-actions/dependency-caching#restrictions-for-accessing-a-cache).

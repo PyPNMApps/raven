@@ -4,7 +4,7 @@
  */
 //! Privileged staging and apt handoff; no network access or Qt initialization.
 #[cfg(target_os = "linux")]
-use super::{download::copy_verified, private_directory, InstallPlan, PACKAGES};
+use super::{download::copy_verified, private_directory, InstallPlan};
 use super::{supported, INSTALLED_VIEWER};
 #[cfg(target_os = "linux")]
 use std::{
@@ -17,7 +17,7 @@ use std::{path::Path, process::Command};
 #[cfg(target_os = "linux")]
 const MAX_PLAN_BYTES: u64 = 16_384;
 
-/// Requests administrator authentication and waits for paired package installation.
+/// Requests administrator authentication and waits for verified package installation.
 /// # Arguments
 /// * `directory` - Private verified download directory retained by the caller.
 /// # Returns
@@ -86,7 +86,11 @@ pub fn install_elevated(directory: &Path) -> Result<(), String> {
         plan.validate()?;
         let staging = private_directory("pnm-install-")?;
         let mut destinations = Vec::new();
-        for (package, expected) in plan.packages.iter().zip(PACKAGES) {
+        for (package, expected) in plan
+            .packages
+            .iter()
+            .zip(InstallPlan::package_names(&plan.version)?)
+        {
             let source = directory.join(&package.name);
             let metadata = fs::symlink_metadata(&source).map_err(|error| error.to_string())?;
             if !metadata.is_file() || metadata.uid() != owner {
@@ -116,7 +120,7 @@ pub fn install_elevated(directory: &Path) -> Result<(), String> {
                 .output()
                 .map_err(|error| error.to_string())?;
             if !installed.status.success() {
-                return Err("Both existing packages must be installed.".into());
+                return Err("The package being updated must be installed.".into());
             }
             let installed =
                 String::from_utf8(installed.stdout).map_err(|_| "Invalid installed version.")?;
@@ -126,7 +130,7 @@ pub fn install_elevated(directory: &Path) -> Result<(), String> {
                 .map_err(|error| error.to_string())?
                 .success()
             {
-                return Err("The update must be newer than both installed packages.".into());
+                return Err("The update must be newer than the installed package.".into());
             }
             destinations.push(destination);
         }

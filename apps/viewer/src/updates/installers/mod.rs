@@ -8,9 +8,9 @@ use super::{release::RELEASES_URL, ubuntu::ReleaseAsset};
 /// A platform-specific browser download action from validated release metadata.
 #[derive(Debug, PartialEq, Eq)]
 pub struct InstallerDownload {
-    /// Plain-text action identifying the native installer or Ubuntu package pair.
+    /// Plain-text action identifying the native installer or Ubuntu installer.
     pub label: &'static str,
-    /// Exact project-owned asset URL, or the release page for paired DEBs.
+    /// Exact project-owned asset URL, or the release page for legacy paired DEBs.
     pub url: String,
 }
 
@@ -24,8 +24,8 @@ pub struct InstallerDownload {
 ///
 /// # Returns
 /// Returns no action for unsupported targets, missing/duplicate assets, empty
-/// files or redirected URLs. Ubuntu uses its existing validated package pair
-/// and opens the version's release page rather than offering only one DEB.
+/// files or redirected URLs. Ubuntu 0.4.2 and later offer the complete desktop
+/// DEB; older releases open the release page for their required package pair.
 pub(super) fn select(
     version: &str,
     assets: &[ReleaseAsset],
@@ -37,10 +37,19 @@ pub(super) fn select(
         ("macos", "aarch64") => ("macos-arm64.dmg", "Download DMG"),
         ("macos", "x86_64") => ("macos-x64.dmg", "Download DMG"),
         ("linux", "x86_64") => {
-            super::ubuntu::InstallPlan::from_assets(version, assets).ok()?;
+            let plan = super::ubuntu::InstallPlan::from_assets(version, assets).ok()?;
+            let standalone_desktop = plan.packages.len() == 1;
             return Some(InstallerDownload {
-                label: "Download packages",
-                url: format!("{RELEASES_URL}/tag/v{version}"),
+                label: if standalone_desktop {
+                    "Download DEB"
+                } else {
+                    "Download packages"
+                },
+                url: if standalone_desktop {
+                    plan.packages[0].url.clone()
+                } else {
+                    format!("{RELEASES_URL}/tag/v{version}")
+                },
             });
         }
         _ => return None,
@@ -102,6 +111,16 @@ mod tests {
         let mut redirected = asset(name);
         redirected.browser_download_url = "https://example.invalid/installer.msi".into();
         assert!(select("0.3.3", &[redirected], "windows", "x86_64").is_none());
+    }
+
+    #[test]
+    fn complete_ubuntu_desktop_links_directly_to_its_deb() {
+        let mut desktop = asset("raven_0.4.2_amd64.deb");
+        desktop.browser_download_url =
+            format!("{RELEASES_URL}/download/v0.4.2/raven_0.4.2_amd64.deb");
+        let download = select("0.4.2", &[desktop], "linux", "x86_64").unwrap();
+        assert_eq!(download.label, "Download DEB");
+        assert!(download.url.ends_with("/raven_0.4.2_amd64.deb"));
     }
 
     #[test]

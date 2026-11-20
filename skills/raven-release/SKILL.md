@@ -78,7 +78,7 @@ Keep complete public releases to six assets: Windows MSI, Intel and Apple
 Silicon DMGs, Ubuntu viewer and CLI DEBs, and SHA256SUMS covering those five
 installers. Keep dependency reports, inventories and standalone CLI archives
 in native Actions artifacts. The release index is local renderer input only.
-Preserve all upstream integrity/lifecycle gates and Ubuntu's paired-DEB updater.
+Preserve all upstream integrity/lifecycle gates and Ubuntu's verified updater and legacy paired-DEB compatibility.
 Partial releases expose only eligible installers and their matching checksums.
 The user restored automatic full tag delivery on 2026-11-04; the old Ubuntu-only
 workflow is manual troubleshooting only. Require MSI/DMG and all Ubuntu lifecycle
@@ -105,12 +105,32 @@ claiming a speedup; never trade away tests or compiler validation for cache hits
 Put the runner and Qt identifier inside rust-cache's shared-key itself: supplying
 both shared-key and key discards key, allowing the Ubuntu jobs to collide.
 
+## Complete desktop installers and independent CLI
+
+Every desktop installer must include the same-version CLI and manual. Never
+require users to download or install the standalone CLI package to install the
+viewer. Keep CLI-only delivery independent of the desktop. Avoid overlapping
+package-owned files: Ubuntu bundles its decoder/manual under `/opt/raven`, while
+the optional CLI DEB owns the global command/manual. Preserve existing standalone
+CLI installations during desktop upgrades and removal. Do not add global
+symlinks or maintainer-script fallback that overwrite another package's files.
+
+For Ubuntu releases from 0.4.2, downloads and updater plans require only the
+complete desktop DEB; retain paired-plan support for older releases. Continue
+publishing the CLI DEB for standalone users and older updater compatibility.
+Native CI must exercise desktop-only installation without a global CLI, CLI-only
+installation without the desktop, coexistence, desktop upgrades, and independent
+removal. Include decoder execution and the bundled manual in installed checks.
+Update the release-page copy/paste commands and platform install docs with any
+packaging-contract change. Do not claim native installation validation from
+metadata-only tests or a local relocated-binary smoke test.
+
 ## Native icons, shortcuts and examples
 
 Use packaging/ assets derived from the existing desktop PNG; regenerate into a
 new review directory with tools/branding/generate.py. Embed the ICO in the GUI
 executable and MSI shell integration; macOS needs CFBundleIconFile and its ICNS.
-WiX artwork uses the project navy/teal palette. Offer an unchecked desktop
+WiX artwork uses the project navy/teal palette. Offer a checked-by-default desktop
 shortcut option before installation, with explicit silent opt-in/out and no
 application-launch custom action. Keep Start-menu integration independent.
 Advertised Start-menu shortcuts use the embedded key-executable icon. Give
@@ -151,6 +171,6 @@ native Cocoa behavior; retain reports and require native confirmation.
 About installer downloads must select the exact published asset matching the
 Rust OS/architecture and release version, with no guessed links when assets are
 missing. Keep Windows MSI and Intel/Apple Silicon DMG cases independently tested.
-Ubuntu manual downloads expose the paired DEB release page; preserve verified
-in-app installation and restart. Keep one compact update status and the installed
+From 0.4.2, Ubuntu manual downloads select the complete desktop DEB directly.
+Preserve verified in-app installation/restart and legacy paired-DEB support. Keep one compact update status and the installed
 version header, with Windows Uninstall under Software.

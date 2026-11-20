@@ -1,6 +1,6 @@
 # RAVEN {{TAG}}
 
-**Under development.** Download the package for your system under **Assets**. The native Qt viewer includes the same-version `pnm-decode` CLI and manual; Ubuntu installs the CLI as a separate package dependency. Rust, Python and a separate Qt SDK are not needed to run the packaged application. APT installs required Ubuntu system libraries and may need network access.
+**Under development.** Download the package for your system under **Assets**. The native Qt viewer includes the same-version `pnm-decode` CLI and manual; Ubuntu bundles a private CLI; the separate CLI DEB is optional. Rust, Python and a separate Qt SDK are not needed to run the packaged application. APT installs required Ubuntu system libraries and may need network access.
 
 ## Choose your download
 
@@ -10,18 +10,59 @@ Sizes above are compressed download bytes expressed in decimal MB, not installed
 
 ## Ubuntu 22.04 / 24.04 / 26.04 — x64
 
-Download both same-version DEBs and `SHA256SUMS` from this release. In the download directory:
+### Download and install the latest release from a terminal
+
+Quit RAVEN, then copy and paste the complete block below. It requires `curl` and
+`python3`, downloads the **complete desktop DEB**, verifies its checksum,
+and installs it. Releases through 0.4.1 also download their required CLI DEB.
+APT may download system dependencies and asks for your administrator password. No uninstall is needed for an upgrade.
+
+```bash
+(
+  set -euo pipefail
+  umask 022
+  release_version="$(curl -fsSL https://api.github.com/repos/PyPNMApps/raven/releases/latest |
+    python3 -c 'import json,sys; print(json.load(sys.stdin)["tag_name"].removeprefix("v"))')"
+  download_dir="$(mktemp -d /tmp/raven-install.XXXXXX)"
+  chmod 755 "$download_dir"
+  cd "$download_dir"
+  release_url="https://github.com/PyPNMApps/raven/releases/download/v${release_version}"
+  packages=("raven_${release_version}_amd64.deb")
+  if dpkg --compare-versions "$release_version" lt 0.4.2; then
+    packages=("pnm-decode_${release_version}_amd64.deb" "${packages[@]}")
+  fi
+  for asset in SHA256SUMS "${packages[@]}"; do
+    curl -fL --retry 3 "$release_url/$asset" -o "$asset"
+  done
+  sha256sum --ignore-missing --check SHA256SUMS
+  sudo apt install "${packages[@]/#/./}"
+  if [ -x /opt/raven/pnm-decode ]; then
+    /opt/raven/pnm-decode --version
+  else
+    pnm-decode --version
+  fi
+  printf 'Downloaded packages: %s\n' "$download_dir"
+)
+```
+
+The printed temporary directory contains the downloads. If a required package is
+missing or verification fails, installation stops. Launch `raven` afterward from
+a graphical desktop terminal as your normal user.
+
+### Manual download for this release
+
+Download the desktop DEB and `SHA256SUMS` from this release. In the download directory:
 
 ```bash
 sha256sum --ignore-missing --check SHA256SUMS &&
-sudo apt install ./pnm-decode_{{VERSION}}_amd64.deb ./raven_{{VERSION}}_amd64.deb
+sudo apt install ./raven_{{VERSION}}_amd64.deb
 ```
 
-Launch **RAVEN** from the application menu, or run `raven` inside your graphical desktop session. The CLI is available as `pnm-decode`; read its manual with `man pnm-decode`.
+Launch **RAVEN** from the application menu, or run `raven` inside your graphical desktop session. The bundled CLI is `/opt/raven/pnm-decode`; read its manual with `man /opt/raven/share/pnm-decode.1`. The optional CLI-only DEB provides global `pnm-decode` and `man pnm-decode` commands.
 
 **CLI only:** install just `pnm-decode_{{VERSION}}_amd64.deb` using APT.
 
-**Update:** quit the viewer, then install both new-version DEBs with APT.
+**Update:** quit the viewer, then install the new desktop DEB with APT.
 
 **Uninstall the viewer:**
 
@@ -29,7 +70,7 @@ Launch **RAVEN** from the application menu, or run `raven` inside your graphical
 sudo apt remove raven
 ```
 
-This leaves the separately owned CLI installed. To remove it too, run `sudo apt remove pnm-decode`.
+This also removes the bundled CLI, while preserving any independently installed CLI package. To remove it too, run `sudo apt remove pnm-decode`.
 
 [Ubuntu installation and uninstall guide]({{SOURCE_URL}}/docs/install/ubuntu.md)
 

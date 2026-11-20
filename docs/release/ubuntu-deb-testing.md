@@ -18,7 +18,7 @@ For an explicitly requested troubleshooting run, open **Actions → Ubuntu 22.04
 Extract it into a fresh directory, keeping one version per directory. It includes:
 
 - `pnm-decode_VERSION_amd64.deb` — CLI/manual.
-- `raven_VERSION_amd64.deb` — viewer, with a matching CLI dependency.
+- `raven_VERSION_amd64.deb` — complete viewer with bundled CLI/manual (from 0.4.2).
 - Existing CLI archive, SHA256SUMS, SBOM and build/dependency metadata.
 
 The job enforces version/master ancestry, CodeQL/static checks, Rust and Qt/QML
@@ -30,13 +30,16 @@ notes. It refuses to change an already public release.
 
 ## Install or manually upgrade
 
+Releases through 0.4.1 require both same-version DEBs. New desktop packages
+bundle the CLI/manual; install the separate CLI DEB only for a global CLI.
+
 On a disposable Ubuntu 22.04 x64 test VM, open a terminal in the extracted
-artifact directory. Verify its bytes, then install both packages together:
+artifact directory. Verify its bytes, then install the complete desktop package (from 0.4.2):
 
 ```bash
 sha256sum --check SHA256SUMS
-sudo apt install ./pnm-decode_*_amd64.deb ./raven_*_amd64.deb
-pnm-decode --version
+sudo apt install ./raven_*_amd64.deb
+/opt/raven/pnm-decode --version
 raven
 ```
 

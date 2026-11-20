@@ -2,7 +2,7 @@
  * Copyright 2026 PNM Viewer contributors
  * SPDX-License-Identifier: GPL-3.0-only
  */
-//! Paired Ubuntu update identity, download and authenticated installation.
+//! Ubuntu update identity, download and authenticated installation.
 mod download;
 mod install;
 #[cfg(test)]
@@ -12,7 +12,7 @@ pub use download::download;
 pub use install::{install, install_elevated, restart};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::Path};
-const MAX_PACKAGE_BYTES: u64 = 50_000_000;
+const MAX_PACKAGE_BYTES: u64 = 75_000_000;
 const INSTALLED_VIEWER: &str = "/opt/raven/raven";
 const PACKAGES: [&str; 2] = ["pnm-decode", "raven"];
 
@@ -34,7 +34,7 @@ pub struct Package {
     pub url: String,
 }
 
-/// One newer version containing both the CLI and viewer DEBs.
+/// One newer desktop version, retaining paired DEBs for legacy releases.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct InstallPlan {
     pub version: String,
@@ -42,17 +42,27 @@ pub struct InstallPlan {
 }
 
 impl InstallPlan {
-    /// Validates the same-version Ubuntu pair using GitHub's asset digests.
+    // Releases through 0.4.1 require the separately installed CLI. Later desktop
+    // packages own a private decoder; never modify an optional global CLI.
+    fn package_names(version: &str) -> Result<&'static [&'static str], String> {
+        if ReleaseVersion::parse(version)? >= ReleaseVersion::parse("0.4.2")? {
+            Ok(&["raven"])
+        } else {
+            Ok(&PACKAGES)
+        }
+    }
+
+    /// Validates the required Ubuntu packages using GitHub's asset digests.
     /// # Arguments
     /// * `version` - Stable numeric triple without a tag prefix.
     /// * `assets` - Assets from this project's published release metadata.
     /// # Returns
-    /// A validated CLI-first pair, independent of release asset ordering.
+    /// A desktop-only plan from 0.4.2, or the legacy CLI-first pair before it.
     /// # Errors
     /// Rejects absent/duplicate assets, invalid identity, size or digest.
     pub fn from_assets(version: &str, assets: &[ReleaseAsset]) -> Result<Self, String> {
         let mut packages = Vec::new();
-        for package in PACKAGES {
+        for package in Self::package_names(version)? {
             let name = format!("{package}_{version}_amd64.deb");
             let mut matching = assets.iter().filter(|asset| asset.name == name);
             let asset = matching
@@ -83,15 +93,15 @@ impl InstallPlan {
 
     /// Checks a deserialized plan before any download or elevated staging.
     /// # Returns
-    /// Success only for the exact same-version project-owned package pair.
+    /// Success only for the exact project-owned package set for this version.
     /// # Errors
     /// Rejects unexpected filenames, URLs, digest syntax, sizes or versions.
     pub fn validate(&self) -> Result<(), String> {
-        ReleaseVersion::parse(&self.version)?;
-        if self.version.starts_with('v') || self.packages.len() != PACKAGES.len() {
+        let expected_packages = Self::package_names(&self.version)?;
+        if self.version.starts_with('v') || self.packages.len() != expected_packages.len() {
             return Err("Invalid Ubuntu update plan.".into());
         }
-        for (package, expected) in self.packages.iter().zip(PACKAGES) {
+        for (package, expected) in self.packages.iter().zip(expected_packages) {
             let name = format!("{expected}_{}_amd64.deb", self.version);
             let url = format!(
                 "{}/download/v{}/{name}",

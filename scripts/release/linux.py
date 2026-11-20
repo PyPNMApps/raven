@@ -99,8 +99,8 @@ def control(stage, name, version, dependencies, description):
 def build(stage, output, version):
     """Build CLI and viewer DEBs from native release binaries.
 
-    The viewer depends on the same-version CLI package; removing it never owns
-    the separately installed CLI files. All Qt files live under a private prefix.
+    The viewer bundles a private same-version CLI and manual. The optional CLI
+    package owns separate global files; either package can be removed independently. All Qt files live under a private prefix.
     """
     cli_stage = stage / 'cli-deb'
     cli_bin = cli_stage / 'usr/bin'
@@ -119,6 +119,7 @@ def build(stage, output, version):
     payload = gui_stage / 'opt/raven'
     payload.mkdir(parents=True)
     shutil.copy2(binary_path(gui=True), payload / 'raven')
+    shutil.copy2(binary_path(), payload / 'pnm-decode')
     deploy_qt(payload)
     notices(payload / 'share')
     bundle(payload / DEMO_DIRECTORY)
@@ -135,7 +136,7 @@ def build(stage, output, version):
     icons.mkdir(parents=True)
     shutil.copy2(ROOT / 'docs/images/raven-icon-dark.png', icons / 'raven.png')
     control(gui_stage, 'raven', version,
-            f'pnm-decode (= {version}), {SYSTEM_DEPENDENCIES}',
+            SYSTEM_DEPENDENCIES,
             'Native Qt DOCSIS PNM viewer (development build)')
     inventory(payload, output / 'linux-installed-files.json')
     run(['dpkg-deb', '--root-owner-group', '-Zxz', '--build', gui_stage,
