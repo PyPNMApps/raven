@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-only
  */
 //! Downstream channel-response analysis and bounded I/Q presentation.
+pub mod collection;
 use crate::capture::{
     chart::{ChartMetadata, Chip, MeasurementView},
     Diagnostic, MAX_VIEW_SAMPLES,

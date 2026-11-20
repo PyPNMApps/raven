@@ -126,6 +126,12 @@ reference it but must state that evidence files are absent from fresh clones.
 Use the versioned specification skills and parser tests to reconstruct evidence
 when needed; do not assume those local records are distributed with the project.
 
+## Measurement displays
+
+Apply `skills/measurement-visualization/SKILL.md` when adding or changing a
+measurement display, including zoom/reset, units, trace controls, examples and
+reporting requirements.
+
 ## Testing
 
 Apply `skills/pnm-testing/SKILL.md` for Rust parser and numeric work. Keep one

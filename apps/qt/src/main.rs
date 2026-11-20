@@ -5,6 +5,7 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 mod ai;
 mod backend;
+mod channel_estimation_collection;
 mod profile_performance;
 mod reports;
 mod spectrum_collection;

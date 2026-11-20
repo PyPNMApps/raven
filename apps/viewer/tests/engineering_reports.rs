@@ -216,6 +216,7 @@ fn all_single_measurements_and_collection_snapshots_share_the_renderer_contract(
         "RxMER Playback",
         "Spectrum Min-Avg-Max",
         "Spectrum Playback",
+        "Multi Channel Estimation",
         "US Pre-EQ Compare",
         "OFDM Profile Performance",
     ] {

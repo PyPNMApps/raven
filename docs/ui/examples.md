@@ -1,7 +1,7 @@
 # Bundled example captures
 
 Desktop installers include single captures, an OFDM Profile Performance demo,
-RxMER and Spectrum collections, and an upstream pre-EQ comparison pair. No download, modem or server is required.
+RxMER, Spectrum and channel-estimation collections, and an upstream pre-EQ comparison pair. No download, modem or server is required.
 
 Capture, archive and folder selection starts in **files → demo**. Choose
 **Open** for a single capture or use the left-gutter collection/compare actions.
@@ -32,6 +32,8 @@ files/demo/
 │   ├── single-channel.zip
 │   ├── multiple-channels.zip
 │   └── multiple-modems.zip
+├── channel-estimation/
+│   └── multiple-captures.zip
 ├── spectrum/
 │   └── synthetic-time-series.zip
 └── us-pre-eq/
@@ -121,3 +123,9 @@ Open `spectrum/synthetic-time-series.zip` from **Spectrum Analyzer → Min-Avg-M
 or **Playback**. Its twelve frames have synthetic timestamps/levels and a moving
 peak; acquisition settings remain identical. This is a labeled demonstration,
 not real time-series measurement data. See [the guide](measurements/spectrum-analyzer/collections.md).
+
+## Multi-capture channel estimation
+
+Open `channel-estimation/multiple-captures.zip` from **DS Channel Estimation →
+Multi Capture**. The 75 real sanitized lab captures cover two channels. See the
+[walkthrough and screenshots](measurements/channel-estimation/collections.md).

@@ -90,9 +90,9 @@ class InstallerSampleTests(unittest.TestCase):
         """Check all registered sources without opening or generating a ZIP."""
         with patch.object(zipfile, 'ZipFile', side_effect=AssertionError('Unexpected ZIP access')):
             datasets = samples.check_sources()
-        self.assertEqual(len(datasets), 5)
+        self.assertEqual(len(datasets), 6)
         self.assertEqual(sum(len([item for item in entry['files'] if item['path'].endswith('.bin')])
-                             for entry in datasets), 381)
+                             for entry in datasets), 456)
 
     def test_generated_zips_repeat_and_installed_resources_match(self):
         """Bundle deterministic ZIPs and verify deployed bytes on each OS layout."""
@@ -107,7 +107,7 @@ class InstallerSampleTests(unittest.TestCase):
             mac.parent.mkdir(parents=True)
             shutil.copytree(first, mac)
             self.assertEqual(samples.installed_directory(root / 'Viewer.app/Contents/MacOS/raven'), mac)
-            for archive in first.glob('rxmer/*.zip'):
+            for archive in first.rglob('*.zip'):
                 self.assertEqual(archive.read_bytes(), (second / archive.relative_to(first)).read_bytes())
                 with zipfile.ZipFile(archive) as source:
                     self.assertTrue(all(info.date_time == (1980, 1, 1, 0, 0, 0) for info in source.infolist()))

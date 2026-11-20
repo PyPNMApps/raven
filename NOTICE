@@ -32,3 +32,10 @@ Native AI credential storage
 keyring 3.6.3 (MIT OR Apache-2.0), https://github.com/hwchen/keyring-rs,
 provides native OS credential storage. Preserve the original license notices in
 LICENSES/keyring and the generated dependency license inventory.
+
+Channel-estimation collection algorithm reference
+-------------------------------------------------
+Complex snapshot averaging and first-order-edge group delay follow the mathematical
+order described by PyPNM's GroupDelayCalculator at commit
+82bbf79fe04a0b5e766dc3eb4d5ca2004008bca9. The Rust implementation adds explicit
+excluded/zero-response gap handling and has no Python runtime dependency.

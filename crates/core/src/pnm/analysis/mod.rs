@@ -10,3 +10,5 @@ pub mod upstream_pre_equalization;
 pub mod rxmer;
 
 pub mod spectrum;
+
+pub mod channel_estimation;

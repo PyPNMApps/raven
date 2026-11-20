@@ -65,3 +65,20 @@ text, but do not automatically enable/send provider requests. Existing OFDM AI
 responses use the same renderer after validation. See
 [report coverage](engineering-reports.md#analysis-coverage-and-lifecycles).
 New analyses must apply `skills/pnm-analysis-assistance/SKILL.md`.
+
+## Multi-capture channel estimation — prepared question 1.1
+
+Owner: `channel-estimation-collection`, derived local analysis. Review compatible
+MAC/channel/grid capture counts, complex-mean magnitude and group delay; preserve
+units (dB, µs display, seconds export), excluded-carrier gaps and chronology.
+Explain that delay comes from mean I/Q and is not averaged delay, and that the
+mean's magnitude can fall below the temporal minimum. Do not infer PLC positions
+or physical fault causes. The Reports action supplies the prepared question and
+existing local evidence; no new live provider route is enabled.
+
+Validation: core independent mean/delay tests, viewer import/export/zoom tests,
+QML metric/trace controls, and native `--channel-estimation-smoke` report creation.
+
+Channel-estimation collection question **1.1** also distinguishes single-capture
+playback (`average_method: single_capture`) from temporal aggregation. Frame
+index/count and capture UTC derive from the current collection, never filenames.

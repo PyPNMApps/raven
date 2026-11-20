@@ -2,6 +2,8 @@
 
 [All measurements](../../measurements.md) · [User guide](../../README.md) · [Project README](../../../../README.md)
 
+For folders/archives of repeated captures, use [Multi Capture](collections.md).
+
 ## Magnitude
 
 

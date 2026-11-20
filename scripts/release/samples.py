@@ -71,7 +71,7 @@ def check_sources():
         directory = DEMO_ROOT / source_name
         if directory.is_symlink() or not directory.is_dir() or len(source_name.parts) != 1:
             raise ValueError('Invalid expanded demo source')
-        if str(output) in outputs or output.parts[0] not in ('rxmer', 'spectrum', 'us-pre-eq'):
+        if str(output) in outputs or output.parts[0] not in ('rxmer', 'spectrum', 'us-pre-eq', 'channel-estimation'):
             raise ValueError('Duplicate or invalid demo output')
         outputs.add(str(output))
         if entry['archive'] != str(output).endswith('.zip'):
@@ -188,6 +188,7 @@ def bundle(destination):
             '- ofdm-profile-performance/: matching profile, RxMER and optional channel estimation; use OFDM Profile Performance.\n'
             '- rxmer/: ZIP collections for Min-Avg-Max and Playback.\n'
             '- spectrum/: explicitly synthetic standard PNN9 temporal demo.\n'
+            '- channel-estimation/: real sanitized multi-capture channel estimates.\n'
             '- us-pre-eq/comparison/: original.bin and last-update.bin; use Compare.\n\n'
             'All captures are sanitized before ZIP generation. Distinct modems use '
             'sequential 00:ca:00 aliases. Installed examples are read-only; export '

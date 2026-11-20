@@ -191,6 +191,7 @@ if navigation is hidden.
 | **Single Capture** | **Open** or one dropped PNM file | Inspect one capture and export decoded JSON |
 | [**OFDM Profile Performance**](measurements/ofdm-profile-performance/README.md) | **Select captures…** | Compare profile references with RxMER and simulate FEC/LDPC performance |
 | [**RxMER → Min-Avg-Max / Playback**](measurements/rxmer/README.md) | A capture folder or archive | Aggregate or play captures over time |
+| [**DS Channel Estimation → Multi Capture / Playback**](measurements/channel-estimation/collections.md) | A capture folder or archive | Complex-average estimates and derive mean group delay, or play individual captures in time order |
 | [**Spectrum Analyzer → Min-Avg-Max / Playback**](measurements/spectrum-analyzer/collections.md) | A capture folder or archive | Compare compatible spectrum captures over time |
 | [**US Pre-EQ → Compare**](measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) | Original and last-update captures | Compare the original correction with the predicted updated response |
 

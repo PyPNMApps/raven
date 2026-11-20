@@ -40,6 +40,29 @@ pub fn group_delay_seconds(
     samples: &[Option<IqPair>],
     spacing_hz: FrequencyHz,
 ) -> Vec<Option<GroupDelaySeconds>> {
+    group_delay_with_edges(samples, spacing_hz, true)
+}
+
+/// Differentiates unwrapped phase with first-order edges, matching PyPNM's
+/// snapshot-averaged group-delay calculator on finite, contiguous inputs.
+/// # Arguments
+/// * `samples` - Complex response; missing/zero/nonfinite values split runs.
+/// * `spacing_hz` - Positive uniform carrier step in Hz.
+/// # Returns
+/// Seconds using forward/backward endpoint and centered interior differences.
+/// Isolated samples and zero spacing yield None. No phase alignment is invented.
+pub fn group_delay_seconds_first_order(
+    samples: &[Option<IqPair>],
+    spacing_hz: FrequencyHz,
+) -> Vec<Option<GroupDelaySeconds>> {
+    group_delay_with_edges(samples, spacing_hz, false)
+}
+
+fn group_delay_with_edges(
+    samples: &[Option<IqPair>],
+    spacing_hz: FrequencyHz,
+    second_order: bool,
+) -> Vec<Option<GroupDelaySeconds>> {
     let mut delays = vec![None; samples.len()];
     if spacing_hz == 0 {
         return delays;
@@ -76,6 +99,10 @@ pub fn group_delay_seconds(
                 continue;
             } else if length == 2 {
                 phases[start + 1].unwrap() - phases[start].unwrap()
+            } else if index == start && !second_order {
+                phases[index + 1].unwrap() - phases[index].unwrap()
+            } else if index == end - 1 && !second_order {
+                phases[index].unwrap() - phases[index - 1].unwrap()
             } else if index == start {
                 (-3.0 * phases[index].unwrap() + 4.0 * phases[index + 1].unwrap()
                     - phases[index + 2].unwrap())

@@ -387,3 +387,21 @@ shared `chartStyleChanged` signal repaints Canvas-based line charts immediately,
 while Min/Avg/Max legend outlines bind to the same effective colors. Grid and
 carrier-marker geometry remain separate from trace width. No measurement math
 or JSON contract changes. See the [user guide](../ui/settings.md).
+
+## Multi-capture channel-estimation smoke
+
+After building, run the native offline folder/archive, report, export and
+source-range smoke against the sanitized examples:
+
+```bash
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software ./scripts/qt-desktop.sh --skip-build \
+  --channel-estimation-smoke \
+  "file://$PWD/tests/fixtures/demos/channel-estimation-multi-capture" \
+  "$PWD/local/channel-estimation-review/new-review"
+```
+
+Create the output directory first and use a fresh prefix; export refuses to
+overwrite existing files. The check writes full-resolution JSON and native
+magnitude/group-delay screenshots in both themes, then prints `CE_COLLECTION_OK`.
+It does not contact providers, check for updates or install packages. An archive
+URL can replace the folder URL. See [design and math](channel-estimation-collections.md).

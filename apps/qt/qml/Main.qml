@@ -27,6 +27,7 @@ ApplicationWindow {
     ViewerBackend { id: backend }
     ViewerBackend { id: comparisonBackend }
     SpectrumCollectionBackend { id: spectrumBackend }
+    ChannelEstimationCollectionBackend { id: channelEstimationBackend }
     ProfilePerformanceBackend { id: ofdmBackend }
     UpdateBackend { id: updateBackend }
     AiBackend { id: aiBackend }
@@ -34,7 +35,9 @@ ApplicationWindow {
     function openEngineeringReport() {
         rxmerCollection.pausePlayback()
         spectrumCollection.pausePlayback()
+        channelEstimationCollection.pausePlayback()
         if(ofdmSelected) engineeringReports.present(ofdmBackend.engineering_report())
+        else if(channelEstimationSelected) engineeringReports.present(channelEstimationBackend.engineering_report())
         else if(spectrumCollectionSelected) engineeringReports.present(spectrumBackend.engineering_report())
         else if(comparisonSelected) engineeringReports.present(comparisonBackend.engineering_report("pre-eq"))
         else if(rxmerCollectionSelected) engineeringReports.present(backend.engineering_report(rxmerPlaybackSelected ? "rxmer-playback" : "rxmer-collection"))
@@ -53,6 +56,7 @@ ApplicationWindow {
     }
     Connections {target:comparisonBackend;function onPre_eq_jsonChanged(){engineeringReports.close()}}
     Connections {target:spectrumBackend;function onView_jsonChanged(){engineeringReports.close()}}
+    Connections {target:channelEstimationBackend;function onView_jsonChanged(){engineeringReports.close()}}
     Connections {target:ofdmBackend;function onResult_jsonChanged(){engineeringReports.close()}}
 
     readonly property url initialCaptureFolder: {
@@ -70,7 +74,7 @@ ApplicationWindow {
         surface: captureSurface
         openCaptureDialog: openDialog
         captureSelectionDialogs: [openDialog, collectionFolderDialog, collectionArchiveDialog,
-            spectrumFolderDialog, spectrumArchiveDialog, preEqOriginalDialog, preEqOpenDialog, ofdmWorkspace.capturePicker]
+            channelEstimationFolderDialog, channelEstimationArchiveDialog, spectrumFolderDialog, spectrumArchiveDialog, preEqOriginalDialog, preEqOpenDialog, ofdmWorkspace.capturePicker]
         exportCaptureDialog: saveDialog
     }
     OfdmProfileSmoke {
@@ -80,6 +84,9 @@ ApplicationWindow {
         surface: captureSurface
         applicationWindow: window
         theme: appTheme
+    }
+    ChannelEstimationCollectionSmoke {
+        service:channelEstimationBackend; workspace:channelEstimationCollection; applicationWindow:window; theme:appTheme; surface:window.contentItem.parent
     }
     AiSetupSmoke {
         service: aiBackend
@@ -95,7 +102,7 @@ ApplicationWindow {
         if(Qt.application.arguments.indexOf("--reports-demo")>=0) Qt.callLater(function(){engineeringReports.gallery()})
         backend.set_dark_icon(appTheme.dark)
         // Packaged smoke checks stay offline; normal launch checks once, asynchronously.
-        if (Qt.application.arguments.indexOf("--reports-demo") < 0 && Qt.application.arguments.indexOf("--report-smoke") < 0 && Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0 && Qt.application.arguments.indexOf("--ai-setup-smoke") < 0) {
+        if (Qt.application.arguments.indexOf("--channel-estimation-smoke") < 0 && Qt.application.arguments.indexOf("--reports-demo") < 0 && Qt.application.arguments.indexOf("--report-smoke") < 0 && Qt.application.arguments.indexOf("--smoke-test") < 0 && Qt.application.arguments.indexOf("--ofdm-smoke") < 0 && Qt.application.arguments.indexOf("--ai-setup-smoke") < 0) {
             Qt.callLater(function() { updateBackend.check_updates() })
         }
     }
@@ -133,11 +140,14 @@ ApplicationWindow {
         engineeringReports.close()
         rxmerCollection.pausePlayback()
         spectrumCollection.pausePlayback()
+        channelEstimationCollection.pausePlayback()
         rxmerCollectionSelected=name==="rxmer"
         spectrumCollectionSelected=name==="spectrum"
+        channelEstimationSelected=name==="channel-estimation"
         comparisonSelected=name==="pre-eq"
         ofdmSelected=name==="ofdm"
     }
+    property bool channelEstimationSelected:false
     property bool spectrumCollectionSelected:false
     property bool spectrumPlaybackSelected:false
     property bool ofdmSelected: false
@@ -148,7 +158,7 @@ ApplicationWindow {
     readonly property var preEqAttachment: JSON.parse(comparisonBackend.pre_eq_attachment_json)
     readonly property var preEqResult: JSON.parse(comparisonBackend.pre_eq_json)
     property bool navigationVisible: true
-    readonly property bool blocked: engineeringReports.visible || ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aiServices.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
+    readonly property bool blocked: channelEstimationBackend.busy || channelEstimationCollection.popupVisible || channelEstimationFolderDialog.visible || channelEstimationArchiveDialog.visible || channelEstimationSaveDialog.visible || engineeringReports.visible || ofdmBackend.busy || ofdmWorkspace.popupVisible || spectrumBackend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumCollection.popupVisible || spectrumFolderDialog.visible || spectrumArchiveDialog.visible || spectrumSaveDialog.visible || preEqOriginalDialog.visible || backend.busy || backend.pre_eq_busy || backend.rxmer_collection_busy || rxmerCollection.popupVisible || collectionArchiveDialog.visible || collectionFolderDialog.visible || collectionSaveDialog.visible || fileError.visible || preEqOpenDialog.visible || preEqSaveDialog.visible || openDialog.visible || saveDialog.visible || systemDialog.visible || aiServices.visible || chartSettings.visible || aboutDialog.visible || profileBandwidth.popupVisible || bitLoadingDialog.visible || analysisSaveDialog.visible
 
     CaptureDropArea {
         parent: Overlay.overlay
@@ -159,7 +169,8 @@ ApplicationWindow {
         attachmentTarget: comparisonBackend.pre_eq_current && window.comparisonSelected ? preEqWorkspace.updateTarget : null
         onAttachmentDropped: captureUrl => comparisonBackend.attach_pre_eq_update(captureUrl)
         onFileDropped: captureUrl => {
-            if (window.spectrumCollectionSelected) spectrumBackend.import_collection(captureUrl)
+            if (window.channelEstimationSelected) channelEstimationBackend.import_collection(captureUrl)
+            else if (window.spectrumCollectionSelected) spectrumBackend.import_collection(captureUrl)
             else if (window.rxmerCollectionSelected) backend.import_rxmer_collection(captureUrl)
             else if (window.comparisonSelected) comparisonBackend.open_pre_eq_original(captureUrl)
             else backend.open_file(captureUrl)
@@ -168,6 +179,10 @@ ApplicationWindow {
 
     Connections { target:spectrumBackend;function onError_messageChanged(){fileError.showError(spectrumBackend.error_message)} }
     Connections { target:comparisonBackend;function onError_messageChanged(){fileError.showError(comparisonBackend.error_message)}function onPre_eq_errorChanged(){fileError.showError(comparisonBackend.pre_eq_error)} }
+    Connections { target:channelEstimationBackend; function onError_messageChanged(){fileError.showError(channelEstimationBackend.error_message)} }
+    FolderDialog { id:channelEstimationFolderDialog; title:"Choose channel-estimation capture folder"; currentFolder:window.initialCaptureFolder; onAccepted:channelEstimationBackend.import_collection(selectedFolder) }
+    FileDialog { id:channelEstimationArchiveDialog; title:"Open channel-estimation archive"; currentFolder:window.initialCaptureFolder; nameFilters:["Capture archives (*.zip *.tar *.tar.gz *.tgz)","All files (*)"]; onAccepted:channelEstimationBackend.import_collection(selectedFile) }
+    FileDialog { id:channelEstimationSaveDialog; title:"Export multi channel estimation"; fileMode:FileDialog.SaveFile; nameFilters:["JSON files (*.json)"]; defaultSuffix:"json"; onAccepted:channelEstimationBackend.export_json(selectedFile) }
     FolderDialog {id:spectrumFolderDialog;title:"Choose standard spectrum capture folder";currentFolder:window.initialCaptureFolder;onAccepted:spectrumBackend.import_collection(selectedFolder)}
     FileDialog {id:spectrumArchiveDialog;title:"Open standard spectrum capture archive";currentFolder:window.initialCaptureFolder;nameFilters:["Capture archives (*.zip *.tar *.tar.gz *.tgz)","All files (*)"];onAccepted:spectrumBackend.import_collection(selectedFile)}
     FileDialog {id:spectrumSaveDialog;title:"Export full-resolution spectrum analysis";fileMode:FileDialog.SaveFile;nameFilters:["JSON files (*.json)"];defaultSuffix:"json";onAccepted:spectrumBackend.export_json(selectedFile)}
@@ -341,7 +356,7 @@ ApplicationWindow {
         theme: appTheme
         updates: updateBackend
         appVersion: backend.app_version
-        captureBusy: ofdmBackend.busy || backend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumBackend.busy || backend.rxmer_collection_busy
+        captureBusy: channelEstimationBackend.busy || ofdmBackend.busy || backend.busy || comparisonBackend.busy || comparisonBackend.pre_eq_busy || spectrumBackend.busy || backend.rxmer_collection_busy
         onRestartRequested: Qt.quit()
         onOpenReleaseRequested: address => Qt.openUrlExternally(address)
         onOpenIssueRequested: address => Qt.openUrlExternally(address)
@@ -356,7 +371,7 @@ ApplicationWindow {
         spacing: 0
         Rectangle {
             visible: window.navigationVisible
-            Layout.preferredWidth: (window.rxmerCollectionSelected || window.spectrumCollectionSelected) ? 340 : 220
+            Layout.preferredWidth: (window.rxmerCollectionSelected || window.spectrumCollectionSelected || window.channelEstimationSelected) ? 340 : 220
             Layout.fillHeight: true
             color: appTheme.sidebar
             ScrollView {
@@ -434,11 +449,11 @@ ApplicationWindow {
                 }
 
                 Label { text: "WORKSPACE"; color: appTheme.muted; font.pixelSize: 10 }
-                Label { text: window.ofdmSelected ? "OFDM Profile Performance" : window.comparisonSelected ? "US Pre-EQ" : window.spectrumCollectionSelected ? "Spectrum Analyzer" : window.rxmerCollectionSelected ? "RxMER" : backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
+                Label { text: window.ofdmSelected ? "OFDM Profile Performance" : window.comparisonSelected ? "US Pre-EQ" : window.channelEstimationSelected ? "DS Channel Estimation" : window.spectrumCollectionSelected ? "Spectrum Analyzer" : window.rxmerCollectionSelected ? "RxMER" : backend.loaded ? (window.metadata.title || "Measurement") : "Home"; color: appTheme.accent; Layout.fillWidth: true; wrapMode: Text.Wrap }
                 ThemeButton {
                     objectName:"showSingleCapture"
                     theme:appTheme;text:"Single Capture";Layout.fillWidth:true
-                    borderHighlighted:!window.ofdmSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.comparisonSelected
+                    borderHighlighted:!window.ofdmSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.channelEstimationSelected && !window.comparisonSelected
                     onClicked:window.selectWorkspace("single")
                 }
                 ThemeButton {
@@ -493,6 +508,15 @@ ApplicationWindow {
 
                 }
                 ToolButton {
+                    id:channelEstimationToolGroup; objectName:"toggleChannelEstimationTools"; text:(checked ? "▾  " : "▸  ")+"DS Channel Estimation"; checkable:true; checked:false; Layout.fillWidth:true
+                    contentItem:Label { text:channelEstimationToolGroup.text; color:appTheme.text; font.bold:true; verticalAlignment:Text.AlignVCenter }
+                }
+                ColumnLayout {
+                    visible:channelEstimationToolGroup.checked; Layout.fillWidth:true; Layout.leftMargin:14
+                    ThemeButton { objectName:"showChannelEstimationMulti"; enabled:!channelEstimationBackend.busy; theme:appTheme; text:"Multi Capture"; Layout.fillWidth:true; borderHighlighted:window.channelEstimationSelected && !channelEstimationCollection.playbackMode; onClicked:{window.selectWorkspace("channel-estimation");channelEstimationCollection.playbackMode=false} }
+                    ThemeButton { objectName:"showChannelEstimationPlayback"; enabled:!channelEstimationBackend.busy; theme:appTheme; text:"Playback"; Layout.fillWidth:true; borderHighlighted:window.channelEstimationSelected && channelEstimationCollection.playbackMode; onClicked:{window.selectWorkspace("channel-estimation");channelEstimationCollection.playbackMode=true} }
+                }
+                ToolButton {
                     id:spectrumToolGroup;objectName:"toggleSpectrumTools";text:(checked ? "▾  " : "▸  ")+"Spectrum Analyzer";checkable:true;checked:false;Layout.fillWidth:true
                     contentItem:Label {text:spectrumToolGroup.text;color:appTheme.text;font.bold:true;verticalAlignment:Text.AlignVCenter}
                 }
@@ -528,6 +552,20 @@ ApplicationWindow {
                         onGroupRequested: (macAddress,groupId) => rxmerCollection.selectGroup(macAddress,groupId)
                     }
                     RxMerCollectionTree {
+                        namePrefix:"channelEstimation"; visible:window.channelEstimationSelected && (catalog.groups || []).length>0
+                        Layout.fillWidth:true; Layout.preferredHeight:Math.max(140,window.height-680); theme:appTheme
+                        catalog:JSON.parse(channelEstimationBackend.catalog_json); selectedMac:channelEstimationCollection.selectedMac; working:channelEstimationBackend.busy
+                        selectedGroup:channelEstimationCollection.selectedGroup
+                        playbackEnabled:channelEstimationCollection.playbackMode
+                        selectedFrame:channelEstimationCollection.viewport.frame_index || 0
+                        onFrameRequested:(mac,groupId,frame)=>{
+                            channelEstimationCollection.pausePlayback()
+                            if (channelEstimationCollection.selectedGroup !== groupId) channelEstimationCollection.selectGroup(mac,groupId)
+                            channelEstimationCollection.showFrame(frame)
+                        }
+                        onGroupRequested:(mac,groupId)=>channelEstimationCollection.selectGroup(mac,groupId)
+                    }
+                    RxMerCollectionTree {
                         namePrefix:"spectrum";visible:window.spectrumCollectionSelected && (catalog.groups || []).length>0
                         Layout.fillWidth:true;Layout.preferredHeight:Math.max(140,window.height-680);theme:appTheme
                         catalog:JSON.parse(spectrumBackend.catalog_json);selectedMac:spectrumCollection.selectedMac;working:spectrumBackend.busy
@@ -553,7 +591,7 @@ ApplicationWindow {
                 Accessible.role: Accessible.AlertMessage
             }
                 Rectangle {
-                    visible: !backend.loaded && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.comparisonSelected && !window.ofdmSelected
+                    visible: !backend.loaded && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.channelEstimationSelected && !window.comparisonSelected && !window.ofdmSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     color: appTheme.panel
@@ -595,6 +633,11 @@ ApplicationWindow {
                     onBitLoadingRequested: (start,count) => { window.averageAnalysisSelected=true; bitLoadingDialog.openRange(start,count) }
                     onExportRequested: collectionSaveDialog.open()
                 }
+                ChannelEstimationCollectionView {
+                    id:channelEstimationCollection; visible:window.channelEstimationSelected; Layout.fillWidth:true; Layout.fillHeight:true
+                    theme:appTheme; service:channelEstimationBackend; playbackBlocked:window.blocked
+                    onChooseDirectory:channelEstimationFolderDialog.open(); onChooseArchive:channelEstimationArchiveDialog.open(); onExportRequested:channelEstimationSaveDialog.open()
+                }
                 SpectrumCollectionView {
                     id:spectrumCollection;visible:window.spectrumCollectionSelected;Layout.fillWidth:true;Layout.fillHeight:true
                     theme:appTheme;service:spectrumBackend;playbackMode:window.spectrumPlaybackSelected;playbackBlocked:window.blocked
@@ -611,7 +654,7 @@ ApplicationWindow {
                     onChooseOriginal:preEqOriginalDialog.open();onChooseUpdate:preEqOpenDialog.open();onExportRequested:preEqSaveDialog.open()
                 }
                 Rectangle {
-                    visible: backend.loaded && !window.comparisonSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.ofdmSelected
+                    visible: backend.loaded && !window.comparisonSelected && !window.rxmerCollectionSelected && !window.spectrumCollectionSelected && !window.channelEstimationSelected && !window.ofdmSelected
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 300

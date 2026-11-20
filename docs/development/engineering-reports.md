@@ -113,6 +113,7 @@ disposes the old controls, including expanded-section state.
 | Analysis | Current local report owner |
 | --- | --- |
 | All nine single capture types (RxMER, spectrum, channel estimate, constellation, histogram, FEC, modulation, both pre-EQ types) | `ViewerBackend::engineering_report("single")`; capture metadata/table/evidence, plus real RxMER plot. |
+| DS Channel Estimation Multi Capture / Playback | Complex-average or individual-capture snapshot with provenance, mode and counts; prepared question 1.1. |
 | RxMER Min-Avg-Max and Playback | Existing RxMER collection view snapshot; current derived values. |
 | Spectrum Min-Avg-Max and Playback | `SpectrumCollectionBackend::engineering_report`; current derived view snapshot. |
 | US Pre-EQ Compare | Existing Rust comparison snapshot; no repeated correction arithmetic. |

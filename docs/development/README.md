@@ -30,3 +30,5 @@ working plans and private specification evidence in ignored root `development/`.
 [RAVEN migration](rebranding.md) records naming, compatibility and repository cutover.
 
 - [AI Assistance](ai-assistance.md) — session credentials, OpenAI OFDM evidence/approval, read-only reports and local validation.
+
+- [Multi-capture channel estimation](channel-estimation-collections.md): complex averaging, delay math, ownership and validation.

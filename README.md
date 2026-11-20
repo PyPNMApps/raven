@@ -46,7 +46,7 @@ its graph, and export decoded JSON. The native Qt interface uses a Rust backend.
 ## Workspaces
 
 Use **Single Capture** to open individual files. The left navigation also offers
-RxMER and Spectrum Analyzer collections, US Pre-EQ comparison, and
+RxMER, Spectrum Analyzer and DS Channel Estimation collections, US Pre-EQ comparison, and
 [**OFDM Profile Performance**](docs/ui/measurements/ofdm-profile-performance/README.md).
 
 For OFDM performance, select modulation-profile and RxMER captures, optionally
@@ -77,7 +77,7 @@ calculations. See the [AI Assistance guide](docs/ui/ai-assistance.md).
 | [OFDM Profile Performance](docs/ui/measurements/ofdm-profile-performance/README.md) | Profile/RxMER overlay, optional channel estimation and MCE, simulated FEC/LDPC counters |
 | [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [Playback](docs/ui/measurements/rxmer/playback.md); [Min-Avg-Max](docs/ui/measurements/rxmer/README.md#min-avg-max); [Modulation & Capacity](docs/ui/measurements/rxmer/README.md#modulation--capacity) |
 | [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude/RBW, [Min-Avg-Max and Playback](docs/ui/measurements/spectrum-analyzer/collections.md) |
-| [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density |
+| [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density; [Multi Capture](docs/ui/measurements/channel-estimation/collections.md) with complex averaging, mean-derived delay and chronological playback |
 | [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay, I/Q, and [Correction & Delta](docs/ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) |
 | [US Pre-EQ (last update)](docs/ui/measurements/upstream-pre-eq-last/README.md) | RNG-RSP update magnitude, group delay and I/Q dots and density |
 | [Histogram](docs/ui/measurements/histogram/README.md) | Hit counts by bin index |

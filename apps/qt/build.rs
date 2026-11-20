@@ -62,6 +62,7 @@ fn main() {
                 "src/backend.rs",
                 "src/update.rs",
                 "src/spectrum_collection.rs",
+                "src/channel_estimation_collection.rs",
                 "src/profile_performance.rs",
             ],
             qml_files: &[
@@ -104,6 +105,8 @@ fn main() {
                 "qml/MeasurementChart.qml",
                 "qml/SpectrumControls.qml",
                 "qml/SpectrumCollectionView.qml",
+                "qml/ChannelEstimationCollectionView.qml",
+                "qml/ChannelEstimationCollectionSmoke.qml",
                 "qml/PreEqWorkspace.qml",
                 "qml/OfdmProfileWorkspace.qml",
                 "qml/OfdmProfileSmoke.qml",
