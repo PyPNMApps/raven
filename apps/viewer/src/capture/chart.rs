@@ -142,6 +142,35 @@ impl Capture {
         let decoded = self.decoded()?;
         validate_view(&decoded, &view)?;
         match decoded {
+            DecodedPnm::CmtsUpstreamRxMer(capture) => Ok(ChartMetadata {
+                modulation_profile: None,
+                fec_summary: None,
+                histogram: false,
+                views: vec![],
+                view_index: 0,
+                spectrum_analysis: None,
+                title: "Upstream OFDMA RxMER — CMTS",
+                unit: "dB",
+                axis_label: "RxMER",
+                sample_count: capture.raw_values().len(),
+                minimum: 0.0,
+                maximum: 64.0,
+                chips: vec![
+                    Chip::new("CCAP", capture.ccap_id()),
+                    Chip::new("IfIndex", capture.if_index()),
+                    Chip::new(
+                        "CM MAC",
+                        capture
+                            .cm_mac_address()
+                            .iter()
+                            .map(|octet| format!("{octet:02x}"))
+                            .collect::<Vec<_>>()
+                            .join(":"),
+                    ),
+                    Chip::new("Subcarriers", capture.raw_values().len()),
+                    Chip::new("Spacing", format!("{} kHz", capture.spacing_khz())),
+                ],
+            }),
             DecodedPnm::ConstellationDisplay(capture) => {
                 Ok(crate::measurements::constellation::metadata(&capture))
             }
@@ -274,6 +303,16 @@ impl Capture {
             }
             DecodedPnm::RxMer(capture) => Ok(capture
                 .frequencies_hz()?
+                .zip(capture.values_db())
+                .enumerate()
+                .map(|(sample_index, (frequency_hz, value))| ChartPoint {
+                    sample_index,
+                    frequency_hz,
+                    value,
+                })
+                .collect()),
+            DecodedPnm::CmtsUpstreamRxMer(capture) => Ok(capture
+                .frequencies_hz()
                 .zip(capture.values_db())
                 .enumerate()
                 .map(|(sample_index, (frequency_hz, value))| ChartPoint {

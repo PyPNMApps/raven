@@ -201,3 +201,11 @@ The local Ubuntu package build and artifact verifier pass. The desktop DEB is
 artifacts and SHA-256 checksums verify. The existing locally extracted `patchelf`
 was used; no host package was installed. Generated packages remain ignored under
 `local/engineering-reports-packages-scroll-20261119/` and were not published.
+
+## CMTS upstream OFDMA RxMER
+
+PNN105 major2 single captures use the existing Rust capture/chart adapter and
+native report renderer. The local report includes a version1 prepared question
+with ID `cmts-upstream-rxmer`, preserving upstream probe scope and unavailable
+positions. There is no new live AI route, downstream capacity model or provider
+request. See the [guide](../ui/measurements/cmts-upstream-rxmer/README.md).

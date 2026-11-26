@@ -8,7 +8,7 @@ use crate::pnm::data_type::PnmFileType;
 
 // Binary signatures contain an ASCII family followed by a numeric type code.
 const PNN_PREFIX: &str = "PNN";
-/// Alternate PNM family prefix, reserved for future confirmed file identities.
+/// Legacy PNM family prefix; recognition does not imply a supported decoder.
 /// Defining this prefix does not alias PNM signatures to PNN decoder routes.
 pub const PNM_PREFIX: &str = "PNM";
 const LLD_PREFIX: &str = "LLD";
@@ -26,9 +26,10 @@ const SPECTRUM_ANALYSIS_CODE: u8 = 9;
 const MODULATION_PROFILE_CODE: u8 = 10;
 const LATENCY_REPORT_CODE: u8 = 1;
 
-/// Recognized PyPNM identities, independent of decoder availability.
+/// Recognized PNM identities, independent of decoder availability.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PnmFileKind {
+    CmtsUpstreamRxMer,
     SymbolCapture,
     ChannelEstimate,
     ConstellationDisplay,
@@ -50,6 +51,7 @@ pub enum HeaderLayout {
 /// Routing identity; shared routes do not erase distinct file identities.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PnmDecoderKind {
+    CmtsUpstreamRxMer,
     RxMer,
     UpstreamPreEqualization,
     ChannelEstimate,
@@ -69,7 +71,7 @@ pub struct FileDescriptor {
     pub tag: &'static str,
     pub prefix: &'static str,
     pub header_version: Option<PnmFormatVersion>,
-    /// Enabled for version 1.0 only; None means layout not yet verified here.
+    /// Enabled for the descriptor's evidenced version; None means unverified.
     pub layout: Option<HeaderLayout>,
     pub decoder: PnmDecoderKind,
 }
@@ -107,6 +109,14 @@ impl FileDescriptor {
 /// Central identity vocabulary; recognition alone does not enable decoding.
 /// RxMER: I27 Table 68 / I13 Table 101. FEC: I27 Table 71 / I13 Table 104.
 pub const FILE_TYPES: &[FileDescriptor] = &[
+    // CCAP-OSSI 3.1 I18 Table410 / 4.0 I02 Table411; CANN Table22.
+    FileDescriptor::new(PNM_PREFIX, 0x69, PnmFileKind::CmtsUpstreamRxMer, "PNM105"),
+    FileDescriptor::new(PNN_PREFIX, 0x69, PnmFileKind::CmtsUpstreamRxMer, "PNN105")
+        .with_header(
+            PnmFormatVersion { major: 2, minor: 0 },
+            HeaderLayout::WithCaptureTime,
+        )
+        .with_decoder(PnmDecoderKind::CmtsUpstreamRxMer),
     FileDescriptor::new(
         PNN_PREFIX,
         SYMBOL_CAPTURE_CODE,

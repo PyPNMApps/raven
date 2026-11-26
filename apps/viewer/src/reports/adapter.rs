@@ -173,14 +173,20 @@ pub fn from_capture(capture: &Capture, generation: u64) -> ReportResult<Value> {
     } else {
         None
     };
-    build_snapshot(
+    let mut report = build_snapshot(
         metadata.title,
         "single-capture",
         generation,
         &snapshot,
         Classification::Measured,
         chart,
-    )
+    )?;
+    if metadata.title == "Upstream OFDMA RxMER — CMTS" {
+        report["prepared_question_id"] = json!("cmts-upstream-rxmer");
+        report["prepared_question_revision"] = json!(1);
+        report["prepared_question"] = json!("Review the supplied CMTS upstream OFDMA probe RxMER. Describe the source CCAP/interface, measured carrier values and unavailable positions. Preserve supplied units and scope. Do not apply downstream capacity thresholds, infer a physical cause or invent missing evidence.");
+    }
+    Ok(report)
 }
 /// Adapts only the existing accepted AI narrative/evidence contract to native blocks.
 /// # Arguments

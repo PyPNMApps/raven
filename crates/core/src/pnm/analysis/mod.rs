@@ -12,3 +12,4 @@ pub mod rxmer;
 pub mod spectrum;
 
 pub mod channel_estimation;
+pub mod cmts_upstream_rxmer;

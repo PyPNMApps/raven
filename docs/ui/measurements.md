@@ -7,6 +7,7 @@ Each file type has its own guide and dark/light screenshots.
 | Capture | Guide and screenshots |
 | --- | --- |
 | OFDM Profile Performance | [Open guide](measurements/ofdm-profile-performance/README.md) |
+| CMTS upstream OFDMA RxMER | [Open guide](measurements/cmts-upstream-rxmer/README.md) |
 | RxMER | [Open guide](measurements/rxmer/README.md) |
 | Spectrum Analyzer | [Open guide](measurements/spectrum-analyzer/README.md) |
 | DS Channel Estimation | [Open guide](measurements/channel-estimation/README.md) |

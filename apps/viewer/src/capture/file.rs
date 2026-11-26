@@ -124,6 +124,7 @@ impl Capture {
     pub(crate) fn decoded(&self) -> Result<DecodedPnm<'_>, Diagnostic> {
         let decoded = PnmFile::from_bytes(&self.bytes).decode(ParseLimits::default())?;
         match decoded {
+            DecodedPnm::CmtsUpstreamRxMer(_) => Ok(decoded),
             DecodedPnm::UpstreamPreEqualization(_) => Ok(decoded),
             DecodedPnm::ConstellationDisplay(_) | DecodedPnm::RxMer(_) | DecodedPnm::SpectrumAnalysis(_) | DecodedPnm::ChannelEstimate(_) | DecodedPnm::Histogram(_) | DecodedPnm::FecSummary(_) | DecodedPnm::ModulationProfile(_) => Ok(decoded),
             _ => Err(Diagnostic::new("UnsupportedViewer", "This viewer supports RxMER, Spectrum Analyzer, DS Channel Estimation, Histogram, FEC Summary, Modulation Profile, Constellation Display and current/last-update Upstream Pre-EQ captures. Other formats remain available in pnm-decode.")),

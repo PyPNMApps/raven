@@ -394,3 +394,9 @@ summaries are shared Rust code; UI sampling never changes full exports.
 
 RxMER temporal [Min-Avg-Max statistics and average-line analysis](rxmer-min-avg-max.md)
 are derived analyses; they do not change the binary parser JSON.
+
+## CMTS upstream OFDMA RxMER
+
+PNN105 major2 is distinct from downstream PNN4. See the
+[field evidence and compatibility matrix](cmts-upstream-rxmer/format.md).
+Legacy PNM105 is recognized but its complete layout remains unsupported.

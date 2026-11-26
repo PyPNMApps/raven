@@ -19,5 +19,6 @@ pub mod cm_latency_rpt;
 pub mod cm_spectrum_analysis;
 pub mod cm_symbol_capture;
 pub mod cm_us_ofdma_pre_eq;
+pub mod cmts_us_ofdma_rxmer;
 pub mod parse_limits;
 mod support;

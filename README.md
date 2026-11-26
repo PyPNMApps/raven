@@ -76,6 +76,7 @@ calculations. See the [AI Assistance guide](docs/ui/ai-assistance.md).
 | --- | --- |
 | [OFDM Profile Performance](docs/ui/measurements/ofdm-profile-performance/README.md) | Profile/RxMER overlay, optional channel estimation and MCE, simulated FEC/LDPC counters |
 | [RxMER](docs/ui/measurements/rxmer/README.md) | MER by frequency; [Playback](docs/ui/measurements/rxmer/playback.md); [Min-Avg-Max](docs/ui/measurements/rxmer/README.md#min-avg-max); [Modulation & Capacity](docs/ui/measurements/rxmer/README.md#modulation--capacity) |
+| [CMTS upstream OFDMA RxMER](docs/ui/measurements/cmts-upstream-rxmer/README.md) | Single-capture MER/frequency, metadata, zoom and JSON; synthetic examples |
 | [Spectrum Analyzer](docs/ui/measurements/spectrum-analyzer/README.md) | Amplitude/RBW, [Min-Avg-Max and Playback](docs/ui/measurements/spectrum-analyzer/collections.md) |
 | [DS Channel Estimation](docs/ui/measurements/channel-estimation/README.md) | Magnitude, group delay and I/Q dots and density; [Multi Capture](docs/ui/measurements/channel-estimation/collections.md) with complex averaging, mean-derived delay and chronological playback |
 | [US Pre-EQ (current)](docs/ui/measurements/upstream-pre-eq/README.md) | Coefficient magnitude, group delay, I/Q, and [Correction & Delta](docs/ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter) |

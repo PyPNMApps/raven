@@ -688,7 +688,7 @@ ApplicationWindow {
                                                 anchors.centerIn: parent
                                                 spacing: 8
                                                 Label { text: modelData.title; color: appTheme.accent; font.pixelSize: 12; font.bold: true }
-                                                Label { text: modelData.value === undefined ? "" : modelData.value.toString(); color: appTheme.text; font.pixelSize: 12 }
+                                                Label { text: modelData.value === undefined ? "" : modelData.value.toString(); textFormat: Text.PlainText; color: appTheme.text; font.pixelSize: 12 }
                                             }
                                         }
                                     }

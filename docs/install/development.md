@@ -118,5 +118,10 @@ checks and project-local dependency ownership, adapted to Rust and Qt.
 
 ## CLI-only installation
 
+The optional [Python decoding library](../../bindings/python/README.md) uses an
+isolated virtual environment and pinned maturin development tool. It is not a
+desktop prerequisite and is not installed automatically by `--development`.
+The native desktop and CLI retain their existing installation requirements.
+
 After preparing the Rust toolchain, use `./install.sh --cli --prefix DIRECTORY`.
 This builds the decoder without Qt dependencies. See [CLI usage](../cli/usage.md).

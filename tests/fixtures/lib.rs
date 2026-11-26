@@ -6,6 +6,10 @@
 //! Binary inputs retain their upstream license and provenance in pypnm/.
 #![forbid(unsafe_code)]
 
+/// Explicitly synthetic CCAP RxMER binaries and independent expected manifests.
+pub const CMTS_RXMER_FIXTURE_DIRECTORY: &str =
+    concat!(env!("CARGO_MANIFEST_DIR"), "/synthetic/cmts-upstream-rxmer");
+
 // Anchor the single fixture directory to this package, not a caller's source
 // location or process working directory. Each filename is declared once below.
 macro_rules! capture {

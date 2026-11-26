@@ -11,6 +11,7 @@ use super::cm_ds_ofdm_modulation_profile::CmDsOfdmModulationProfile;
 use super::cm_latency_rpt::CmLatencyRpt;
 use super::cm_spectrum_analysis::CmSpectrumAnalysis;
 use super::cm_us_ofdma_pre_eq::CmUsOfdmaPreEq;
+use super::cmts_us_ofdma_rxmer::CmtsUsOfdmaRxMer;
 use super::{
     cm_ds_ofdm_rx_mer::{CmDsOfdmRxMer, ParseLimits},
     pnm_file_type::PnmDecoderKind,
@@ -28,6 +29,7 @@ pub struct PnmFile<'input> {
 /// Implemented second-tier decoder results; add variants as decoders land.
 #[derive(Debug, PartialEq)]
 pub enum DecodedPnm<'input> {
+    CmtsUpstreamRxMer(CmtsUsOfdmaRxMer<'input>),
     RxMer(CmDsOfdmRxMer<'input>),
     ChannelEstimate(CmDsOfdmChanEstimateCoef<'input>),
     ConstellationDisplay(CmDsConstDispMeas<'input>),
@@ -79,6 +81,9 @@ impl<'input> PnmFile<'input> {
     pub fn decode(&self, limits: ParseLimits) -> Result<DecodedPnm<'input>, ParseError> {
         let header = self.header.as_ref().map_err(Clone::clone)?;
         match header.descriptor().decoder {
+            PnmDecoderKind::CmtsUpstreamRxMer => Ok(DecodedPnm::CmtsUpstreamRxMer(
+                CmtsUsOfdmaRxMer::from_header(header.clone(), limits)?,
+            )),
             PnmDecoderKind::RxMer => Ok(DecodedPnm::RxMer(CmDsOfdmRxMer::from_header(
                 header.clone(),
                 limits,
@@ -144,6 +149,7 @@ impl Serialize for DecodedPnm<'_> {
         serializer: Output,
     ) -> Result<Output::Ok, Output::Error> {
         match self {
+            Self::CmtsUpstreamRxMer(capture) => capture.serialize(serializer),
             Self::RxMer(capture) => capture.serialize(serializer),
             Self::ChannelEstimate(capture) => capture.serialize(serializer),
             Self::ConstellationDisplay(capture) => capture.serialize(serializer),

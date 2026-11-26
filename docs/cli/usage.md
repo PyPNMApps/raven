@@ -271,3 +271,18 @@ A later file time does not prove update adjacency or actual application status.
 
 See the [current Pre-EQ guide](../ui/measurements/upstream-pre-eq/README.md#correction--delta-from-the-left-gutter)
 and [full synthetic comparison example](examples/pre-eq-comparison-synthetic.json).
+
+## CMTS upstream OFDMA RxMER
+
+```bash
+./scripts/cargo-local.sh run -p pnm-decode --locked -- \
+  tests/fixtures/synthetic/cmts-upstream-rxmer/golden.bin --stdout
+```
+
+PNN105 major2 decodes through the same Rust API as the optional Python library
+and Qt viewer. Export includes CCAP/RPD identities, full ifIndex, target CM,
+raw PreEq flag, sample octets, Hz centers and nullable dB readings.
+[Canonical JSON example](examples/cmts-upstream-rxmer.json) ·
+[Format compatibility and field evidence](../reference/cmts-upstream-rxmer/format.md).
+Legacy PNM105 and unknown major versions return structured unsupported diagnostics.
+These examples are synthetic; no vendor capture interoperability is claimed.

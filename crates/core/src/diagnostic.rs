@@ -7,6 +7,7 @@ use std::fmt;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 /// Categories callers can handle without parsing display messages.
 pub enum ErrorCode {
+    InvalidField,
     Truncated,
     UnsupportedType,
     UnsupportedVersion,

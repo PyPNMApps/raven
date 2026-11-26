@@ -13,8 +13,9 @@ MANIFESTS = (
     'crates/core/Cargo.toml', 'crates/logging/Cargo.toml',
     'crates/cli/Cargo.toml', 'tests/fixtures/Cargo.toml',
     'apps/viewer/Cargo.toml', 'apps/qt/Cargo.toml',
+    'bindings/python/Cargo.toml',
 )
-LOCKS = ('Cargo.lock', 'apps/qt/Cargo.lock')
+LOCKS = ('Cargo.lock', 'apps/qt/Cargo.lock', 'bindings/python/Cargo.lock')
 
 
 def validate(version):

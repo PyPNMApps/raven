@@ -145,7 +145,13 @@ fn centralized_identities_are_unique_and_routes_preserve_identity() {
         for other in &FILE_TYPES[index + 1..] {
             assert_ne!(descriptor.signature, other.signature);
             assert_ne!(descriptor.tag, other.tag);
-            assert_ne!(descriptor.kind, other.kind);
+            if descriptor.signature[3] == 0x69 && other.signature[3] == 0x69 {
+                assert_eq!(descriptor.kind, other.kind);
+                assert_ne!(descriptor.prefix, other.prefix);
+                assert_ne!(descriptor.decoder, other.decoder);
+            } else {
+                assert_ne!(descriptor.kind, other.kind);
+            }
         }
     }
     let first = identify_tag("PNN6").unwrap();

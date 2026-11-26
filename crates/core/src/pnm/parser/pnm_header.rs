@@ -46,14 +46,26 @@ impl<'input> PnmHeader<'input> {
             offset: 0,
             field: "file_type",
         })?;
+        // A recognized legacy identity does not authorize interpreting timestamp
+        // octets as a version. Its complete historical layout is not enabled.
+        if descriptor.prefix == super::pnm_file_type::PNM_PREFIX {
+            return Err(ParseError {
+                code: ErrorCode::UnsupportedLayout,
+                offset: 4,
+                field: "header_layout",
+            });
+        }
         let format_version = PnmFormatVersion {
             major: reader.read_u8("major_version")?,
             minor: reader.read_u8("minor_version")?,
         };
-        if descriptor
-            .header_version
-            .is_some_and(|supported| format_version != supported)
-        {
+        if descriptor.header_version.is_some_and(|supported| {
+            if descriptor.kind == super::pnm_file_type::PnmFileKind::CmtsUpstreamRxMer {
+                format_version.major != supported.major
+            } else {
+                format_version != supported
+            }
+        }) {
             return Err(ParseError {
                 code: ErrorCode::UnsupportedVersion,
                 offset: 4,

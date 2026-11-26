@@ -63,6 +63,13 @@ def normalize_mac(value):
 
 def field_ranges(data):
     """Return evidenced MAC ranges; fail closed for unknown/truncated layouts."""
+    # CCAP-OSSI 3.1 I18 Table410 / 4.0 I02 Table411, major2 only.
+    # Integrated CCAP uses an all-zero RPD ID, which is not a customer MAC.
+    if data[:4] == b'PNN\x69' and len(data) >= 297 and data[4] == 2:
+        fields = [('mac_address', 277)]
+        if any(data[270:276]):
+            fields.append(('cmts_mac_address', 270))
+        return tuple(fields)
     fields = MAC_FIELDS.get(data[:4])
     if fields is None or data[4:6] != bytes((1, 0)):
         raise ValueError('Unsupported PNM identity or format version')
@@ -96,8 +103,11 @@ def decode(decoder, data):
 def without_identity(value):
     """Mask MAC keys for exact before/after decoded measurement comparison."""
     if isinstance(value, dict):
+        identity_keys = {'mac_address', 'cmts_mac_address'}
+        if value.get('measurement_type') == 'cmts_upstream_ofdma_rxmer':
+            identity_keys.update(('cm_mac_address', 'rpd_id'))
         return {key: without_identity(item) for key, item in value.items()
-                if key not in ('mac_address', 'cmts_mac_address')}
+                if key not in identity_keys}
     if isinstance(value, list):
         return [without_identity(item) for item in value]
     return value
@@ -176,7 +186,7 @@ def check_examples(address):
     def visit(value):
         if isinstance(value, dict):
             for key, item in value.items():
-                if key in ('mac_address', 'cmts_mac_address'):
+                if key in ('mac_address', 'cmts_mac_address', 'cm_mac_address'):
                     if not isinstance(item, str) or normalize_mac(item) != address:
                         raise ValueError('JSON example has a non-approved MAC field; regenerate examples')
                 else:
@@ -238,7 +248,7 @@ def update_examples(address):
     """Update structured JSON identity keys and evidenced synthetic hex sources."""
     # Match only JSON identity string values (for example "mac_address": "aa:bb:cc:dd:ee:ff").
     # Group 1 retains the key/spacing; whole documents keep their numeric spelling.
-    identity_field = re.compile(r'("(?:mac_address|cmts_mac_address)"\s*:\s*)"[^"]*"')
+    identity_field = re.compile(r'("(?:mac_address|cmts_mac_address|cm_mac_address)"\s*:\s*)"[^"]*"')
     for path in (ROOT / 'docs/cli/examples').glob('*.json'):
         original = path.read_text()
         json.loads(original)  # Reject malformed source before replacing anything.
@@ -268,7 +278,7 @@ def check_tracked_captures():
             with path.open('rb') as stream:
                 prefix = stream.read(4)
             candidate = (len(prefix) == 4 and prefix[:3] in (b'PNN', b'LLD', b'PNM')
-                         and prefix[3] < 0x20) or prefix.startswith((b'PK\x03\x04', b'\x1f\x8b'))
+                         and (prefix[3] < 0x20 or prefix[3] == 0x69)) or prefix.startswith((b'PK\x03\x04', b'\x1f\x8b'))
         if not candidate:
             continue
         if path.is_symlink():

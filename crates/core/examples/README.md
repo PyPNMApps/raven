@@ -76,3 +76,16 @@ Keep `capture_bytes` alive while using the capture. To reuse an already parsed
 header, call the concrete parser's `from_header(header, limits)` method.
 The shared `common/mod.rs` handles example CLI input only; the parser library
 performs no file I/O and does not initialize global logging.
+
+## CMTS upstream OFDMA RxMER
+
+`cmts_rxmer` demonstrates bounded file loading, the borrowed typed header and
+metadata, sample iteration, statistics and canonical JSON. `cmts_rxmer_fixtures`
+generates deterministic specification-derived binaries and expected manifests
+into a new directory. See [Rust API](../../../docs/reference/cmts-upstream-rxmer/api.md)
+and [format evidence](../../../docs/reference/cmts-upstream-rxmer/format.md).
+
+```bash
+./scripts/cargo-local.sh run -p pnm --example cmts_rxmer --locked -- \
+  tests/fixtures/synthetic/cmts-upstream-rxmer/golden.bin
+```

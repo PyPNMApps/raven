@@ -21,6 +21,22 @@ SPEC.loader.exec_module(TOOL)
 class FixtureMacTests(unittest.TestCase):
     """Exercise real fixture layouts and deliberately malformed synthetic inputs."""
 
+    def test_cmts_major_two_fields_preserve_integrated_rpd_and_payload(self):
+        """Recognize only the evidenced layout and rewrite identities, not samples."""
+        original = bytearray(303)
+        original[:6] = b'PNN\x69\x02\x07'
+        original[277:283] = b'ABCDEF'
+        original[297:] = b'ABCDEF'
+        self.assertEqual(TOOL.field_ranges(bytes(original)), (('mac_address', 277),))
+        updated = TOOL.rewrite(bytes(original), bytes.fromhex('00ca00000001'))
+        self.assertEqual(updated[270:277], bytes(7))
+        self.assertEqual(updated[297:], b'ABCDEF')
+        original[270:276] = b'GHIJKL'
+        self.assertEqual(TOOL.field_ranges(bytes(original)), (('mac_address', 277), ('cmts_mac_address', 270)))
+        for candidate in (original[:296], original[:4] + b'\x01' + original[5:]):
+            with self.assertRaises(ValueError):
+                TOOL.field_ranges(bytes(candidate))
+
     def test_user_alias_formats_and_invalid_input(self):
         """Accept equivalent formats; reject malformed groups and wrong lengths."""
         expected = bytes.fromhex('aabbccddeeff')

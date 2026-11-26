@@ -78,6 +78,14 @@ PyPNM's text `--clear-oui` replacement is never used on arbitrary binary bytes.
 
 ## Installer build order
 
+CMTS upstream RxMER PNN105 major2 uses CM MAC at byte277 and RPD ID at byte270
+(CCAP-OSSI 3.1 I18 Table410 / 4.0 I02 Table411). Nonzero RPD IDs are checked as
+device aliases; the all-zero integrated-CCAP default is preserved. Vendor minor
+bytes are retained; legacy/unknown major layouts still fail closed. Shipped
+synthetic binaries use the approved aliases and reserved example CCAP names.
+Malformed fixtures are generated into a new local test directory and tested
+against their manifests; they are not shipped or exempted from the hygiene gate.
+
 Installer demo ZIPs are generated from expanded, approved repository captures.
 `tests/fixtures/demos/installer-demos.json` records their paths, sizes and hashes.
 `python3 scripts/release/samples.py --check` verifies that manifest and runs

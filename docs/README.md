@@ -22,6 +22,9 @@ actual published assets and [CI scope](development/ci.md) for validation status.
 - [Build only the CLI from source](install/source.md)
 - [CLI user guide, output and errors](cli/usage.md)
 - [JSON examples for each PNM file type](cli/usage.md#json-examples-by-file-type)
+- [CMTS upstream RxMER wire evidence](reference/cmts-upstream-rxmer/format.md)
+- [Rust upstream RxMER API](reference/cmts-upstream-rxmer/api.md)
+- [Optional Python decoding API](../bindings/python/README.md)
 - [Supported file formats](reference/formats.md)
 - [Man page](../crates/cli/man/pnm-decode.1)
 
