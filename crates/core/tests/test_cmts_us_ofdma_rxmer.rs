@@ -62,6 +62,80 @@ fn independent_golden_fields_values_and_json() {
     ));
     assert!(capture.to_json(10).is_err());
 }
+
+#[test]
+fn opaque_metadata_and_zero_epoch_are_preserved_losslessly() {
+    let mut bytes = golden();
+    bytes[5] = 255;
+    bytes[6..10].fill(0);
+    bytes[10..14].fill(255);
+    bytes[14..270].fill(255);
+    bytes[14..32].copy_from_slice(b"ccap.example.test\0");
+    bytes[32..36].copy_from_slice(&[0, 1, 0x7f, 0x80]);
+    bytes[276] = 255;
+    bytes[283..286].fill(255);
+
+    let observation = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits { max_samples: 4096 }).unwrap();
+    let header = observation.pnm_header();
+    let metadata = observation.metadata();
+    let raw = observation.raw_values();
+    let readings: Vec<Option<f64>> = observation.values_db().collect();
+    assert_eq!(header.to_model().pnm_header.capture_time, Some(0));
+    assert_eq!(observation.format_version().minor, 255);
+    assert_eq!(metadata.if_index, u32::MAX);
+    assert_eq!(metadata.ccap_id, "ccap.example.test");
+    assert_eq!(metadata.ccap_id_raw, &bytes[14..270]);
+    assert_eq!(metadata.ccap_id_raw.as_ptr(), bytes[14..].as_ptr());
+    assert_eq!(metadata.rpd_id, [0, 0xca, 0, 0, 0, 2]);
+    assert_eq!(metadata.rpd_port, 255);
+    assert_eq!(metadata.cm_mac_address, [0, 0xca, 0, 0, 0, 1]);
+    assert_eq!(metadata.number_of_averages, u16::MAX);
+    assert_eq!(metadata.pre_eq_raw, 255);
+    assert_eq!(raw.as_ptr(), bytes[297..].as_ptr());
+    assert_eq!(raw, [0, 1, 95, 254, 255]);
+    assert_eq!(
+        readings,
+        [Some(0.0), Some(0.25), Some(23.75), Some(63.5), None]
+    );
+
+    let json: serde_json::Value =
+        serde_json::from_str(&observation.to_json(10000).unwrap()).unwrap();
+    assert_eq!(json["pnm_header"]["capture_time"], 0);
+    assert_eq!(json["pnm_header"]["minor_version"], 255);
+    assert_eq!(json["if_index"], u32::MAX);
+    assert_eq!(json["ccap_id_raw"], serde_json::json!(&bytes[14..270]));
+    assert_eq!(json["number_of_averages"], 65535);
+    assert_eq!(json["pre_eq_raw"], 255);
+    assert!(json["docsis_version_context"].is_null());
+}
+
+#[test]
+fn explicit_consumer_limit_accepts_4096_and_rejects_4097_before_payload_work() {
+    let mut bytes = golden();
+    bytes.resize(297 + 4096, 160);
+    bytes[293..297].copy_from_slice(&4096u32.to_be_bytes());
+    let observation = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits { max_samples: 4096 }).unwrap();
+    assert_eq!(observation.raw_values().len(), 4096);
+    assert_eq!(observation.raw_values().as_ptr(), bytes[297..].as_ptr());
+    assert_eq!(observation.samples().last().unwrap().subcarrier_index, 4111);
+    assert_eq!(observation.frequencies_hz().last(), Some(122_775_000));
+
+    bytes.push(160);
+    bytes[293..297].copy_from_slice(&4097u32.to_be_bytes());
+    let observation = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits::default()).unwrap();
+    assert_eq!(observation.raw_values().len(), 4097);
+    assert_eq!(observation.samples().last().unwrap().subcarrier_index, 4112);
+    assert_eq!(observation.frequencies_hz().last(), Some(122_800_000));
+
+    // Reject the declared budget before payload inspection, even with payload absent.
+    for input in [bytes.as_slice(), &bytes[..297]] {
+        let error = CmtsUsOfdmaRxMer::parse(input, ParseLimits { max_samples: 4096 }).unwrap_err();
+        assert_eq!(error.code, ErrorCode::LimitExceeded);
+        assert_eq!(error.field, "data_length");
+        assert_eq!(error.offset, 293);
+    }
+}
+
 #[test]
 fn every_truncation_and_declared_length_is_bounded() {
     let bytes = golden();
@@ -117,14 +191,13 @@ fn unsupported_layouts_types_versions_and_encodings_do_not_fall_back() {
             .field,
         "ccap_id_terminator"
     );
-    bytes[14] = 0xff;
-    bytes[15] = 0;
-    assert_eq!(
-        CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits::default())
-            .unwrap_err()
-            .code,
-        ErrorCode::InvalidField
-    );
+    for prefix in [b"\xff\0".as_slice(), b"c\n\0", b"\xc2\x85\0"] {
+        bytes[14..14 + prefix.len()].copy_from_slice(prefix);
+        let error = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits::default()).unwrap_err();
+        assert_eq!(error.code, ErrorCode::InvalidField);
+        assert_eq!(error.field, "ccap_id_encoding");
+        assert_eq!(error.offset, 14);
+    }
 }
 #[test]
 fn null_empty_frequency_and_index_boundaries() {
@@ -132,9 +205,17 @@ fn null_empty_frequency_and_index_boundaries() {
     bytes[297..].fill(255);
     let capture = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits::default()).unwrap();
     assert_eq!(statistics(&capture).arithmetic_mean_db, None);
+    assert_eq!(statistics(&capture).minimum_db, None);
+    assert_eq!(statistics(&capture).maximum_db, None);
+    assert_eq!(statistics(&capture).valid_count, 0);
     assert_eq!(statistics(&capture).unavailable_count, 5);
     bytes.truncate(297);
     bytes[293..297].fill(0);
+    let capture = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits { max_samples: 0 }).unwrap();
+    assert_eq!(statistics(&capture).arithmetic_mean_db, None);
+    assert_eq!(statistics(&capture).minimum_db, None);
+    assert_eq!(statistics(&capture).maximum_db, None);
+    assert_eq!(statistics(&capture).sample_count, 0);
     assert_eq!(
         CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits { max_samples: 0 })
             .unwrap()
@@ -144,12 +225,10 @@ fn null_empty_frequency_and_index_boundaries() {
     );
     bytes = golden();
     bytes[286..290].fill(255);
-    assert_eq!(
-        CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits::default())
-            .unwrap_err()
-            .code,
-        ErrorCode::ArithmeticOverflow
-    );
+    let error = CmtsUsOfdmaRxMer::parse(&bytes, ParseLimits::default()).unwrap_err();
+    assert_eq!(error.code, ErrorCode::ArithmeticOverflow);
+    assert_eq!(error.field, "sample_frequency_hz");
+    assert_eq!(error.offset, 286);
     bytes = golden();
     bytes[290..292].fill(255);
     assert_eq!(

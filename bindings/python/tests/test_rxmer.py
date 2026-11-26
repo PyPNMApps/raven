@@ -9,6 +9,7 @@ from pathlib import Path
 import subprocess
 import unittest
 from raven_pnm import CmtsUsOfdmaRxMer, ParseFailure
+from raven_pnm._native import NativeCapture
 
 ROOT = Path(__file__).resolve().parents[3]
 FIXTURES = Path(os.environ.get('RAVEN_FIXTURE_DIR', ROOT / 'tests/fixtures/synthetic/cmts-upstream-rxmer'))
@@ -46,6 +47,33 @@ class RxMerTests(unittest.TestCase):
                     self.assertIsInstance(failure.exception.offset, int)
                     self.assertIsInstance(failure.exception.field, str)
 
+    def test_native_ownership_and_structured_errors_match_rust_contract(self):
+        """Keep owned bytes after temporary input expires and inspect error attributes directly."""
+        path = FIXTURES / 'golden.bin'
+        native = NativeCapture.from_bytes(path.read_bytes())
+        capture = CmtsUsOfdmaRxMer.from_bytes(path.read_bytes())
+        cli = Path(os.environ.get('RAVEN_TEST_CLI', ROOT / 'target/debug/pnm-decode'))
+        result = subprocess.run([str(cli), str(path), '--stdout'], check=True, capture_output=True, text=True)
+        expected = json.loads(result.stdout)
+        self.assertEqual(json.loads(native.to_json()), expected)
+        self.assertEqual(capture.metadata, {key: value for key, value in expected.items() if key != 'samples'})
+        self.assertEqual(native.original_bytes(), path.read_bytes())
+        self.assertEqual(capture.original_bytes(), path.read_bytes())
+        self.assertEqual(native.raw_values(), bytes([0, 1, 95, 254, 255]))
+        self.assertEqual(capture.samples[-1].rxmer_db, None)
+        self.assertEqual(json.loads(native.statistics_json())['arithmetic_mean_db'], 21.875)
+
+        for prefix in (b'\xff\0', b'c\n\0', b'\xc2\x85\0'):
+            malformed = bytearray(path.read_bytes())
+            malformed[14:14 + len(prefix)] = prefix
+            for decoder in (NativeCapture.from_bytes, CmtsUsOfdmaRxMer.from_bytes):
+                with self.subTest(prefix=prefix, decoder=decoder):
+                    with self.assertRaises(ParseFailure) as failure:
+                        decoder(bytes(malformed))
+                    self.assertEqual(failure.exception.code, 'InvalidField')
+                    self.assertEqual(failure.exception.field, 'ccap_id_encoding')
+                    self.assertEqual(failure.exception.offset, 14)
+
     def test_limits_and_missing_input(self):
         """Keep filesystem and bounded parser failures distinct."""
         with self.assertRaises(OSError):
@@ -54,6 +82,11 @@ class RxMerTests(unittest.TestCase):
             CmtsUsOfdmaRxMer.from_bytes(b'x' * 70000)
         self.assertEqual(failure.exception.code, 'LimitExceeded')
         self.assertEqual(CmtsUsOfdmaRxMer.from_file(FIXTURES / 'all-unavailable.bin').statistics['valid_count'], 0)
+        for name in ('all-unavailable', 'empty'):
+            summary = CmtsUsOfdmaRxMer.from_file(FIXTURES / (name + '.bin')).statistics
+            self.assertIsNone(summary['minimum_db'])
+            self.assertIsNone(summary['arithmetic_mean_db'])
+            self.assertIsNone(summary['maximum_db'])
 
 if __name__ == '__main__':
     unittest.main()
